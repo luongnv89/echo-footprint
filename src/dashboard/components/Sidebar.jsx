@@ -4,93 +4,92 @@
  * Per PRD: Time filters, settings access
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import PlatformStats from './PlatformStats.jsx';
 import '../styles/Sidebar.css';
+import logoSvg from '../../assets/logo.svg?url';
 
 function Sidebar({ stats, filter, onFilterChange, activeView, onViewChange, onSettingsClick, onHelpClick }) {
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const timeFilterOptions = [
+    { value: '1hour', label: 'Last Hour' },
+    { value: '24hours', label: 'Last 24 Hours' },
+    { value: '7days', label: 'Last 7 Days' },
+    { value: '30days', label: 'Last 30 Days' },
+    { value: 'all', label: 'All Time' },
+  ];
+
   const handleFilterChange = timeRange => {
     onFilterChange({
       timeRange,
       startDate: null,
       endDate: null,
     });
+    setShowDropdown(false);
+  };
+
+  const getActiveFilterLabel = () => {
+    const activeOption = timeFilterOptions.find(opt => opt.value === filter.timeRange);
+    return activeOption ? activeOption.label : 'All Time';
   };
 
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="logo">
-          <h1>EchoFootPrint</h1>
-          <span className="version">v1.0.0</span>
+          <img src={logoSvg} alt="EchoFootPrint Logo" className="logo-image" />
+          <div className="logo-text">
+            <h1>EchoFootPrint</h1>
+            <span className="version">v1.1.0</span>
+          </div>
         </div>
       </div>
 
       <nav className="sidebar-nav">
         <div className="nav-section">
-          <h2>Visualizations</h2>
-          <button
-            className={`nav-button ${activeView === 'graph' ? 'active' : ''}`}
-            onClick={() => onViewChange('graph')}
-            aria-label="Switch to graph view"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          <h2>Time Filter</h2>
+          <div className="time-filter-dropdown">
+            <button
+              className="dropdown-button"
+              onClick={() => setShowDropdown(!showDropdown)}
+              aria-expanded={showDropdown}
+              aria-haspopup="true"
             >
-              <circle cx="10" cy="10" r="2" />
-              <circle cx="5" cy="5" r="1.5" />
-              <circle cx="15" cy="5" r="1.5" />
-              <circle cx="5" cy="15" r="1.5" />
-              <circle cx="15" cy="15" r="1.5" />
-              <line x1="10" y1="10" x2="5" y2="5" stroke="currentColor" />
-              <line x1="10" y1="10" x2="15" y2="5" stroke="currentColor" />
-              <line x1="10" y1="10" x2="5" y2="15" stroke="currentColor" />
-              <line x1="10" y1="10" x2="15" y2="15" stroke="currentColor" />
-            </svg>
-            <span>Radial Graph</span>
-          </button>
-          {/* Map View disabled - requires geolocation which was removed per user request */}
-          <button
-            className={`nav-button ${activeView === 'table' ? 'active' : ''}`}
-            onClick={() => onViewChange('table')}
-            aria-label="Switch to data table view"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path d="M3 3h14v14H3V3zm0 4h14M7 7v10" stroke="currentColor" fill="none" strokeWidth="1.5" />
-            </svg>
-            <span>Data Table</span>
-          </button>
-        </div>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+              </svg>
+              <span>{getActiveFilterLabel()}</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className={`dropdown-chevron ${showDropdown ? 'open' : ''}`}
+              >
+                <path fillRule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
 
-        <div className="nav-section">
-          <h2>Time Filters</h2>
-          <div className="filter-buttons">
-            <button
-              className={`filter-button ${filter.timeRange === '7days' ? 'active' : ''}`}
-              onClick={() => handleFilterChange('7days')}
-            >
-              Last 7 Days
-            </button>
-            <button
-              className={`filter-button ${filter.timeRange === '30days' ? 'active' : ''}`}
-              onClick={() => handleFilterChange('30days')}
-            >
-              Last 30 Days
-            </button>
-            <button
-              className={`filter-button ${filter.timeRange === 'all' ? 'active' : ''}`}
-              onClick={() => handleFilterChange('all')}
-            >
-              All Time
-            </button>
+            {showDropdown && (
+              <div className="dropdown-menu">
+                {timeFilterOptions.map(option => (
+                  <button
+                    key={option.value}
+                    className={`dropdown-item ${filter.timeRange === option.value ? 'active' : ''}`}
+                    onClick={() => handleFilterChange(option.value)}
+                  >
+                    {option.label}
+                    {filter.timeRange === option.value && (
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

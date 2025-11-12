@@ -11,7 +11,6 @@ import RadialGraph from './components/RadialGraph.jsx';
 // import MapView from './components/MapView.jsx';
 import DataTable from './components/DataTable.jsx';
 import PlatformStats from './components/PlatformStats.jsx';
-import ScreenshotModal from './components/ScreenshotModal.jsx';
 import SettingsSheet from './components/SettingsSheet.jsx';
 import HelpSheet from './components/HelpSheet.jsx';
 import Sidebar from './components/Sidebar.jsx';
@@ -20,13 +19,12 @@ import './styles/App.css';
 
 function App() {
   const [filter, setFilter] = useState({
-    timeRange: 'all', // '7days', '30days', 'all', 'custom'
+    timeRange: 'all', // '1hour', '24hours', '7days', '30days', 'all', 'custom'
     startDate: null,
     endDate: null,
   });
 
   const [activeView, setActiveView] = useState('graph'); // 'graph', 'map', or 'table'
-  const [showScreenshotModal, setShowScreenshotModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
@@ -36,7 +34,11 @@ function App() {
       const now = Date.now();
       const filterOptions = {};
 
-      if (filter.timeRange === '7days') {
+      if (filter.timeRange === '1hour') {
+        filterOptions.startDate = now - 60 * 60 * 1000; // 1 hour
+      } else if (filter.timeRange === '24hours') {
+        filterOptions.startDate = now - 24 * 60 * 60 * 1000; // 24 hours
+      } else if (filter.timeRange === '7days') {
         filterOptions.startDate = now - 7 * 24 * 60 * 60 * 1000;
       } else if (filter.timeRange === '30days') {
         filterOptions.startDate = now - 30 * 24 * 60 * 60 * 1000;
@@ -104,27 +106,7 @@ function App() {
       />
       <main className="main-content">
         <header className="dashboard-header">
-          <div className="header-top">
-            <div>
-              <h1>Your Tracking Footprint</h1>
-              <p className="subtitle">
-                {stats.totalFootprints} detections across {stats.uniqueDomains}{' '}
-                domains
-              </p>
-            </div>
-            <button
-              className="screenshot-button"
-              onClick={() => setShowScreenshotModal(true)}
-              aria-label="Take screenshot"
-              title="Export current view as PNG"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              Screenshot
-            </button>
-          </div>
+          <h1>Your Tracking Footprint</h1>
 
           <nav className="view-tabs" role="tablist">
             <button
@@ -190,12 +172,6 @@ function App() {
           </p>
         </footer>
       </main>
-
-      <ScreenshotModal
-        isOpen={showScreenshotModal}
-        onClose={() => setShowScreenshotModal(false)}
-        activeView={activeView}
-      />
 
       <SettingsSheet
         isOpen={showSettings}
