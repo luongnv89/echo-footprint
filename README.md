@@ -1,10 +1,32 @@
-# EchoFootPrint
+<div align="center">
+  <img src="docs/logo.svg" alt="EchoFootPrint Logo" width="200"/>
 
-> Privacy-first browser extension that visualizes cross-site tracking from 10 major platforms
+  # EchoFootPrint
+
+  > Privacy-first browser extension that visualizes cross-site tracking from 10 major platforms
+
+  [![Version](https://img.shields.io/badge/version-1.1.0-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
+  [![License](https://img.shields.io/badge/license-MIT-00d4aa.svg)](LICENSE)
+  [![Chrome](https://img.shields.io/badge/chrome-extension-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
+</div>
 
 ## Overview
 
 EchoFootPrint is a zero-configuration browser extension that empowers users to visualize how they're being tracked across the web. Unlike traditional privacy tools that simply block trackers, EchoFootPrint creates a compelling visual narrative of the tracking ecosystem through an interactive, client-side-only experience.
+
+## Screenshots
+
+### Dashboard
+![Dashboard - Radial Graph View](docs/screenshots/dashboard.png)
+*Interactive radial graph showing your cross-site tracking network with real-time statistics*
+
+### Help & FAQ
+![Help Page](docs/screenshots/faq.png)
+*Comprehensive help system with FAQs, features guide, and privacy information*
+
+### Settings
+![Settings Panel](docs/screenshots/settings.png)
+*Data management, privacy controls, and extension settings*
 
 **Detected Platforms:**
 - Facebook/Meta (Instagram, WhatsApp)
@@ -233,8 +255,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Status
 
-**Current Version**: 0.3.0
-**Status**: Functional POC with 10-platform detection
+**Current Version**: 1.1.0
+**Status**: Production-ready with 10-platform detection
 **Next Milestone**: Chrome Web Store submission
 
 ---

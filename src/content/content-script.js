@@ -36,7 +36,8 @@ function sendPixelDetection(detectionData) {
   try {
     // Check if extension context is valid (prevents errors when extension is reloaded)
     if (!chrome.runtime?.id) {
-      console.warn('EchoFootPrint: Extension context invalidated, skipping message');
+      // Silently skip if extension context is invalidated (expected during extension reload)
+      debug('Extension context invalidated, skipping message');
       return;
     }
 
@@ -50,7 +51,7 @@ function sendPixelDetection(detectionData) {
         if (chrome.runtime.lastError) {
           // Gracefully handle context invalidation (extension reloaded while page open)
           if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
-            console.warn('EchoFootPrint: Extension was reloaded, skipping');
+            debug('Extension was reloaded, skipping');
             return;
           }
           console.error(
@@ -65,7 +66,7 @@ function sendPixelDetection(detectionData) {
   } catch (error) {
     // Gracefully handle context invalidation errors
     if (error.message?.includes('Extension context invalidated')) {
-      console.warn('EchoFootPrint: Extension was reloaded, skipping');
+      debug('Extension was reloaded, skipping');
       return;
     }
     console.error('EchoFootPrint: Failed to send detection:', error);
