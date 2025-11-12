@@ -1,0 +1,7 @@
+- Improve existing EchoFootPrint code before introducing new modules; consolidate detection/storage utilities to avoid repetition and honor MVP scope in `tasks.md`.
+- Follow the stack conventions in `phase-1-requirements/IMPLEMENTATION_GUIDE.md` (TypeScript/React style, MV3 APIs) and adhere to project linting/formatting configs before committing.
+- Implement features per PRD/TAD requirements with unit/integration tests (Vitest/Playwright), accessibility checks, and documentation updates (README, UX/brand notes) whenever code changes affect user flows.
+- Embed security/privacy best practices from PRD/TAD: minimal permissions, SHA-256 hashing, AES-GCM optional encryption, safe cookie handling, CSP compliance, and input validation for all user-facing components.
+- Update affected artifacts (`tasks.md`, design docs, release notes) after each change, and stop for clarification whenever requirements, file locations, or commands are ambiguous.
+- Before running Python scripts, activate the virtual environment; fail fast on errors, and seek explicit confirmation for high-risk or deployment actions per operating rules.
+- After each implementation, self-review for code quality, edge cases, performance, and security; log findings and next steps before marking tasks complete.
