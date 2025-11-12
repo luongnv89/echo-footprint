@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Tracking Pixels - EchoFootPrint</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 EchoFootPrint Test Page</h1>
+
+    <div class="section">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Open Chrome DevTools (F12 or Right-click → Inspect)</li>
+            <li>Go to the Console tab</li>
+            <li>Look for <code>[EchoFootPrint]</code> messages</li>
+            <li>Check that pixels are being detected</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Test Status</h2>
+        <div class="status loading" id="status">⏳ Loading test tracking scripts...</div>
+    </div>
+
+    <div class="section">
+        <h2>Active Test Scripts</h2>
+        <ul id="script-list">
+            <li>Loading...</li>
+        </ul>
+    </div>
+
+    <!-- Google Analytics (Universal Analytics) -->
+    <script async src="https://www.google-analytics.com/analytics.js"></script>
+
+    <!-- Google Tag Manager -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-000000-01"></script>
+
+    <!-- Facebook Pixel -->
+    <script async src="https://connect.facebook.net/en_US/fbevents.js"></script>
+
+    <!-- Twitter/X Pixel -->
+    <script async src="https://static.ads-twitter.com/uwt.js"></script>
+
+    <!-- LinkedIn Insight Tag -->
+    <script async src="https://snap.licdn.com/li.lms-analytics/insight.min.js"></script>
+
+    <!-- TikTok Pixel -->
+    <script async src="https://analytics.tiktok.com/i18n/pixel/sdk.js?sdkid=TEST"></script>
+
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const status = document.getElementById('status');
+                status.className = 'status success';
+                status.textContent = '✅ All test scripts loaded! Check console for [EchoFootPrint] messages';
+
+                // List all loaded scripts
+                const scripts = document.querySelectorAll('script[src]');
+                const scriptList = document.getElementById('script-list');
+                scriptList.innerHTML = '';
+
+                Array.from(scripts).forEach(function(script) {
+                    if (script.src.includes('google') ||
+                        script.src.includes('facebook') ||
+                        script.src.includes('twitter') ||
+                        script.src.includes('linkedin') ||
+                        script.src.includes('tiktok')) {
+                        const li = document.createElement('li');
+                        li.textContent = script.src;
+                        scriptList.appendChild(li);
+                    }
+                });
+
+                // Open extension popup
+                console.log('%c🔍 EchoFootPrint Test Page', 'font-size: 20px; color: #00d4aa;');
+                console.log('Click the EchoFootPrint extension icon to see detected pixels in the dashboard!');
+            }, 4000); // Wait 4 seconds for scripts to load
+        });
+    </script>
+</body>
+</html>

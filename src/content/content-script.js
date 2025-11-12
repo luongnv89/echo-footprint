@@ -11,7 +11,7 @@ import {
 
 // Configuration
 const DEBUG_MODE = true; // Set to false in production
-const DETECTION_DELAY_MS = 500; // Wait for page to settle before detection
+const DETECTION_DELAY_MS = 3000; // Wait 3 seconds for page to fully load (Facebook Pixel loads async)
 
 /**
  * Log debug messages (only in debug mode)
@@ -34,6 +34,12 @@ function debug(message, data = null) {
  */
 function sendPixelDetection(detectionData) {
   try {
+    // Check if extension context is valid (prevents errors when extension is reloaded)
+    if (!chrome.runtime?.id) {
+      console.warn('EchoFootPrint: Extension context invalidated, skipping message');
+      return;
+    }
+
     // Send message to service worker
     chrome.runtime.sendMessage(
       {
@@ -42,6 +48,11 @@ function sendPixelDetection(detectionData) {
       },
       response => {
         if (chrome.runtime.lastError) {
+          // Gracefully handle context invalidation (extension reloaded while page open)
+          if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
+            console.warn('EchoFootPrint: Extension was reloaded, skipping');
+            return;
+          }
           console.error(
             'EchoFootPrint: Error sending message:',
             chrome.runtime.lastError
@@ -52,52 +63,12 @@ function sendPixelDetection(detectionData) {
       }
     );
   } catch (error) {
-    console.error('EchoFootPrint: Failed to send detection:', error);
-  }
-}
-
-/**
- * Detect Facebook ID from cookie (only on facebook.com)
- */
-function detectFacebookID() {
-  if (
-    !window.location.hostname.includes('facebook.com') &&
-    !window.location.hostname.includes('fb.com')
-  ) {
-    return;
-  }
-
-  try {
-    const cookies = document.cookie.split(';');
-    const cUserCookie = cookies.find(c => c.trim().startsWith('c_user='));
-
-    if (cUserCookie) {
-      const userId = cUserCookie.split('=')[1].trim();
-
-      if (userId) {
-        debug('Facebook user ID detected', userId.substring(0, 8) + '...');
-
-        // Send to service worker for hashing and storage
-        chrome.runtime.sendMessage(
-          {
-            type: 'FB_ID_DETECTED',
-            userId: userId,
-          },
-          response => {
-            if (chrome.runtime.lastError) {
-              console.error(
-                'EchoFootPrint: Error sending FB ID:',
-                chrome.runtime.lastError
-              );
-            } else {
-              debug('FB ID sent to service worker');
-            }
-          }
-        );
-      }
+    // Gracefully handle context invalidation errors
+    if (error.message?.includes('Extension context invalidated')) {
+      console.warn('EchoFootPrint: Extension was reloaded, skipping');
+      return;
     }
-  } catch (error) {
-    console.error('EchoFootPrint: Error detecting Facebook ID:', error);
+    console.error('EchoFootPrint: Failed to send detection:', error);
   }
 }
 
@@ -107,8 +78,11 @@ function detectFacebookID() {
 function runPixelDetection() {
   const startTime = performance.now();
 
-  // Detect Facebook ID if on facebook.com
-  detectFacebookID();
+  debug(`Starting detection on ${window.location.hostname}`);
+
+  // Count all scripts for debugging
+  const allScripts = document.querySelectorAll('script[src]');
+  debug(`Found ${allScripts.length} scripts on page`);
 
   // Run pixel detection
   const result = detectFacebookPixel();
@@ -117,10 +91,30 @@ function runPixelDetection() {
   debug(`Detection completed in ${Math.round(totalTime * 100) / 100}ms`);
 
   if (result) {
-    debug('Facebook Pixel detected!', result);
+    debug(`Tracking pixel detected: ${result.platform}`, result);
     sendPixelDetection(result);
   } else {
-    debug('No Facebook Pixel detected on this page');
+    debug('No tracking pixels detected on this page');
+    // Log all unique domains found in scripts
+    if (allScripts.length > 0) {
+      const scriptDomains = Array.from(allScripts)
+        .map(script => {
+          try {
+            const url = new URL(script.src);
+            return url.hostname;
+          } catch (e) {
+            return null;
+          }
+        })
+        .filter(domain => domain !== null);
+
+      // Get unique domains
+      const uniqueDomains = [...new Set(scriptDomains)];
+      debug(`Checked ${allScripts.length} scripts from ${uniqueDomains.length} unique domains:`, uniqueDomains);
+
+      // Show a hint about what we're looking for
+      debug('Looking for tracking domains like: facebook.net, google-analytics.com, snap.licdn.com, etc.');
+    }
   }
 
   // Validate latency requirement (<100ms per PRD)
@@ -149,12 +143,13 @@ function init() {
 
   // Setup observer for dynamically loaded pixels
   const observer = observeDynamicPixels(detectionData => {
-    debug('Dynamic pixel detected!', detectionData);
+    debug(`Dynamic pixel detected: ${detectionData.platform}`, detectionData);
     sendPixelDetection(detectionData);
   });
 
   // Cleanup observer when page unloads
-  window.addEventListener('unload', () => {
+  // Note: Using pagehide instead of unload to avoid Permissions Policy violations
+  window.addEventListener('pagehide', () => {
     observer.disconnect();
     debug('Content script unloaded');
   });

@@ -1,15 +1,23 @@
 /**
  * EchoFootPrint Service Worker (Manifest V3)
- * Orchestrates pixel detection, Facebook ID hashing, and message relay
+ * Orchestrates pixel detection and message relay
  * Per PRD: Must handle short-lived service worker lifecycle
+ * Sprint 1: Now using IndexedDB for persistence
  */
+
+import {
+  addFootprint,
+  getSetting,
+  setSetting,
+  getFootprintCount,
+  getUniqueDomainCount,
+  initDatabase,
+} from '../lib/db-sw.js';
+// Geolocation removed per user request
+// import { queueGeolocationLookup, getQueueStats } from '../lib/geo-queue.js';
 
 // Configuration
 const DEBUG_MODE = true;
-
-// In-memory queue for POC (will be replaced with IndexedDB in Sprint 1)
-let detectionQueue = [];
-let facebookIdHash = null;
 
 /**
  * Log debug messages
@@ -27,75 +35,10 @@ function debug(message, data = null) {
   }
 }
 
-/**
- * Hash Facebook ID using SHA-256
- * @param {string} userId - Raw Facebook user ID
- * @returns {Promise<string>} - Hashed ID
- */
-async function hashFacebookID(userId) {
-  try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(userId);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    debug('Facebook ID hashed successfully', {
-      originalLength: userId.length,
-      hashLength: hashHex.length,
-      hashPreview: hashHex.substring(0, 16) + '...',
-    });
-
-    return hashHex;
-  } catch (error) {
-    console.error('ServiceWorker: Error hashing Facebook ID:', error);
-    return null;
-  }
-}
-
-/**
- * Handle Facebook ID detection event
- * @param {string} userId - Raw Facebook user ID
- * @returns {Promise<Object>} - Response object
- */
-async function handleFacebookID(userId) {
-  if (!userId || typeof userId !== 'string') {
-    debug('Invalid Facebook ID received', userId);
-    return { success: false, error: 'Invalid user ID' };
-  }
-
-  try {
-    // Hash the ID
-    const hashedId = await hashFacebookID(userId);
-
-    if (hashedId) {
-      facebookIdHash = hashedId;
-
-      // Store in chrome.storage.local for persistence across service worker restarts
-      await chrome.storage.local.set({ fbIdHash: hashedId });
-
-      debug('Facebook ID stored', {
-        hash: hashedId.substring(0, 16) + '...',
-      });
-
-      return {
-        success: true,
-        message: 'Facebook ID hashed and stored',
-        hashPreview: hashedId.substring(0, 8),
-      };
-    } else {
-      return { success: false, error: 'Hashing failed' };
-    }
-  } catch (error) {
-    console.error('ServiceWorker: Error handling Facebook ID:', error);
-    return { success: false, error: error.message };
-  }
-}
 
 /**
  * Handle pixel detection event
+ * Per PRD: Persist to IndexedDB, normalize data, queue geolocation lookup
  * @param {Object} detectionData - Detection data from content script
  * @param {Object} sender - Message sender information
  * @returns {Promise<Object>} - Response object
@@ -107,33 +50,40 @@ async function handlePixelDetection(detectionData, sender) {
   }
 
   try {
-    // Enrich detection data with tab information
-    const enrichedData = {
-      ...detectionData,
-      tabId: sender.tab?.id,
-      tabUrl: sender.tab?.url,
+    const domain = detectionData.domain;
+
+    // Geolocation removed per user request - no more API calls
+
+    // Normalize detection data (no geolocation enrichment)
+    const footprintData = {
+      domain: domain,
+      url: sender.tab?.url || detectionData.url || 'unknown',
+      pixelType: detectionData.method || 'unknown',
+      platform: detectionData.platform || 'unknown', // Multi-platform support
       timestamp: Date.now(),
     };
 
-    // Add to queue (POC - will use IndexedDB in Sprint 1)
-    detectionQueue.push(enrichedData);
+    // Persist to IndexedDB immediately (don't wait for geo)
+    const id = await addFootprint(footprintData);
 
-    debug('Pixel detection added to queue', {
-      domain: enrichedData.domain,
-      method: enrichedData.method,
-      queueSize: detectionQueue.length,
+    debug('Pixel detection persisted to IndexedDB', {
+      id,
+      domain: footprintData.domain,
+      pixelType: footprintData.pixelType,
     });
 
-    // Keep queue size manageable (max 1000 items for POC)
-    if (detectionQueue.length > 1000) {
-      const removed = detectionQueue.shift();
-      debug('Queue full, removed oldest entry', removed.domain);
-    }
+    // Get current stats
+    const totalCount = await getFootprintCount();
+    const uniqueDomains = await getUniqueDomainCount();
 
     return {
       success: true,
       message: 'Detection logged',
-      queueSize: detectionQueue.length,
+      footprintId: id,
+      stats: {
+        totalFootprints: totalCount,
+        uniqueDomains,
+      },
     };
   } catch (error) {
     console.error('ServiceWorker: Error handling pixel detection:', error);
@@ -142,21 +92,28 @@ async function handlePixelDetection(detectionData, sender) {
 }
 
 /**
- * Get current detection queue stats
- * @returns {Object} - Queue statistics
+ * Get current statistics from IndexedDB
+ * @returns {Promise<Object>} - Statistics
  */
-function getQueueStats() {
-  const uniqueDomains = new Set(detectionQueue.map(d => d.domain));
+async function getStats() {
+  try {
+    const totalFootprints = await getFootprintCount();
+    const uniqueDomains = await getUniqueDomainCount();
+    const installDate = await getSetting('installDate');
 
-  return {
-    totalDetections: detectionQueue.length,
-    uniqueDomains: uniqueDomains.size,
-    domains: Array.from(uniqueDomains),
-    hasFacebookId: !!facebookIdHash,
-    facebookIdPreview: facebookIdHash
-      ? facebookIdHash.substring(0, 8) + '...'
-      : null,
-  };
+    return {
+      totalFootprints,
+      uniqueDomains,
+      installDate,
+    };
+  } catch (error) {
+    console.error('ServiceWorker: Error getting stats:', error);
+    return {
+      totalFootprints: 0,
+      uniqueDomains: 0,
+      error: error.message,
+    };
+  }
 }
 
 /**
@@ -173,19 +130,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // Handle different message types
-  if (message.type === 'FB_ID_DETECTED') {
-    // Handle Facebook ID detection
-    handleFacebookID(message.userId)
-      .then(response => {
-        sendResponse(response);
-      })
-      .catch(error => {
-        console.error('ServiceWorker: Error in FB_ID handler:', error);
-        sendResponse({ success: false, error: error.message });
-      });
-    return true; // Indicates async response
-  }
-
   if (message.type === 'PIXEL_DETECTED') {
     // Handle pixel detection
     handlePixelDetection(message.data, sender)
@@ -200,10 +144,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === 'GET_STATS') {
-    // Return queue statistics (for debugging/dashboard)
-    const stats = getQueueStats();
-    sendResponse({ success: true, stats });
-    return false; // Synchronous response
+    // Return statistics from IndexedDB (for debugging/dashboard)
+    getStats()
+      .then(stats => {
+        sendResponse({
+          success: true,
+          stats: stats,
+        });
+      })
+      .catch(error => {
+        console.error('ServiceWorker: Error in GET_STATS handler:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true; // Async response
   }
 
   // Unknown message type
@@ -214,37 +167,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 /**
  * Service worker installation
+ * Per PRD: Initialize IndexedDB on install
  */
-chrome.runtime.onInstalled.addListener(details => {
+chrome.runtime.onInstalled.addListener(async details => {
   debug('Extension installed/updated', {
     reason: details.reason,
     version: chrome.runtime.getManifest().version,
   });
 
-  // Initialize storage if needed
-  if (details.reason === 'install') {
-    chrome.storage.local.set({
-      installDate: Date.now(),
-      version: chrome.runtime.getManifest().version,
-    });
+  try {
+    // Initialize IndexedDB
+    await initDatabase();
+    debug('IndexedDB initialized successfully');
 
-    debug('Initial storage setup complete');
+    // Set version in settings
+    if (details.reason === 'install') {
+      await setSetting('extensionVersion', chrome.runtime.getManifest().version);
+      debug('Initial database setup complete');
+    } else if (details.reason === 'update') {
+      const oldVersion = details.previousVersion;
+      const newVersion = chrome.runtime.getManifest().version;
+      await setSetting('extensionVersion', newVersion);
+      debug('Extension updated', { from: oldVersion, to: newVersion });
+    }
+  } catch (error) {
+    console.error('ServiceWorker: Error initializing database:', error);
   }
 });
 
 /**
  * Service worker startup
+ * Per PRD: Service workers are short-lived, so state is in IndexedDB
  */
-chrome.runtime.onStartup.addListener(() => {
+chrome.runtime.onStartup.addListener(async () => {
   debug('Service worker started');
 
-  // Restore Facebook ID hash from storage (if exists)
-  chrome.storage.local.get(['fbIdHash'], result => {
-    if (result.fbIdHash) {
-      facebookIdHash = result.fbIdHash;
-      debug('Facebook ID hash restored from storage');
-    }
-  });
+  try {
+    // Initialize database connection
+    await initDatabase();
+
+    // Log current stats
+    const stats = await getStats();
+    debug('Service worker ready', stats);
+  } catch (error) {
+    console.error('ServiceWorker: Error on startup:', error);
+  }
 });
 
 /**
@@ -253,9 +220,9 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.action.onClicked.addListener(tab => {
   debug('Extension icon clicked', { tabId: tab.id });
 
-  // Open dashboard in new tab (will be implemented in Sprint 1)
+  // Open dashboard in new tab
   chrome.tabs.create({
-    url: chrome.runtime.getURL('dashboard/index.html'),
+    url: chrome.runtime.getURL('src/dashboard/index.html'),
   });
 });
 

@@ -1,0 +1,213 @@
+/**
+ * Help Sheet Component Styles
+ */
+
+.help-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-lg);
+}
+
+.help-sheet {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Help Tabs */
+.help-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-xl);
+  border-bottom: 2px solid var(--color-border);
+  background-color: var(--color-bg-darker);
+}
+
+.help-tab {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  position: relative;
+}
+
+.help-tab:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.help-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Help Content */
+.help-content {
+  padding: var(--spacing-xl);
+}
+
+.help-content h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: var(--spacing-sm);
+}
+
+.help-content h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+}
+
+.help-content p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.help-content a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.help-content a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+/* Lists */
+.help-list {
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-left: var(--spacing-xl);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+}
+
+.help-list li {
+  margin-bottom: var(--spacing-sm);
+}
+
+.help-list strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+/* Feature Items */
+.feature-item {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--color-bg-darker);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+.feature-item h4 {
+  margin-top: 0;
+}
+
+.feature-item p {
+  margin-bottom: var(--spacing-md);
+}
+
+/* FAQ Items */
+.faq-item {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.faq-item h4 {
+  margin-top: 0;
+  color: var(--color-primary);
+}
+
+.faq-item p {
+  margin: 0;
+}
+
+/* Help Note */
+.help-note {
+  background-color: var(--color-bg-darker);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+  color: var(--color-text-primary) !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .help-sheet-overlay {
+    padding: 0;
+  }
+
+  .help-sheet {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .help-tabs {
+    overflow-x: auto;
+    padding: 0 var(--spacing-md);
+  }
+
+  .help-tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .help-content {
+    padding: var(--spacing-md);
+  }
+
+  .help-content h3 {
+    font-size: 20px;
+  }
+
+  .help-content h4 {
+    font-size: 16px;
+  }
+
+  .feature-item,
+  .faq-item {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .help-tab {
+    transition: none;
+  }
+}

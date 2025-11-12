@@ -1,22 +1,59 @@
 # EchoFootPrint
 
-> Privacy-first browser extension that visualizes Facebook tracking across the web
+> Privacy-first browser extension that visualizes cross-site tracking from 10 major platforms
 
 ## Overview
 
-EchoFootPrint is a zero-configuration browser extension that empowers users to visualize how their Facebook identity leaks across the web through third-party tracking. Unlike traditional privacy tools that simply block trackers, EchoFootPrint creates a compelling visual narrative of the tracking ecosystem through an interactive, client-side-only experience.
+EchoFootPrint is a zero-configuration browser extension that empowers users to visualize how they're being tracked across the web. Unlike traditional privacy tools that simply block trackers, EchoFootPrint creates a compelling visual narrative of the tracking ecosystem through an interactive, client-side-only experience.
 
-## Features (MVP v1.0)
+**Detected Platforms:**
+- Facebook/Meta (Instagram, WhatsApp)
+- Google (YouTube, Analytics, DoubleClick)
+- Twitter/X
+- LinkedIn
+- TikTok
+- Amazon
+- Pinterest
+- Snapchat
+- Reddit
+- Microsoft/Bing (Clarity)
 
-- ✅ Silent Facebook ID detection & hashing
-- ✅ Facebook Pixel detection across all sites
-- ✅ Local-only IndexedDB storage (zero telemetry)
-- ✅ Radial topology graph visualization (D3.js)
-- ✅ Geographic map view (Leaflet.js)
-- ✅ Raw data table with sorting & filtering
-- ✅ CSV export functionality
-- ✅ Dark mode UI (WCAG 2.1 AA compliant)
-- ✅ Screenshot sharing with privacy blur
+## Features
+
+- ✅ **Multi-Platform Detection** - Tracks 10 major advertising platforms
+- ✅ **Silent Operation** - Zero configuration, works automatically
+- ✅ **Local-Only Storage** - IndexedDB storage with zero telemetry
+- ✅ **Radial Graph Visualization** - Interactive D3.js force-directed graph
+- ✅ **Platform Breakdown** - Color-coded statistics by platform
+- ✅ **Data Table** - Raw data with sorting, filtering, and CSV export
+- ✅ **Time Filters** - View tracking by 7 days, 30 days, or all time
+- ✅ **Screenshot Export** - Export visualizations as PNG
+- ✅ **Dark Mode UI** - WCAG 2.1 AA compliant interface
+- ✅ **Help & Documentation** - Built-in comprehensive help system
+
+## Quick Start
+
+### Installation
+
+1. Clone this repository
+2. Install dependencies and build:
+   ```bash
+   npm install
+   npm run build
+   ```
+3. Load in Chrome:
+   - Open `chrome://extensions`
+   - Enable "Developer mode"
+   - Click "Load unpacked"
+   - Select the `dist/` folder
+
+### Usage
+
+1. Browse the web normally
+2. Click the EchoFootPrint extension icon to open the dashboard
+3. View your tracking network in real-time
+4. Use time filters to see historical data
+5. Export data as CSV or screenshot visualizations
 
 ## Development
 
@@ -25,13 +62,10 @@ EchoFootPrint is a zero-configuration browser extension that empowers users to v
 - Node.js 20+
 - npm or pnpm
 
-### Setup
+### Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Development mode
+# Development mode (watches for changes)
 npm run dev
 
 # Build for production
@@ -46,58 +80,165 @@ npm run format
 # Run tests
 npm test
 
-# Package extension
+# Package extension (creates .zip)
 npm run zip
 ```
 
-### Loading the Extension
+### Project Structure
 
-1. Run `npm run build` to create the `dist/` folder
-2. Open Chrome and navigate to `chrome://extensions`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the `dist/` folder
+```
+echo-footprint/
+├── src/
+│   ├── background/          # Service worker
+│   ├── content/             # Content scripts
+│   ├── dashboard/           # React dashboard UI
+│   │   ├── components/      # React components
+│   │   ├── styles/          # CSS files
+│   │   └── utils/           # Database & utilities
+│   └── lib/                 # Shared libraries
+├── tests/                   # Test files
+├── scripts/                 # Build scripts
+├── docs/                    # Development documentation
+└── dist/                    # Built extension (generated)
+```
 
 ## Architecture
 
-- **Content Script**: Detects Facebook Pixel on all web pages
-- **Service Worker**: Manages data persistence and geolocation lookups
-- **Dashboard**: React-based visualization interface with D3.js and Leaflet
+### Content Script
+Injected into all web pages to detect tracking pixels by monitoring:
+- Script tags from known tracking domains
+- Image pixels (1x1 tracking beacons)
+- iFrame embeds
+
+Detection happens in <100ms per page with no performance impact.
+
+### Service Worker
+Manages:
+- Message relay from content scripts
+- Data persistence to IndexedDB
+- Statistics calculation
+
+### Dashboard
+React 18 + Vite single-page application featuring:
+- **Radial Graph**: D3.js force-directed graph with interactive controls
+- **Platform Breakdown**: Real-time statistics with color-coding
+- **Data Table**: Sortable, filterable table with export functionality
+- **Settings**: Data management and privacy controls
 
 ## Privacy Guarantees
 
-- ✅ All data stored locally (IndexedDB)
-- ✅ No external telemetry or analytics
-- ✅ Facebook IDs hashed with SHA-256
-- ✅ Optional AES-GCM encryption
-- ✅ Open source (MIT License)
+- ✅ **100% Local Storage** - All data stored in browser IndexedDB
+- ✅ **Zero Telemetry** - No external servers, no analytics, no tracking
+- ✅ **No Blocking** - Pure visualization, doesn't interfere with websites
+- ✅ **Open Source** - MIT License, fully auditable code
+- ✅ **No Permissions Abuse** - Minimal required permissions
+
+## Platform Detection
+
+EchoFootPrint detects tracking pixels by matching against known domain patterns:
+
+| Platform | Detection Method | Example Domains |
+|----------|-----------------|-----------------|
+| Facebook/Meta | Script/Pixel | `connect.facebook.net`, `facebook.com/tr` |
+| Google | Script/Pixel | `google-analytics.com`, `doubleclick.net` |
+| Twitter/X | Script/Pixel | `analytics.twitter.com`, `platform.x.com` |
+| LinkedIn | Script/Pixel | `snap.licdn.com`, `platform.linkedin.com` |
+| TikTok | Script/Pixel | `analytics.tiktok.com` |
+| Amazon | Script/Pixel | `amazon-adsystem.com` |
+| Pinterest | Script/Pixel | `ct.pinterest.com` |
+| Snapchat | Script/Pixel | `sc-static.net`, `tr.snapchat.com` |
+| Reddit | Script/Pixel | `rdt.reddit.com`, `pixel.redditmedia.com` |
+| Microsoft | Script/Pixel | `bat.bing.com`, `clarity.ms` |
 
 ## Documentation
 
-See the `phase-1-requirements/` directory for detailed documentation:
-- [Product Requirements (PRD)](phase-1-requirements/prd.md)
-- [Technical Architecture (TAD)](phase-1-requirements/tad.md)
-- [Implementation Guide](phase-1-requirements/IMPLEMENTATION_GUIDE.md)
-- [UX Design](phase-1-requirements/ux_design.md)
-- [Brand Kit](phase-1-requirements/brand_kit.md)
+Detailed development documentation is available in the `docs/` directory:
+- [Product Requirements (PRD)](docs/phase-1-requirements/prd.md)
+- [Technical Architecture (TAD)](docs/phase-1-requirements/tad.md)
+- [Implementation Guide](docs/phase-1-requirements/IMPLEMENTATION_GUIDE.md)
+- [Claude AI Instructions](docs/CLAUDE.md)
+- [Sprint Summaries](docs/)
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+npm test tests/unit/db.test.js
+
+# Run with coverage
+npm run test:coverage
+```
 
 ## Contributing
 
-This project is in active development. Contributions welcome!
+Contributions are welcome! Please:
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes with tests
-4. Submit a pull request
+4. Ensure `npm run lint` and `npm test` pass
+5. Commit with clear messages
+6. Push to your fork
+7. Open a Pull Request
+
+### Code Style
+
+- Use Prettier for formatting (`npm run format`)
+- Follow ESLint rules (`npm run lint`)
+- Write tests for new features
+- Update documentation as needed
+
+## Known Limitations
+
+- **Chrome/Edge Only**: Currently supports Chromium-based browsers (Manifest V3)
+- **Script Detection Only**: Detects script-based pixels, not cookie-based tracking
+- **Performance**: Optimized for <500 domains, may slow with 1000+ unique domains
+- **No Blocking**: Visualization tool only, doesn't prevent tracking
+
+## Roadmap
+
+- [ ] Firefox support (Manifest V2 branch)
+- [ ] Additional platforms (Taboola, Outbrain, etc.)
+- [ ] Export to JSON format
+- [ ] Custom domain pattern matching
+- [ ] Advanced filtering and search
+- [ ] Browser action badge with detection count
+
+## FAQ
+
+**Q: Does EchoFootPrint block tracking?**
+A: No. EchoFootPrint is a visualization tool to make tracking visible. Use uBlock Origin or Privacy Badger for blocking.
+
+**Q: Is my data shared with anyone?**
+A: No. All data stays on your device. We don't collect any telemetry or usage data.
+
+**Q: Why don't I see tracking on platform websites?**
+A: Platforms don't track themselves. Visit third-party sites (news, shopping, etc.) to see cross-site tracking.
+
+**Q: Can I delete my data?**
+A: Yes. Settings → Danger Zone → Clear All Data.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Inspired by Mozilla's Lightbeam project
+- Built with [D3.js](https://d3js.org/), [React](https://react.dev/), and [Dexie.js](https://dexie.org/)
+- Icons from [Bootstrap Icons](https://icons.getbootstrap.com/)
 
 ## Status
 
-**Current Phase**: Phase 0 - Proof of Concept
-**Target Launch**: Q1 2026
+**Current Version**: 0.3.0
+**Status**: Functional POC with 10-platform detection
+**Next Milestone**: Chrome Web Store submission
 
 ---
 
 **Built with privacy, transparency, and user empowerment in mind.**
+
+*Made with ❤️ for a more transparent web*
