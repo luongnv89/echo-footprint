@@ -132,7 +132,7 @@ describe('Database Layer', () => {
       const id = await addFootprint(footprint);
       const stored = await db.footprints.get(id);
 
-      expect(stored.ipGeo).toBeNull();
+      expect(stored.ipGeo).toBeUndefined();
     });
   });
 
