@@ -1,13 +1,14 @@
 <div align="center">
   <img src="docs/logo.svg" alt="EchoFootPrint Logo" width="200"/>
 
-  # EchoFootPrint
+# EchoFootPrint
 
-  > Privacy-first browser extension that visualizes cross-site tracking from 10 major platforms
+> Privacy-first browser extension that visualizes cross-site tracking from 50 major ad network platforms
 
-  [![Version](https://img.shields.io/badge/version-1.1.0-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
-  [![License](https://img.shields.io/badge/license-MIT-00d4aa.svg)](LICENSE)
-  [![Chrome](https://img.shields.io/badge/chrome-extension-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
+[![Version](https://img.shields.io/badge/version-1.1.0-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
+[![License](https://img.shields.io/badge/license-MIT-00d4aa.svg)](LICENSE)
+[![Chrome](https://img.shields.io/badge/chrome-extension-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
+
 </div>
 
 ## Overview
@@ -17,32 +18,35 @@ EchoFootPrint is a zero-configuration browser extension that empowers users to v
 ## Screenshots
 
 ### Dashboard
+
 ![Dashboard - Radial Graph View](docs/screenshots/dashboard.png)
-*Interactive radial graph showing your cross-site tracking network with real-time statistics*
+_Interactive radial graph showing your cross-site tracking network with real-time statistics_
 
 ### Help & FAQ
+
 ![Help Page](docs/screenshots/faq.png)
-*Comprehensive help system with FAQs, features guide, and privacy information*
+_Comprehensive help system with FAQs, features guide, and privacy information_
 
 ### Settings
+
 ![Settings Panel](docs/screenshots/settings.png)
-*Data management, privacy controls, and extension settings*
+_Data management, privacy controls, and extension settings_
 
 **Detected Platforms:**
-- Facebook/Meta (Instagram, WhatsApp)
-- Google (YouTube, Analytics, DoubleClick)
-- Twitter/X
-- LinkedIn
-- TikTok
-- Amazon
-- Pinterest
-- Snapchat
-- Reddit
-- Microsoft/Bing (Clarity)
+
+EchoFootPrint now tracks 50 major ad networks including:
+
+- **Social & Consumer Platforms**: Facebook/Meta, Google, Twitter/X, LinkedIn, TikTok, Amazon, Pinterest, Snapchat, Reddit, Microsoft/Bing
+- **Programmatic Ad Exchanges**: The Trade Desk, AppNexus/Xandr, OpenX, Index Exchange, PubMatic, Magnite
+- **DSPs & SSPs**: Criteo, Yahoo DSP, Quantcast, Basis DSP, Amobee, Verizon Media DSP, Adform
+- **Content Discovery**: Taboola, Outbrain, RevContent
+- **Mobile Ad Networks**: InMobi, Smaato, Unity Ads, IronSource, Vungle, Chartboost, Moloco, Digital Turbine, Flurry
+- **Specialized Networks**: Media.net, AdRoll, Kargo, TripleLift, Sovrn, BidSwitch, SmartyAds
+- **Data Management**: Zeta Global, Lotame, Nielsen Marketing Cloud, Oracle BlueKai, Epsilon, Acxiom, Experian, StackAdapt
 
 ## Features
 
-- ✅ **Multi-Platform Detection** - Tracks 10 major advertising platforms
+- ✅ **Multi-Platform Detection** - Tracks 50 major ad network platforms
 - ✅ **Silent Operation** - Zero configuration, works automatically
 - ✅ **Local-Only Storage** - IndexedDB storage with zero telemetry
 - ✅ **Radial Graph Visualization** - Interactive D3.js force-directed graph
@@ -154,7 +158,9 @@ echo-footprint/
 ## Architecture
 
 ### Content Script
+
 Injected into all web pages to detect tracking pixels by monitoring:
+
 - Script tags from known tracking domains
 - Image pixels (1x1 tracking beacons)
 - iFrame embeds
@@ -162,13 +168,17 @@ Injected into all web pages to detect tracking pixels by monitoring:
 Detection happens in <100ms per page with no performance impact.
 
 ### Service Worker
+
 Manages:
+
 - Message relay from content scripts
 - Data persistence to IndexedDB
 - Statistics calculation
 
 ### Dashboard
+
 React 18 + Vite single-page application featuring:
+
 - **Radial Graph**: D3.js force-directed graph with interactive controls
 - **Platform Breakdown**: Real-time statistics with color-coding
 - **Data Table**: Sortable, filterable table with export functionality
@@ -184,24 +194,32 @@ React 18 + Vite single-page application featuring:
 
 ## Platform Detection
 
-EchoFootPrint detects tracking pixels by matching against known domain patterns:
+EchoFootPrint detects tracking pixels from 50 major ad networks by matching against known domain patterns. Detection methods include:
 
+- **Script Tags**: Monitoring JavaScript includes from tracking domains
+- **Pixel Beacons**: Detecting 1x1 image tracking pixels
+- **iFrames**: Identifying embedded tracking frames
+
+**Sample Platforms** (10 of 50):
 | Platform | Detection Method | Example Domains |
 |----------|-----------------|-----------------|
 | Facebook/Meta | Script/Pixel | `connect.facebook.net`, `facebook.com/tr` |
 | Google | Script/Pixel | `google-analytics.com`, `doubleclick.net` |
-| Twitter/X | Script/Pixel | `analytics.twitter.com`, `platform.x.com` |
-| LinkedIn | Script/Pixel | `snap.licdn.com`, `platform.linkedin.com` |
-| TikTok | Script/Pixel | `analytics.tiktok.com` |
+| The Trade Desk | Script/Pixel | `adsrvr.org`, `insight.adsrvr.org` |
+| Criteo | Script/Pixel | `static.criteo.net`, `dis.criteo.com` |
+| Taboola | Script/Pixel | `cdn.taboola.com`, `trc.taboola.com` |
 | Amazon | Script/Pixel | `amazon-adsystem.com` |
-| Pinterest | Script/Pixel | `ct.pinterest.com` |
-| Snapchat | Script/Pixel | `sc-static.net`, `tr.snapchat.com` |
-| Reddit | Script/Pixel | `rdt.reddit.com`, `pixel.redditmedia.com` |
+| AppNexus/Xandr | Script/Pixel | `ib.adnxs.com`, `secure.adnxs.com` |
+| Unity Ads | Script/Pixel | `unityads.unity3d.com` |
+| Oracle BlueKai | Script/Pixel | `tags.bluekai.com` |
 | Microsoft | Script/Pixel | `bat.bing.com`, `clarity.ms` |
+
+_See `src/lib/pixel-detector.js` for the complete list of all 50 platforms and their tracking domains._
 
 ## Documentation
 
 Detailed development documentation is available in the `docs/` directory:
+
 - [Product Requirements (PRD)](docs/phase-1-requirements/prd.md)
 - [Technical Architecture (TAD)](docs/phase-1-requirements/tad.md)
 - [Implementation Guide](docs/phase-1-requirements/IMPLEMENTATION_GUIDE.md)
@@ -250,11 +268,11 @@ Contributions are welcome! Please:
 ## Roadmap
 
 - [ ] Firefox support (Manifest V2 branch)
-- [ ] Additional platforms (Taboola, Outbrain, etc.)
 - [ ] Export to JSON format
 - [ ] Custom domain pattern matching
 - [ ] Advanced filtering and search
 - [ ] Browser action badge with detection count
+- [ ] Network visualization improvements
 
 ## FAQ
 
@@ -283,11 +301,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## Status
 
 **Current Version**: 1.1.0
-**Status**: Production-ready with 10-platform detection
+**Status**: Production-ready with 50-platform detection
 **Next Milestone**: Chrome Web Store submission
 
 ---
 
 **Built with privacy, transparency, and user empowerment in mind.**
 
-*Made with ❤️ for a more transparent web*
+_Made with ❤️ for a more transparent web_
