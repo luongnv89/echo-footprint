@@ -494,12 +494,7 @@ export const TRACKING_PLATFORMS = {
   },
   basis: {
     name: 'Basis DSP (Centro)',
-    domains: [
-      'centro.net',
-      'tags.w55c.net',
-      'ads.w55c.net',
-      'match.w55c.net',
-    ],
+    domains: ['centro.net', 'tags.w55c.net', 'ads.w55c.net', 'match.w55c.net'],
     color: '#FF3B3F', // Basis red
   },
   amobee: {
