@@ -31,9 +31,9 @@ function EmptyState() {
 
       <p className="empty-state-description">
         EchoFootPrint is silently monitoring your browsing for tracking pixels
-        from 10 major platforms including Facebook, Google, LinkedIn, Twitter, TikTok,
-        Amazon, Pinterest, Snapchat, Reddit, and Microsoft. Visit some websites to start
-        seeing your tracking footprint.
+        from 50 major ad networks including Facebook, Google, The Trade Desk,
+        Criteo, Taboola, LinkedIn, TikTok, Amazon, Unity Ads, and many more.
+        Visit some websites to start seeing your tracking footprint.
       </p>
 
       <div className="empty-state-steps">
