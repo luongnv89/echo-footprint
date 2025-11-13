@@ -61,7 +61,6 @@ async function updateBadge() {
   }
 }
 
-
 /**
  * Handle pixel detection event
  * Per PRD: Persist to IndexedDB, normalize data, queue geolocation lookup
@@ -211,7 +210,10 @@ chrome.runtime.onInstalled.addListener(async details => {
 
     // Set version in settings
     if (details.reason === 'install') {
-      await setSetting('extensionVersion', chrome.runtime.getManifest().version);
+      await setSetting(
+        'extensionVersion',
+        chrome.runtime.getManifest().version
+      );
       debug('Initial database setup complete');
     } else if (details.reason === 'update') {
       const oldVersion = details.previousVersion;
