@@ -16,8 +16,10 @@ import '../styles/MapView.css';
 // Fix Leaflet default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
+  iconRetinaUrl:
+    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
+  iconUrl:
+    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
   shadowUrl: null,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
@@ -243,7 +245,12 @@ function MapView({ footprints, stats }) {
         </div>
       </div>
 
-      <div ref={mapRef} className="leaflet-map" role="region" aria-label="Geographic tracking map"></div>
+      <div
+        ref={mapRef}
+        className="leaflet-map"
+        role="region"
+        aria-label="Geographic tracking map"
+      ></div>
 
       {selectedRegion && (
         <div className="region-detail-drawer">
@@ -268,7 +275,9 @@ function MapView({ footprints, stats }) {
             </div>
             <div className="detail-item">
               <span className="detail-label">Tracking Domains:</span>
-              <span className="detail-value">{selectedRegion.domains.length}</span>
+              <span className="detail-value">
+                {selectedRegion.domains.length}
+              </span>
             </div>
             <div className="domains-detail-list">
               {selectedRegion.domains.map(domain => (
