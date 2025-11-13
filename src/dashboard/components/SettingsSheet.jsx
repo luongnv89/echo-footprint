@@ -39,7 +39,11 @@ function SettingsSheet({ isOpen, onClose, stats }) {
       setBuildInfo(info);
     } catch (error) {
       console.error('Failed to load build info:', error);
-      setBuildInfo({ version: '1.1.0', versionWithCommit: '1.1.0', gitCommitHash: 'unknown' });
+      setBuildInfo({
+        version: '1.1.0',
+        versionWithCommit: '1.1.0',
+        gitCommitHash: 'unknown',
+      });
     }
   };
 
@@ -184,7 +188,14 @@ function SettingsSheet({ isOpen, onClose, stats }) {
             <div className="about-info">
               <div className="about-item">
                 <span className="about-label">Version</span>
-                <span className="about-value" title={buildInfo?.gitCommitHash ? `Commit: ${buildInfo.gitCommitHash}` : ''}>
+                <span
+                  className="about-value"
+                  title={
+                    buildInfo?.gitCommitHash
+                      ? `Commit: ${buildInfo.gitCommitHash}`
+                      : ''
+                  }
+                >
                   {buildInfo?.versionWithCommit || '1.1.0'}
                 </span>
               </div>
@@ -197,7 +208,10 @@ function SettingsSheet({ isOpen, onClose, stats }) {
               {buildInfo?.buildTimestamp && (
                 <div className="about-item">
                   <span className="about-label">Built</span>
-                  <span className="about-value" title={buildInfo.buildTimestamp}>
+                  <span
+                    className="about-value"
+                    title={buildInfo.buildTimestamp}
+                  >
                     {new Date(buildInfo.buildTimestamp).toLocaleDateString()}
                   </span>
                 </div>
