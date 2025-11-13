@@ -68,7 +68,8 @@ describe('detectFacebookPixelScripts', () => {
     const result = detectFacebookPixelScripts();
 
     expect(result).toBeTruthy();
-    expect(result.count).toBe(2);
+    expect(result.platform).toBe('facebook');
+    expect(result.detected).toBe(true);
   });
 
   it('should complete detection under 100ms', () => {
@@ -137,7 +138,7 @@ describe('detectFacebookPixelElements', () => {
 });
 
 describe('detectFacebookPixel', () => {
-  it('should return null on facebook.com domain', () => {
+  it('should detect pixel even on facebook.com domain', () => {
     window.location.hostname = 'www.facebook.com';
 
     const script = document.createElement('script');
@@ -146,7 +147,9 @@ describe('detectFacebookPixel', () => {
 
     const result = detectFacebookPixel();
 
-    expect(result).toBeNull();
+    // Now tracking all domains including facebook.com (per user request)
+    expect(result).toBeTruthy();
+    expect(result.platform).toBe('facebook');
   });
 
   it('should detect pixel via script method', () => {

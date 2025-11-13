@@ -94,13 +94,15 @@ async function fetchGeolocation(domain, attempt = 0) {
     // Record the request
     recordRequest();
 
-    debug(`Fetching geolocation for ${domain} (attempt ${attempt + 1}/${MAX_RETRIES})`);
+    debug(
+      `Fetching geolocation for ${domain} (attempt ${attempt + 1}/${MAX_RETRIES})`
+    );
 
     // Make API request
     const response = await fetch(`${GEO_API_URL}${domain}`, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
 

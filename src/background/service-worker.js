@@ -35,6 +35,31 @@ function debug(message, data = null) {
   }
 }
 
+/**
+ * Update browser action badge with current detection count
+ * Shows total footprint count on the extension icon
+ */
+async function updateBadge() {
+  try {
+    const totalFootprints = await getFootprintCount();
+
+    // Format badge text (show numbers up to 999, then 999+)
+    let badgeText = '';
+    if (totalFootprints > 0) {
+      badgeText = totalFootprints > 999 ? '999+' : totalFootprints.toString();
+    }
+
+    // Set badge text
+    await chrome.action.setBadgeText({ text: badgeText });
+
+    // Set badge color (red to indicate tracking)
+    await chrome.action.setBadgeBackgroundColor({ color: '#DC2626' }); // Red-600
+
+    debug('Badge updated', { totalFootprints, badgeText });
+  } catch (error) {
+    console.error('ServiceWorker: Error updating badge:', error);
+  }
+}
 
 /**
  * Handle pixel detection event
@@ -75,6 +100,9 @@ async function handlePixelDetection(detectionData, sender) {
     // Get current stats
     const totalCount = await getFootprintCount();
     const uniqueDomains = await getUniqueDomainCount();
+
+    // Update badge with new count
+    await updateBadge();
 
     return {
       success: true,
@@ -182,7 +210,10 @@ chrome.runtime.onInstalled.addListener(async details => {
 
     // Set version in settings
     if (details.reason === 'install') {
-      await setSetting('extensionVersion', chrome.runtime.getManifest().version);
+      await setSetting(
+        'extensionVersion',
+        chrome.runtime.getManifest().version
+      );
       debug('Initial database setup complete');
     } else if (details.reason === 'update') {
       const oldVersion = details.previousVersion;
@@ -190,6 +221,9 @@ chrome.runtime.onInstalled.addListener(async details => {
       await setSetting('extensionVersion', newVersion);
       debug('Extension updated', { from: oldVersion, to: newVersion });
     }
+
+    // Initialize badge
+    await updateBadge();
   } catch (error) {
     console.error('ServiceWorker: Error initializing database:', error);
   }
@@ -209,6 +243,9 @@ chrome.runtime.onStartup.addListener(async () => {
     // Log current stats
     const stats = await getStats();
     debug('Service worker ready', stats);
+
+    // Update badge with current count
+    await updateBadge();
   } catch (error) {
     console.error('ServiceWorker: Error on startup:', error);
   }

@@ -102,13 +102,13 @@ function DataTable({ footprints, stats }) {
       ...filteredData.map(fp => {
         const timestamp = formatTimestamp(fp.timestamp);
         const domain = fp.domain || '';
-        const platform = TRACKING_PLATFORMS[fp.platform || 'facebook']?.name || 'Unknown';
+        const platform =
+          TRACKING_PLATFORMS[fp.platform || 'facebook']?.name || 'Unknown';
         const url = fp.url || '';
         const pixelType = fp.pixelType || 'script';
 
         // Escape CSV fields
-        const escapeCSV = field =>
-          `"${String(field).replace(/"/g, '""')}"`;
+        const escapeCSV = field => `"${String(field).replace(/"/g, '""')}"`;
 
         return [
           escapeCSV(timestamp),
@@ -125,10 +125,7 @@ function DataTable({ footprints, stats }) {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `echofootprint-export-${Date.now()}.csv`
-    );
+    link.setAttribute('download', `echofootprint-export-${Date.now()}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -316,11 +313,14 @@ function DataTable({ footprints, stats }) {
                   <span
                     className="platform-badge"
                     style={{
-                      backgroundColor: TRACKING_PLATFORMS[fp.platform || 'facebook']?.color || '#4a90e2',
-                      color: '#fff'
+                      backgroundColor:
+                        TRACKING_PLATFORMS[fp.platform || 'facebook']?.color ||
+                        '#4a90e2',
+                      color: '#fff',
                     }}
                   >
-                    {TRACKING_PLATFORMS[fp.platform || 'facebook']?.name || 'Unknown'}
+                    {TRACKING_PLATFORMS[fp.platform || 'facebook']?.name ||
+                      'Unknown'}
                   </span>
                 </td>
                 <td className="pixel-type-cell">{fp.pixelType || 'script'}</td>
