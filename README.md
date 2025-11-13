@@ -106,6 +106,33 @@ npm test
 npm run zip
 ```
 
+### Pre-commit Hooks (CI/CD Dry-Run)
+
+This project uses **Husky** to run pre-commit hooks that simulate the GitHub Actions CI/CD pipeline locally. Every commit automatically runs:
+
+1. **ESLint** - Code linting
+2. **Prettier** - Format checking
+3. **Tests** - Full test suite with coverage
+4. **Build** - Production build verification
+5. **Security Audit** - npm audit for vulnerabilities
+
+This ensures that:
+- ✅ Your commits will pass CI before pushing
+- ✅ You catch issues early in development
+- ✅ Code quality is maintained across all commits
+
+**Setup** (automatic on `npm install`):
+```bash
+npm install  # Husky hooks installed automatically via "prepare" script
+```
+
+**Bypass** (not recommended):
+```bash
+git commit --no-verify  # Skip pre-commit checks
+```
+
+The pre-commit checks match exactly what GitHub Actions will run, giving you immediate feedback on whether your changes will pass CI.
+
 ### Project Structure
 
 ```

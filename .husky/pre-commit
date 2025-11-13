@@ -1,0 +1,73 @@
+# Pre-commit hook that simulates GitHub Actions CI/CD pipeline
+# This ensures local commits will pass CI before pushing
+
+echo "🔍 Running pre-commit checks (GitHub Actions dry-run)..."
+echo ""
+
+# Track if any check fails
+FAILED=0
+
+# 1. Lint Job - ESLint
+echo "📋 [1/5] Running ESLint (matches CI lint job)..."
+if npm run lint; then
+  echo "✅ ESLint passed"
+else
+  echo "❌ ESLint failed - fix errors before committing"
+  FAILED=1
+fi
+echo ""
+
+# 2. Lint Job - Prettier format check
+echo "🎨 [2/5] Checking code formatting (matches CI lint job)..."
+if npm run format -- --check; then
+  echo "✅ Prettier format check passed"
+else
+  echo "❌ Prettier format check failed - run 'npm run format' to fix"
+  FAILED=1
+fi
+echo ""
+
+# 3. Test Job - Run tests
+echo "🧪 [3/5] Running tests (matches CI test job)..."
+if npm test -- --run; then
+  echo "✅ Tests passed"
+else
+  echo "❌ Tests failed - fix failing tests before committing"
+  FAILED=1
+fi
+echo ""
+
+# 4. Build Job - Build extension
+echo "🔨 [4/5] Building extension (matches CI build job)..."
+if npm run build; then
+  echo "✅ Build passed"
+else
+  echo "❌ Build failed - fix build errors before committing"
+  FAILED=1
+fi
+echo ""
+
+# 5. Security Job - npm audit
+echo "🔒 [5/5] Running security audit (matches CI security job)..."
+if npm audit --audit-level=moderate; then
+  echo "✅ Security audit passed"
+else
+  echo "⚠️  Security audit found vulnerabilities (continuing - matches CI behavior)"
+  # Note: CI has continue-on-error: true for this step
+fi
+echo ""
+
+# Summary
+echo "========================================="
+if [ $FAILED -eq 0 ]; then
+  echo "✅ All pre-commit checks passed!"
+  echo "   Your commit should pass GitHub Actions CI"
+  echo "========================================="
+  exit 0
+else
+  echo "❌ Pre-commit checks failed!"
+  echo "   Your commit would fail GitHub Actions CI"
+  echo "   Please fix the errors above before committing"
+  echo "========================================="
+  exit 1
+fi
