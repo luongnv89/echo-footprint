@@ -44,16 +44,27 @@ async function init() {
   } catch (error) {
     console.error('Failed to initialize dashboard:', error);
 
-    // Show error message to user
-    document.getElementById('root').innerHTML = `
-      <div style="text-align: center; padding: 50px; color: #ff6b6b;">
-        <h1>Failed to Load Dashboard</h1>
-        <p>${error.message}</p>
-        <p style="font-size: 14px; color: #999;">
-          Try refreshing the page. If the problem persists, please report it on GitHub.
-        </p>
-      </div>
-    `;
+    // Show error message to user (sanitized)
+    const root = document.getElementById('root');
+    const errorContainer = document.createElement('div');
+    errorContainer.style.cssText =
+      'text-align: center; padding: 50px; color: #ff6b6b;';
+
+    const title = document.createElement('h1');
+    title.textContent = 'Failed to Load Dashboard';
+
+    const message = document.createElement('p');
+    message.textContent = error.message || 'Unknown error';
+
+    const help = document.createElement('p');
+    help.style.cssText = 'font-size: 14px; color: #999;';
+    help.textContent =
+      'Try refreshing the page. If the problem persists, please report it on GitHub.';
+
+    errorContainer.appendChild(title);
+    errorContainer.appendChild(message);
+    errorContainer.appendChild(help);
+    root.appendChild(errorContainer);
   }
 }
 

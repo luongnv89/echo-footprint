@@ -13,7 +13,12 @@ import '../styles/RadialGraph.css';
 function RadialGraph({ footprints, stats }) {
   const svgRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, data: null });
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    data: null,
+  });
 
   useEffect(() => {
     if (!footprints || footprints.length === 0 || !svgRef.current) {
@@ -46,7 +51,10 @@ function RadialGraph({ footprints, stats }) {
 
     const domainNodes = Object.keys(domainCounts).map((domain, index) => {
       const platform = domainPlatforms[domain] || 'facebook';
-      const platformConfig = TRACKING_PLATFORMS[platform] || { color: '#4a90e2', name: 'Unknown' };
+      const platformConfig = TRACKING_PLATFORMS[platform] || {
+        color: '#4a90e2',
+        name: 'Unknown',
+      };
 
       return {
         id: domain,
@@ -89,7 +97,10 @@ function RadialGraph({ footprints, stats }) {
       )
       .force('charge', d3.forceManyBody().strength(-200))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(d => d.size + 10));
+      .force(
+        'collision',
+        d3.forceCollide().radius(d => d.size + 10)
+      );
 
     // Create arrow markers for links
     svg
@@ -263,7 +274,10 @@ function RadialGraph({ footprints, stats }) {
     const platforms = new Set(footprints.map(fp => fp.platform || 'facebook'));
     return Array.from(platforms).map(platformId => ({
       id: platformId,
-      ...(TRACKING_PLATFORMS[platformId] || { name: 'Unknown', color: '#4a90e2' }),
+      ...(TRACKING_PLATFORMS[platformId] || {
+        name: 'Unknown',
+        color: '#4a90e2',
+      }),
     }));
   }, [footprints]);
 
@@ -274,10 +288,10 @@ function RadialGraph({ footprints, stats }) {
           className="control-button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg.transition().duration(750).call(
-              d3.zoom().transform,
-              d3.zoomIdentity
-            );
+            svg
+              .transition()
+              .duration(750)
+              .call(d3.zoom().transform, d3.zoomIdentity);
           }}
           title="Reset zoom"
         >
@@ -353,7 +367,10 @@ function RadialGraph({ footprints, stats }) {
             {selectedNode.platformName && (
               <div className="detail-stat">
                 <span className="detail-label">Platform:</span>
-                <span className="detail-value" style={{ color: selectedNode.color }}>
+                <span
+                  className="detail-value"
+                  style={{ color: selectedNode.color }}
+                >
                   {selectedNode.platformName}
                 </span>
               </div>

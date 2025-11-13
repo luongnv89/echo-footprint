@@ -3,15 +3,8 @@
   "name": "EchoFootPrint",
   "version": "1.1.0",
   "description": "Visualize how 50 major ad networks track you across the web including Facebook, Google, Criteo, The Trade Desk, Taboola, and more. Zero config, 100% local.",
-  "permissions": [
-    "storage",
-    "webNavigation",
-    "cookies"
-  ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "permissions": [],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
@@ -37,6 +30,6 @@
     "128": "assets/icon-128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
   }
 }
