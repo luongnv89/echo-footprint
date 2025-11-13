@@ -4,7 +4,7 @@
  * Per PRD: Time filters, settings access
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PlatformStats from './PlatformStats.jsx';
 import '../styles/Sidebar.css';
 import logoSvg from '../../assets/logo.svg?url';
@@ -19,6 +19,20 @@ function Sidebar({
   onHelpClick,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [buildVersion, setBuildVersion] = useState('v1.1.0');
+
+  // Load build info with commit hash
+  useEffect(() => {
+    fetch('/build-info.json')
+      .then(res => res.json())
+      .then(buildInfo => {
+        setBuildVersion(`v${buildInfo.versionWithCommit}`);
+      })
+      .catch(() => {
+        // Fallback to package.json version if build-info.json not found
+        setBuildVersion('v1.1.0');
+      });
+  }, []);
 
   const timeFilterOptions = [
     { value: '1hour', label: 'Last Hour' },
@@ -51,7 +65,7 @@ function Sidebar({
           <img src={logoSvg} alt="EchoFootPrint Logo" className="logo-image" />
           <div className="logo-text">
             <h1>EchoFootPrint</h1>
-            <span className="version">v1.1.0</span>
+            <span className="version" title={`Build: ${buildVersion}`}>{buildVersion}</span>
           </div>
         </div>
       </div>

@@ -13,11 +13,13 @@ function SettingsSheet({ isOpen, onClose, stats }) {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+  const [buildInfo, setBuildInfo] = useState(null);
 
-  // Load storage info when sheet opens
+  // Load storage info and build info when sheet opens
   useEffect(() => {
     if (isOpen) {
       loadStorageInfo();
+      loadBuildInfo();
     }
   }, [isOpen]);
 
@@ -27,6 +29,17 @@ function SettingsSheet({ isOpen, onClose, stats }) {
       setStorageInfo(info);
     } catch (error) {
       console.error('Failed to load storage info:', error);
+    }
+  };
+
+  const loadBuildInfo = async () => {
+    try {
+      const response = await fetch('/build-info.json');
+      const info = await response.json();
+      setBuildInfo(info);
+    } catch (error) {
+      console.error('Failed to load build info:', error);
+      setBuildInfo({ version: '1.1.0', versionWithCommit: '1.1.0', gitCommitHash: 'unknown' });
     }
   };
 
@@ -171,8 +184,24 @@ function SettingsSheet({ isOpen, onClose, stats }) {
             <div className="about-info">
               <div className="about-item">
                 <span className="about-label">Version</span>
-                <span className="about-value">1.0.0</span>
+                <span className="about-value" title={buildInfo?.gitCommitHash ? `Commit: ${buildInfo.gitCommitHash}` : ''}>
+                  {buildInfo?.versionWithCommit || '1.1.0'}
+                </span>
               </div>
+              {buildInfo?.gitBranch && (
+                <div className="about-item">
+                  <span className="about-label">Branch</span>
+                  <span className="about-value">{buildInfo.gitBranch}</span>
+                </div>
+              )}
+              {buildInfo?.buildTimestamp && (
+                <div className="about-item">
+                  <span className="about-label">Built</span>
+                  <span className="about-value" title={buildInfo.buildTimestamp}>
+                    {new Date(buildInfo.buildTimestamp).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
               <div className="about-item">
                 <span className="about-label">License</span>
                 <span className="about-value">MIT</span>
@@ -180,7 +209,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
               <div className="about-item">
                 <span className="about-label">GitHub</span>
                 <a
-                  href="https://github.com/yourusername/echofootprint"
+                  href="https://github.com/luongnv89/echo-footprint"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="about-link"
