@@ -40,4 +40,8 @@ coverage/
 # Web extension specific
 web-ext-artifacts/
 
-dist.pem
+# Private keys and certificates (NEVER commit these!)
+*.pem
+*.key
+*.pub
+*.crx
