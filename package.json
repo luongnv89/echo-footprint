@@ -1,7 +1,7 @@
 {
   "name": "echofootprint",
   "version": "1.1.0",
-  "description": "Privacy-first browser extension that visualizes cross-site tracking from 10 major platforms",
+  "description": "Privacy-first browser extension that visualizes cross-site tracking from 50 major ad network platforms",
   "type": "module",
   "scripts": {
     "dev": "vite",

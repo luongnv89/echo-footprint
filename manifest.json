@@ -2,12 +2,9 @@
   "manifest_version": 3,
   "name": "EchoFootPrint",
   "version": "1.1.0",
-  "description": "Visualize how Meta, Google, TikTok, X, LinkedIn and others track you across the web — zero setup, fully local.",
+  "description": "Visualize how 50 major ad networks track you across the web including Facebook, Google, Criteo, The Trade Desk, Taboola, and more. Zero config, 100% local.",
   "permissions": [],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*"
-  ],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"

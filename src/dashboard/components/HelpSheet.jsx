@@ -61,9 +61,9 @@ function HelpSheet({ isOpen, onClose }) {
               <h3>Welcome to EchoFootPrint</h3>
               <p>
                 EchoFootPrint helps you visualize how you're being tracked
-                across the web by major platforms like Facebook, Google,
-                LinkedIn, Twitter, TikTok, Amazon, Pinterest, Snapchat, Reddit,
-                and Microsoft.
+                across the web by 50 major ad networks including Facebook,
+                Google, The Trade Desk, Criteo, Taboola, LinkedIn, TikTok,
+                Amazon, Unity Ads, and many more.
               </p>
 
               <h4>How It Works</h4>
@@ -74,7 +74,8 @@ function HelpSheet({ isOpen, onClose }) {
                 </li>
                 <li>
                   <strong>Automatic Detection</strong> - When you visit
-                  websites, we detect tracking pixels from 10 major platforms.
+                  websites, we detect tracking pixels from 50 major ad network
+                  platforms.
                 </li>
                 <li>
                   <strong>Real-Time Visualization</strong> - Open this dashboard
