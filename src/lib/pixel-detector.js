@@ -597,14 +597,6 @@ function detectPlatformFromUrl(url) {
 }
 
 /**
- * Legacy function for backward compatibility
- * @deprecated Use detectPlatformFromUrl instead
- */
-function isFacebookDomain(url) {
-  return detectPlatformFromUrl(url) === 'facebook';
-}
-
-/**
  * Detect tracking pixel from script tags in the DOM
  * @returns {Object|null} - Detection result or null
  */

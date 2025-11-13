@@ -18,21 +18,55 @@ db.version(1).stores({
 });
 
 // Version 2: Add platform field for multi-platform tracking support
-db.version(2).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, platform',
-  settings: 'key',
-  geoCache: 'domain, country, region',
-}).upgrade(tx => {
-  // Migrate existing footprints: backfill platform as 'facebook'
-  console.log('[SW DB] Migrating to version 2: adding platform field');
-  return tx.table('footprints').toCollection().modify(footprint => {
-    if (!footprint.platform) {
-      footprint.platform = 'facebook';
-    }
-    // Remove ipGeo field (geolocation was removed per user request)
-    delete footprint.ipGeo;
+db.version(2)
+  .stores({
+    footprints: '++id, timestamp, domain, url, pixelType, platform',
+    settings: 'key',
+    geoCache: 'domain, country, region',
+  })
+  .upgrade(tx => {
+    // Migrate existing footprints: backfill platform as 'facebook'
+    console.log('[SW DB] Migrating to version 2: adding platform field');
+    return tx
+      .table('footprints')
+      .toCollection()
+      .modify(footprint => {
+        if (!footprint.platform) {
+          footprint.platform = 'facebook';
+        }
+        // Remove ipGeo field (geolocation was removed per user request)
+        delete footprint.ipGeo;
+      });
   });
-});
+
+/**
+ * Sanitize string input to prevent XSS
+ * @param {string} input - Input string
+ * @param {number} maxLength - Maximum length
+ * @returns {string} - Sanitized string
+ */
+function sanitizeString(input, maxLength = 2048) {
+  if (typeof input !== 'string') return 'unknown';
+  // Remove any HTML tags and limit length
+  return (
+    input
+      .replace(/<[^>]*>/g, '')
+      .substring(0, maxLength)
+      .trim() || 'unknown'
+  );
+}
+
+/**
+ * Validate domain format
+ * @param {string} domain - Domain string
+ * @returns {boolean} - True if valid
+ */
+function isValidDomain(domain) {
+  if (!domain || typeof domain !== 'string') return false;
+  // Basic domain validation (alphanumeric, dots, hyphens)
+  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$/;
+  return domainRegex.test(domain) && domain.length <= 253;
+}
 
 /**
  * Add a footprint record
@@ -41,12 +75,17 @@ db.version(2).stores({
  */
 export async function addFootprint(data) {
   try {
+    // Validate and sanitize domain
+    if (!isValidDomain(data.domain)) {
+      throw new Error('Invalid domain format');
+    }
+
     return await db.footprints.add({
       timestamp: data.timestamp || Date.now(),
-      domain: data.domain,
-      url: data.url,
-      pixelType: data.pixelType || 'unknown',
-      platform: data.platform || 'facebook', // Default to facebook for backward compatibility
+      domain: sanitizeString(data.domain, 253),
+      url: sanitizeString(data.url),
+      pixelType: sanitizeString(data.pixelType || 'unknown', 50),
+      platform: sanitizeString(data.platform || 'facebook', 50),
     });
   } catch (error) {
     console.error('[SW DB] Error adding footprint:', error);

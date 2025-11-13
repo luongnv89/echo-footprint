@@ -34,7 +34,10 @@ function PlatformStats({ stats }) {
             color: '#999',
           };
           const data = platformStats[platformId];
-          const percentage = ((data.detections / totalFootprints) * 100).toFixed(1);
+          const percentage = (
+            (data.detections / totalFootprints) *
+            100
+          ).toFixed(1);
 
           return (
             <div key={platformId} className="platform-item">
@@ -50,11 +53,13 @@ function PlatformStats({ stats }) {
               </div>
               <div className="platform-stats-details">
                 <span className="stat-item">
-                  <strong>{data.detections}</strong> detection{data.detections !== 1 ? 's' : ''}
+                  <strong>{data.detections}</strong> detection
+                  {data.detections !== 1 ? 's' : ''}
                 </span>
                 <span className="stat-separator">•</span>
                 <span className="stat-item">
-                  <strong>{data.domains}</strong> domain{data.domains !== 1 ? 's' : ''}
+                  <strong>{data.domains}</strong> domain
+                  {data.domains !== 1 ? 's' : ''}
                 </span>
               </div>
               <div className="platform-bar">

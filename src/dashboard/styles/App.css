@@ -71,7 +71,7 @@
   color: var(--color-primary);
 }
 
-.tab-button[aria-selected="true"] {
+.tab-button[aria-selected='true'] {
   font-weight: 600;
 }
 
