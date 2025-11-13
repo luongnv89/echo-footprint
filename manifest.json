@@ -2,12 +2,8 @@
   "manifest_version": 3,
   "name": "EchoFootPrint",
   "version": "1.1.0",
-  "description": "Visualize how Facebook/Meta (including Instagram), Google, Twitter, LinkedIn, TikTok, and other platforms track you across the web. Zero config, 100% local.",
-  "permissions": [
-    "storage",
-    "webNavigation",
-    "cookies"
-  ],
+  "description": "Visualize how Meta, Google, TikTok, X, LinkedIn and others track you across the web — zero setup, fully local.",
+  "permissions": [],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
@@ -37,6 +33,6 @@
     "128": "assets/icon-128.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
   }
 }

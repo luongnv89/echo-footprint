@@ -17,7 +17,7 @@ import {
 // import { queueGeolocationLookup, getQueueStats } from '../lib/geo-queue.js';
 
 // Configuration
-const DEBUG_MODE = true;
+const DEBUG_MODE = false; // Set to true only during development
 
 /**
  * Log debug messages
@@ -34,7 +34,6 @@ function debug(message, data = null) {
     }
   }
 }
-
 
 /**
  * Handle pixel detection event
@@ -122,6 +121,16 @@ async function getStats() {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   debug('Message received', { type: message.type, sender: sender.tab?.id });
 
+  // Validate sender - only accept messages from our extension
+  if (!sender.id || sender.id !== chrome.runtime.id) {
+    console.warn(
+      'ServiceWorker: Rejecting message from unknown sender:',
+      sender.id
+    );
+    sendResponse({ success: false, error: 'Unauthorized sender' });
+    return false;
+  }
+
   // Validate message format
   if (!message || !message.type) {
     debug('Invalid message format', message);
@@ -182,7 +191,10 @@ chrome.runtime.onInstalled.addListener(async details => {
 
     // Set version in settings
     if (details.reason === 'install') {
-      await setSetting('extensionVersion', chrome.runtime.getManifest().version);
+      await setSetting(
+        'extensionVersion',
+        chrome.runtime.getManifest().version
+      );
       debug('Initial database setup complete');
     } else if (details.reason === 'update') {
       const oldVersion = details.previousVersion;

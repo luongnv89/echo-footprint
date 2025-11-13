@@ -18,21 +18,26 @@ db.version(1).stores({
 });
 
 // Version 2: Add platform field for multi-platform tracking support
-db.version(2).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, platform',
-  settings: 'key',
-  geoCache: 'domain, country, region',
-}).upgrade(tx => {
-  // Migrate existing footprints: backfill platform as 'facebook'
-  console.log('[Dashboard DB] Migrating to version 2: adding platform field');
-  return tx.table('footprints').toCollection().modify(footprint => {
-    if (!footprint.platform) {
-      footprint.platform = 'facebook';
-    }
-    // Remove ipGeo field (geolocation was removed per user request)
-    delete footprint.ipGeo;
+db.version(2)
+  .stores({
+    footprints: '++id, timestamp, domain, url, pixelType, platform',
+    settings: 'key',
+    geoCache: 'domain, country, region',
+  })
+  .upgrade(tx => {
+    // Migrate existing footprints: backfill platform as 'facebook'
+    console.log('[Dashboard DB] Migrating to version 2: adding platform field');
+    return tx
+      .table('footprints')
+      .toCollection()
+      .modify(footprint => {
+        if (!footprint.platform) {
+          footprint.platform = 'facebook';
+        }
+        // Remove ipGeo field (geolocation was removed per user request)
+        delete footprint.ipGeo;
+      });
   });
-});
 
 // Storage quota configuration (500MB = 524,288,000 bytes)
 const STORAGE_SOFT_CAP = 500 * 1024 * 1024; // 500 MB
@@ -256,9 +261,7 @@ export async function getStats() {
     const footprintCount = await db.footprints.count();
     const geoCount = await db.geoCache.count();
     const domains = await getUniqueDomains();
-    const oldestRecord = await db.footprints
-      .orderBy('timestamp')
-      .first();
+    const oldestRecord = await db.footprints.orderBy('timestamp').first();
     const newestRecord = await db.footprints
       .orderBy('timestamp')
       .reverse()
@@ -325,7 +328,10 @@ export async function checkStorageQuota() {
 
     const estimate = await navigator.storage.estimate();
     const usage = estimate.usage || 0;
-    const quota = Math.min(estimate.quota || STORAGE_SOFT_CAP, STORAGE_SOFT_CAP);
+    const quota = Math.min(
+      estimate.quota || STORAGE_SOFT_CAP,
+      STORAGE_SOFT_CAP
+    );
     const percentage = quota > 0 ? usage / quota : 0;
 
     return {

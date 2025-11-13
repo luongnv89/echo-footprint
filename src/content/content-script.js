@@ -10,7 +10,7 @@ import {
 } from '../lib/pixel-detector.js';
 
 // Configuration
-const DEBUG_MODE = true; // Set to false in production
+const DEBUG_MODE = false; // Set to true only during development
 const DETECTION_DELAY_MS = 3000; // Wait 3 seconds for page to fully load (Facebook Pixel loads async)
 
 /**
@@ -50,7 +50,11 @@ function sendPixelDetection(detectionData) {
       response => {
         if (chrome.runtime.lastError) {
           // Gracefully handle context invalidation (extension reloaded while page open)
-          if (chrome.runtime.lastError.message.includes('Extension context invalidated')) {
+          if (
+            chrome.runtime.lastError.message.includes(
+              'Extension context invalidated'
+            )
+          ) {
             debug('Extension was reloaded, skipping');
             return;
           }
@@ -111,10 +115,15 @@ function runPixelDetection() {
 
       // Get unique domains
       const uniqueDomains = [...new Set(scriptDomains)];
-      debug(`Checked ${allScripts.length} scripts from ${uniqueDomains.length} unique domains:`, uniqueDomains);
+      debug(
+        `Checked ${allScripts.length} scripts from ${uniqueDomains.length} unique domains:`,
+        uniqueDomains
+      );
 
       // Show a hint about what we're looking for
-      debug('Looking for tracking domains like: facebook.net, google-analytics.com, snap.licdn.com, etc.');
+      debug(
+        'Looking for tracking domains like: facebook.net, google-analytics.com, snap.licdn.com, etc.'
+      );
     }
   }
 

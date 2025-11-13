@@ -29,28 +29,25 @@ function App() {
   const [showHelp, setShowHelp] = useState(false);
 
   // Use Dexie's useLiveQuery for reactive data
-  const footprints = useLiveQuery(
-    async () => {
-      const now = Date.now();
-      const filterOptions = {};
+  const footprints = useLiveQuery(async () => {
+    const now = Date.now();
+    const filterOptions = {};
 
-      if (filter.timeRange === '1hour') {
-        filterOptions.startDate = now - 60 * 60 * 1000; // 1 hour
-      } else if (filter.timeRange === '24hours') {
-        filterOptions.startDate = now - 24 * 60 * 60 * 1000; // 24 hours
-      } else if (filter.timeRange === '7days') {
-        filterOptions.startDate = now - 7 * 24 * 60 * 60 * 1000;
-      } else if (filter.timeRange === '30days') {
-        filterOptions.startDate = now - 30 * 24 * 60 * 60 * 1000;
-      } else if (filter.timeRange === 'custom' && filter.startDate) {
-        filterOptions.startDate = filter.startDate;
-        filterOptions.endDate = filter.endDate || now;
-      }
+    if (filter.timeRange === '1hour') {
+      filterOptions.startDate = now - 60 * 60 * 1000; // 1 hour
+    } else if (filter.timeRange === '24hours') {
+      filterOptions.startDate = now - 24 * 60 * 60 * 1000; // 24 hours
+    } else if (filter.timeRange === '7days') {
+      filterOptions.startDate = now - 7 * 24 * 60 * 60 * 1000;
+    } else if (filter.timeRange === '30days') {
+      filterOptions.startDate = now - 30 * 24 * 60 * 60 * 1000;
+    } else if (filter.timeRange === 'custom' && filter.startDate) {
+      filterOptions.startDate = filter.startDate;
+      filterOptions.endDate = filter.endDate || now;
+    }
 
-      return await getFootprints(filterOptions);
-    },
-    [filter]
-  );
+    return await getFootprints(filterOptions);
+  }, [filter]);
 
   const stats = useLiveQuery(async () => await getStats());
 
@@ -85,10 +82,7 @@ function App() {
           onClose={() => setShowSettings(false)}
           stats={stats}
         />
-        <HelpSheet
-          isOpen={showHelp}
-          onClose={() => setShowHelp(false)}
-        />
+        <HelpSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     );
   }
@@ -116,16 +110,49 @@ function App() {
               className={`tab-button ${activeView === 'graph' ? 'active' : ''}`}
               onClick={() => setActiveView('graph')}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <circle cx="10" cy="10" r="2" />
                 <circle cx="4" cy="6" r="2" />
                 <circle cx="16" cy="6" r="2" />
                 <circle cx="4" cy="14" r="2" />
                 <circle cx="16" cy="14" r="2" />
-                <line x1="10" y1="10" x2="6" y2="7" stroke="currentColor" strokeWidth="1.5" />
-                <line x1="10" y1="10" x2="14" y2="7" stroke="currentColor" strokeWidth="1.5" />
-                <line x1="10" y1="10" x2="6" y2="13" stroke="currentColor" strokeWidth="1.5" />
-                <line x1="10" y1="10" x2="14" y2="13" stroke="currentColor" strokeWidth="1.5" />
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="6"
+                  y2="7"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="14"
+                  y2="7"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="6"
+                  y2="13"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="10"
+                  y1="10"
+                  x2="14"
+                  y2="13"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
               </svg>
               Graph View
             </button>
@@ -137,8 +164,18 @@ function App() {
               className={`tab-button ${activeView === 'table' ? 'active' : ''}`}
               onClick={() => setActiveView('table')}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M3 3h14v14H3V3zm0 4h14M7 7v10" stroke="currentColor" fill="none" strokeWidth="1.5" />
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M3 3h14v14H3V3zm0 4h14M7 7v10"
+                  stroke="currentColor"
+                  fill="none"
+                  strokeWidth="1.5"
+                />
               </svg>
               Data Table
             </button>
@@ -179,10 +216,7 @@ function App() {
         stats={stats}
       />
 
-      <HelpSheet
-        isOpen={showHelp}
-        onClose={() => setShowHelp(false)}
-      />
+      <HelpSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   );
 }
