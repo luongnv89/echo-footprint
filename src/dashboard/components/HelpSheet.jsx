@@ -167,41 +167,46 @@ function HelpSheet({ isOpen, onClose }) {
 
               <div className="feature-item">
                 <h4>Platform Detection</h4>
-                <p>We detect tracking pixels from these platforms:</p>
+                <p>
+                  We detect tracking pixels from 50 major advertising and
+                  analytics platforms, including:
+                </p>
                 <ul className="help-list">
                   <li>
-                    <span style={{ color: '#1877f2' }}>●</span> Facebook/Meta
-                    (includes Instagram, WhatsApp)
+                    <span style={{ color: '#1877f2' }}>●</span> Social media
+                    platforms
                   </li>
                   <li>
-                    <span style={{ color: '#4285f4' }}>●</span> Google (includes
-                    YouTube, Analytics)
+                    <span style={{ color: '#4285f4' }}>●</span> Search engines
+                    and analytics
                   </li>
                   <li>
-                    <span style={{ color: '#1DA1F2' }}>●</span> Twitter/X
+                    <span style={{ color: '#FF9900' }}>●</span> E-commerce
+                    networks
                   </li>
                   <li>
-                    <span style={{ color: '#0A66C2' }}>●</span> LinkedIn
+                    <span style={{ color: '#00A4EF' }}>●</span> Ad exchanges and
+                    DSPs
                   </li>
                   <li>
-                    <span style={{ color: '#FF0050' }}>●</span> TikTok
+                    <span style={{ color: '#FF0050' }}>●</span> Content
+                    discovery platforms
                   </li>
                   <li>
-                    <span style={{ color: '#FF9900' }}>●</span> Amazon
+                    <span style={{ color: '#E60023' }}>●</span> Mobile ad
+                    networks
                   </li>
                   <li>
-                    <span style={{ color: '#E60023' }}>●</span> Pinterest
-                  </li>
-                  <li>
-                    <span style={{ color: '#FFFC00' }}>●</span> Snapchat
-                  </li>
-                  <li>
-                    <span style={{ color: '#FF4500' }}>●</span> Reddit
-                  </li>
-                  <li>
-                    <span style={{ color: '#00A4EF' }}>●</span> Microsoft/Bing
+                    <span style={{ color: '#7B68EE' }}>●</span> Data management
+                    platforms
                   </li>
                 </ul>
+                <p>
+                  <small>
+                    Each detected tracker is color-coded by its platform in the
+                    visualization.
+                  </small>
+                </p>
               </div>
 
               <div className="feature-item">

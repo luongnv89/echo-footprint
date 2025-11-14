@@ -15,10 +15,10 @@
   },
   "keywords": [
     "privacy",
-    "facebook",
-    "tracking",
-    "visualization",
-    "browser-extension"
+    "tracking-protection",
+    "data-visualization",
+    "browser-extension",
+    "ad-tracking"
   ],
   "author": "EchoFootPrint",
   "license": "MIT",

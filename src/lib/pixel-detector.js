@@ -8,7 +8,7 @@
 export const TRACKING_PLATFORMS = {
   facebook: {
     name: 'Facebook/Meta',
-    description: 'Includes Facebook, Instagram, and WhatsApp tracking',
+    description: 'Meta family tracking platforms',
     domains: [
       'connect.facebook.net',
       'facebook.com/tr',

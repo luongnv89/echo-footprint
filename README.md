@@ -34,15 +34,17 @@ _Data management, privacy controls, and extension settings_
 
 **Detected Platforms:**
 
-EchoFootPrint now tracks 50 major ad networks including:
+EchoFootPrint detects tracking pixels from 50 major advertising and analytics platforms across multiple categories:
 
-- **Social & Consumer Platforms**: Facebook/Meta, Google, Twitter/X, LinkedIn, TikTok, Amazon, Pinterest, Snapchat, Reddit, Microsoft/Bing
-- **Programmatic Ad Exchanges**: The Trade Desk, AppNexus/Xandr, OpenX, Index Exchange, PubMatic, Magnite
-- **DSPs & SSPs**: Criteo, Yahoo DSP, Quantcast, Basis DSP, Amobee, Verizon Media DSP, Adform
-- **Content Discovery**: Taboola, Outbrain, RevContent
-- **Mobile Ad Networks**: InMobi, Smaato, Unity Ads, IronSource, Vungle, Chartboost, Moloco, Digital Turbine, Flurry
-- **Specialized Networks**: Media.net, AdRoll, Kargo, TripleLift, Sovrn, BidSwitch, SmartyAds
-- **Data Management**: Zeta Global, Lotame, Nielsen Marketing Cloud, Oracle BlueKai, Epsilon, Acxiom, Experian, StackAdapt
+- Social media and consumer platforms
+- Programmatic ad exchanges
+- Demand-side and supply-side platforms (DSPs & SSPs)
+- Content discovery networks
+- Mobile ad networks
+- Specialized advertising networks
+- Data management platforms
+
+_For the complete list of detected platforms and their tracking domains, see `src/lib/pixel-detector.js`_
 
 ## Features
 
@@ -200,19 +202,15 @@ EchoFootPrint detects tracking pixels from 50 major ad networks by matching agai
 - **Pixel Beacons**: Detecting 1x1 image tracking pixels
 - **iFrames**: Identifying embedded tracking frames
 
-**Sample Platforms** (10 of 50):
-| Platform | Detection Method | Example Domains |
-|----------|-----------------|-----------------|
-| Facebook/Meta | Script/Pixel | `connect.facebook.net`, `facebook.com/tr` |
-| Google | Script/Pixel | `google-analytics.com`, `doubleclick.net` |
-| The Trade Desk | Script/Pixel | `adsrvr.org`, `insight.adsrvr.org` |
-| Criteo | Script/Pixel | `static.criteo.net`, `dis.criteo.com` |
-| Taboola | Script/Pixel | `cdn.taboola.com`, `trc.taboola.com` |
-| Amazon | Script/Pixel | `amazon-adsystem.com` |
-| AppNexus/Xandr | Script/Pixel | `ib.adnxs.com`, `secure.adnxs.com` |
-| Unity Ads | Script/Pixel | `unityads.unity3d.com` |
-| Oracle BlueKai | Script/Pixel | `tags.bluekai.com` |
-| Microsoft | Script/Pixel | `bat.bing.com`, `clarity.ms` |
+**Detection Examples:**
+
+The extension monitors script tags, pixel beacons, and iFrame embeds from known tracking domains. Examples of detection patterns:
+
+| Detection Method | Example Domains |
+|------------------|-----------------|
+| Script Tags | `connect.facebook.net`, `google-analytics.com`, `static.criteo.net` |
+| Pixel Beacons | `facebook.com/tr`, `adsrvr.org`, `cdn.taboola.com` |
+| iFrame Embeds | Various third-party tracking frames |
 
 _See `src/lib/pixel-detector.js` for the complete list of all 50 platforms and their tracking domains._
 
