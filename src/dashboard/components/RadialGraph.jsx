@@ -13,6 +13,7 @@ import '../styles/RadialGraph.css';
 function RadialGraph({ footprints, stats }) {
   const svgRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [focusedPlatform, setFocusedPlatform] = useState(null); // Track platform-centric view
   const [tooltip, setTooltip] = useState({
     visible: false,
     x: 0,
@@ -40,42 +41,96 @@ function RadialGraph({ footprints, stats }) {
       }
     });
 
-    // Create nodes and links
-    const centerNode = {
-      id: 'user',
-      type: 'user',
-      label: 'You',
-      size: 20,
-      color: '#00d4aa',
-    };
+    let nodes, links, centerNode;
 
-    const domainNodes = Object.keys(domainCounts).map((domain, index) => {
-      const platform = domainPlatforms[domain] || 'facebook';
-      const platformConfig = TRACKING_PLATFORMS[platform] || {
+    // Platform-centric view: show selected domain/platform at center
+    if (focusedPlatform) {
+      const platformConfig = TRACKING_PLATFORMS[focusedPlatform.platform] || {
         color: '#4a90e2',
         name: 'Unknown',
       };
 
-      return {
-        id: domain,
-        type: 'domain',
-        label: domain,
-        platform: platform,
+      // Center node is the selected domain
+      centerNode = {
+        id: focusedPlatform.id,
+        type: 'platform-center',
+        label: focusedPlatform.label,
+        platform: focusedPlatform.platform,
         platformName: platformConfig.name,
-        count: domainCounts[domain],
-        size: Math.min(Math.max(domainCounts[domain] * 2, 8), 20),
-        color: platformConfig.color, // Use platform-specific color
-        index,
+        size: 25,
+        color: platformConfig.color,
+        count: focusedPlatform.count,
       };
-    });
 
-    const nodes = [centerNode, ...domainNodes];
+      // Get all domains from the same platform
+      const platformDomains = Object.keys(domainCounts)
+        .filter(domain => {
+          const platform = domainPlatforms[domain] || 'facebook';
+          return platform === focusedPlatform.platform && domain !== focusedPlatform.id;
+        })
+        .map((domain, index) => {
+          const platform = domainPlatforms[domain] || 'facebook';
+          const config = TRACKING_PLATFORMS[platform] || {
+            color: '#4a90e2',
+            name: 'Unknown',
+          };
 
-    const links = domainNodes.map(node => ({
-      source: 'user',
-      target: node.id,
-      value: node.count,
-    }));
+          return {
+            id: domain,
+            type: 'domain',
+            label: domain,
+            platform: platform,
+            platformName: config.name,
+            count: domainCounts[domain],
+            size: Math.min(Math.max(domainCounts[domain] * 2, 8), 20),
+            color: config.color,
+            index,
+          };
+        });
+
+      nodes = [centerNode, ...platformDomains];
+      links = platformDomains.map(node => ({
+        source: centerNode.id,
+        target: node.id,
+        value: node.count,
+      }));
+    } else {
+      // User-centric view: show user at center with all domains
+      centerNode = {
+        id: 'user',
+        type: 'user',
+        label: 'You',
+        size: 20,
+        color: '#00d4aa',
+      };
+
+      const domainNodes = Object.keys(domainCounts).map((domain, index) => {
+        const platform = domainPlatforms[domain] || 'facebook';
+        const platformConfig = TRACKING_PLATFORMS[platform] || {
+          color: '#4a90e2',
+          name: 'Unknown',
+        };
+
+        return {
+          id: domain,
+          type: 'domain',
+          label: domain,
+          platform: platform,
+          platformName: platformConfig.name,
+          count: domainCounts[domain],
+          size: Math.min(Math.max(domainCounts[domain] * 2, 8), 20),
+          color: platformConfig.color, // Use platform-specific color
+          index,
+        };
+      });
+
+      nodes = [centerNode, ...domainNodes];
+      links = domainNodes.map(node => ({
+        source: 'user',
+        target: node.id,
+        value: node.count,
+      }));
+    }
 
     // Setup SVG
     const svg = d3.select(svgRef.current);
@@ -183,7 +238,27 @@ function RadialGraph({ footprints, stats }) {
         d3.select(this).select('circle').attr('stroke-width', 2);
       })
       .on('click', (event, d) => {
-        setSelectedNode(d);
+        // Double-click on domain node to focus on platform
+        if (d.type === 'domain') {
+          // Check if this is a double-click (within 300ms)
+          const now = Date.now();
+          if (d.lastClickTime && now - d.lastClickTime < 300) {
+            // Double-click: switch to platform-centric view
+            setFocusedPlatform({
+              id: d.id,
+              label: d.label,
+              platform: d.platform,
+              count: d.count,
+            });
+            setSelectedNode(null);
+          } else {
+            // Single click: show detail panel
+            d.lastClickTime = now;
+            setSelectedNode(d);
+          }
+        } else {
+          setSelectedNode(d);
+        }
       });
 
     // Add circles to nodes
@@ -199,6 +274,7 @@ function RadialGraph({ footprints, stats }) {
       .append('text')
       .text(d => {
         if (d.type === 'user') return d.label;
+        if (d.type === 'platform-center') return d.platformName;
 
         // Extract meaningful domain name
         let domain = d.label;
@@ -220,19 +296,20 @@ function RadialGraph({ footprints, stats }) {
       .attr('x', 0)
       .attr('y', d => d.size + 15)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '12px')
+      .attr('font-size', d => (d.type === 'platform-center' ? '14px' : '12px'))
+      .attr('font-weight', d => (d.type === 'platform-center' ? 'bold' : 'normal'))
       .attr('fill', '#e0e0e0')
       .attr('pointer-events', 'none');
 
-    // Add count badges for domain nodes
+    // Add count badges for domain nodes and platform-center
     node
-      .filter(d => d.type === 'domain')
+      .filter(d => d.type === 'domain' || d.type === 'platform-center')
       .append('text')
       .text(d => d.count)
       .attr('x', 0)
       .attr('y', 5)
       .attr('text-anchor', 'middle')
-      .attr('font-size', '10px')
+      .attr('font-size', d => (d.type === 'platform-center' ? '12px' : '10px'))
       .attr('font-weight', 'bold')
       .attr('fill', '#fff')
       .attr('pointer-events', 'none');
@@ -251,16 +328,16 @@ function RadialGraph({ footprints, stats }) {
     // Drag functions
     function dragstarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
-      // Don't allow dragging the user node
-      if (d.type !== 'user') {
+      // Don't allow dragging the center node (user or platform-center)
+      if (d.type !== 'user' && d.type !== 'platform-center') {
         d.fx = d.x;
         d.fy = d.y;
       }
     }
 
     function dragged(event, d) {
-      // Don't allow dragging the user node
-      if (d.type !== 'user') {
+      // Don't allow dragging the center node (user or platform-center)
+      if (d.type !== 'user' && d.type !== 'platform-center') {
         d.fx = event.x;
         d.fy = event.y;
       }
@@ -268,8 +345,8 @@ function RadialGraph({ footprints, stats }) {
 
     function dragended(event, d) {
       if (!event.active) simulation.alphaTarget(0);
-      // Don't allow dragging the user node
-      if (d.type !== 'user') {
+      // Don't allow dragging the center node (user or platform-center)
+      if (d.type !== 'user' && d.type !== 'platform-center') {
         d.fx = null;
         d.fy = null;
       }
@@ -279,7 +356,7 @@ function RadialGraph({ footprints, stats }) {
     return () => {
       simulation.stop();
     };
-  }, [footprints]);
+  }, [footprints, focusedPlatform]);
 
   // Calculate which platforms are detected
   const detectedPlatforms = React.useMemo(() => {
@@ -297,6 +374,21 @@ function RadialGraph({ footprints, stats }) {
   return (
     <div className="radial-graph-container">
       <div className="graph-controls">
+        {focusedPlatform && (
+          <button
+            className="control-button back-button"
+            onClick={() => setFocusedPlatform(null)}
+            title="Back to user view"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
+              />
+            </svg>
+            <span style={{ marginLeft: '5px' }}>Back to User View</span>
+          </button>
+        )}
         <button
           className="control-button"
           onClick={() => {
@@ -314,7 +406,9 @@ function RadialGraph({ footprints, stats }) {
           </svg>
         </button>
         <div className="zoom-hint">
-          Drag to pan • Scroll to zoom • Click nodes for details
+          {focusedPlatform
+            ? `Platform view: ${focusedPlatform.label} • Double-click domain to explore`
+            : 'Drag to pan • Scroll to zoom • Double-click domain to explore platform'}
         </div>
       </div>
 
@@ -350,6 +444,17 @@ function RadialGraph({ footprints, stats }) {
                 <strong>Your Identity</strong>
                 <p>Central node in tracking network</p>
               </>
+            ) : tooltip.data.type === 'platform-center' ? (
+              <>
+                <strong>{tooltip.data.label}</strong>
+                <p>{tooltip.data.count} tracking events</p>
+                <p style={{ color: tooltip.data.color }}>
+                  Platform: {tooltip.data.platformName}
+                </p>
+                <p style={{ fontSize: '11px', marginTop: '5px' }}>
+                  Showing all {tooltip.data.platformName} domains
+                </p>
+              </>
             ) : (
               <>
                 <strong>{tooltip.data.label}</strong>
@@ -359,6 +464,9 @@ function RadialGraph({ footprints, stats }) {
                     Platform: {tooltip.data.platformName}
                   </p>
                 )}
+                <p style={{ fontSize: '11px', marginTop: '5px' }}>
+                  Double-click to explore platform
+                </p>
               </>
             )}
           </div>

@@ -93,6 +93,20 @@
   color: var(--color-bg-dark);
 }
 
+.control-button.back-button {
+  width: auto;
+  padding: 0 var(--spacing-md);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  gap: var(--spacing-xs);
+}
+
+.control-button.back-button:hover {
+  background-color: var(--color-primary-hover, var(--color-primary));
+  transform: translateX(-2px);
+}
+
 .zoom-hint {
   font-size: 11px;
   color: var(--color-text-secondary);
