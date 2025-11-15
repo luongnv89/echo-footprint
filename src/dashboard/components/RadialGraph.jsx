@@ -85,6 +85,10 @@ function RadialGraph({ footprints, stats }) {
 
     svg.attr('width', width).attr('height', height);
 
+    // Fix user node at center
+    centerNode.fx = width / 2;
+    centerNode.fy = height / 2;
+
     // Create force simulation
     const simulation = d3
       .forceSimulation(nodes)
@@ -247,19 +251,28 @@ function RadialGraph({ footprints, stats }) {
     // Drag functions
     function dragstarted(event, d) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
-      d.fx = d.x;
-      d.fy = d.y;
+      // Don't allow dragging the user node
+      if (d.type !== 'user') {
+        d.fx = d.x;
+        d.fy = d.y;
+      }
     }
 
     function dragged(event, d) {
-      d.fx = event.x;
-      d.fy = event.y;
+      // Don't allow dragging the user node
+      if (d.type !== 'user') {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
     }
 
     function dragended(event, d) {
       if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
+      // Don't allow dragging the user node
+      if (d.type !== 'user') {
+        d.fx = null;
+        d.fy = null;
+      }
     }
 
     // Cleanup
