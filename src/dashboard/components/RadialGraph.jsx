@@ -10,7 +10,12 @@ import { getGeoCache } from '../utils/db.js';
 import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
 import '../styles/RadialGraph.css';
 
-function RadialGraph({ footprints, stats }) {
+function RadialGraph({
+  footprints,
+  stats,
+  externalPlatformFocus,
+  onPlatformFocusChange,
+}) {
   const svgRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [focusedPlatform, setFocusedPlatform] = useState(null); // Track platform-centric view
@@ -20,6 +25,37 @@ function RadialGraph({ footprints, stats }) {
     y: 0,
     data: null,
   });
+
+  // Sync external platform focus with internal state
+  useEffect(() => {
+    if (externalPlatformFocus && footprints && footprints.length > 0) {
+      // If external focus only has platformId but no specific domain, find the first domain
+      if (!externalPlatformFocus.id && externalPlatformFocus.platformId) {
+        // Find the first domain for this platform
+        const firstDomainFootprint = footprints.find(
+          fp =>
+            (fp.platform || 'facebook') === externalPlatformFocus.platformId
+        );
+
+        if (firstDomainFootprint) {
+          // Count total detections for this domain
+          const domainCount = footprints.filter(
+            fp => fp.domain === firstDomainFootprint.domain
+          ).length;
+
+          setFocusedPlatform({
+            id: firstDomainFootprint.domain,
+            label: firstDomainFootprint.domain,
+            platform: externalPlatformFocus.platformId,
+            count: domainCount,
+          });
+        }
+      } else {
+        // Use the provided focus as-is
+        setFocusedPlatform(externalPlatformFocus);
+      }
+    }
+  }, [externalPlatformFocus, footprints]);
 
   useEffect(() => {
     if (!footprints || footprints.length === 0 || !svgRef.current) {
@@ -244,13 +280,18 @@ function RadialGraph({ footprints, stats }) {
           const now = Date.now();
           if (d.lastClickTime && now - d.lastClickTime < 300) {
             // Double-click: switch to platform-centric view
-            setFocusedPlatform({
+            const platformFocus = {
               id: d.id,
               label: d.label,
               platform: d.platform,
               count: d.count,
-            });
+            };
+            setFocusedPlatform(platformFocus);
             setSelectedNode(null);
+            // Notify parent
+            if (onPlatformFocusChange) {
+              onPlatformFocusChange(platformFocus);
+            }
           } else {
             // Single click: show detail panel
             d.lastClickTime = now;
@@ -377,7 +418,12 @@ function RadialGraph({ footprints, stats }) {
         {focusedPlatform && (
           <button
             className="control-button back-button"
-            onClick={() => setFocusedPlatform(null)}
+            onClick={() => {
+              setFocusedPlatform(null);
+              if (onPlatformFocusChange) {
+                onPlatformFocusChange(null);
+              }
+            }}
             title="Back to user view"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

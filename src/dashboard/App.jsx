@@ -27,6 +27,7 @@ function App() {
   const [activeView, setActiveView] = useState('graph'); // 'graph', 'map', or 'table'
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
 
   // Use Dexie's useLiveQuery for reactive data
   const footprints = useLiveQuery(async () => {
@@ -51,6 +52,20 @@ function App() {
 
   const stats = useLiveQuery(async () => await getStats());
 
+  // Handler for platform selection from sidebar
+  const handlePlatformSelect = (platformId, platformData) => {
+    // Switch to graph view if not already there
+    if (activeView !== 'graph') {
+      setActiveView('graph');
+    }
+
+    // Set the selected platform for RadialGraph
+    setSelectedPlatform({
+      platformId,
+      ...platformData,
+    });
+  };
+
   // Loading state
   if (footprints === undefined || stats === undefined) {
     return (
@@ -73,6 +88,7 @@ function App() {
           onFilterChange={setFilter}
           onSettingsClick={() => setShowSettings(true)}
           onHelpClick={() => setShowHelp(true)}
+          onPlatformSelect={handlePlatformSelect}
         />
         <main className="main-content">
           <EmptyState />
@@ -97,6 +113,8 @@ function App() {
         onViewChange={setActiveView}
         onSettingsClick={() => setShowSettings(true)}
         onHelpClick={() => setShowHelp(true)}
+        onPlatformSelect={handlePlatformSelect}
+        selectedPlatform={selectedPlatform}
       />
       <main className="main-content">
         <header className="dashboard-header">
@@ -185,7 +203,12 @@ function App() {
         <section className="visualization-section">
           {activeView === 'graph' && (
             <div id="graph-view" role="tabpanel" aria-labelledby="graph-tab">
-              <RadialGraph footprints={footprints} stats={stats} />
+              <RadialGraph
+                footprints={footprints}
+                stats={stats}
+                externalPlatformFocus={selectedPlatform}
+                onPlatformFocusChange={setSelectedPlatform}
+              />
             </div>
           )}
           {/* Map View disabled - requires geolocation which was removed per user request */}

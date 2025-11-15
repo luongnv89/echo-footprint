@@ -17,6 +17,8 @@ function Sidebar({
   onViewChange,
   onSettingsClick,
   onHelpClick,
+  onPlatformSelect,
+  selectedPlatform,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [buildVersion, setBuildVersion] = useState('v1.1.0');
@@ -146,7 +148,11 @@ function Sidebar({
 
         {/* Platform Breakdown */}
         <div className="nav-section platform-stats-sidebar">
-          <PlatformStats stats={stats} />
+          <PlatformStats
+            stats={stats}
+            onPlatformSelect={onPlatformSelect}
+            selectedPlatform={selectedPlatform}
+          />
         </div>
       </nav>
 
