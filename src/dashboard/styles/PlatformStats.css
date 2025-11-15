@@ -60,10 +60,29 @@
   border-radius: var(--radius-md);
   transition:
     transform 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.platform-item:hover {
+.platform-item.clickable {
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.platform-item.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background-color: var(--color-bg-lighter);
+}
+
+.platform-item.active {
+  background-color: var(--color-bg-lighter);
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 0 12px rgba(0, 212, 170, 0.3);
+}
+
+.platform-item:not(.clickable):hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }

@@ -7,7 +7,7 @@ import React from 'react';
 import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
 import '../styles/PlatformStats.css';
 
-function PlatformStats({ stats }) {
+function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
   if (!stats || !stats.platformStats) {
     return null;
   }
@@ -24,6 +24,18 @@ function PlatformStats({ stats }) {
     (a, b) => platformStats[b].detections - platformStats[a].detections
   );
 
+  // Handle platform click
+  const handlePlatformClick = (platformId, platformData) => {
+    if (onPlatformSelect) {
+      // Pass platform info - RadialGraph will select the appropriate domain
+      onPlatformSelect(platformId, {
+        platformId: platformId,
+        platform: platformId,
+        count: platformData.detections,
+      });
+    }
+  };
+
   return (
     <div className="platform-stats">
       <h3 className="stats-title">Platform Breakdown</h3>
@@ -39,8 +51,27 @@ function PlatformStats({ stats }) {
             100
           ).toFixed(1);
 
+          const isSelected =
+            selectedPlatform?.platformId === platformId ||
+            selectedPlatform?.platform === platformId;
+
           return (
-            <div key={platformId} className="platform-item">
+            <div
+              key={platformId}
+              className={`platform-item ${isSelected ? 'active' : ''} ${onPlatformSelect ? 'clickable' : ''}`}
+              onClick={() => handlePlatformClick(platformId, data)}
+              role={onPlatformSelect ? 'button' : undefined}
+              tabIndex={onPlatformSelect ? 0 : undefined}
+              onKeyPress={e => {
+                if (
+                  onPlatformSelect &&
+                  (e.key === 'Enter' || e.key === ' ')
+                ) {
+                  e.preventDefault();
+                  handlePlatformClick(platformId, data);
+                }
+              }}
+            >
               <div className="platform-header">
                 <div className="platform-info">
                   <div
