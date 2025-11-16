@@ -269,27 +269,7 @@ export async function getStats() {
 
     // Get platform breakdown
     const allFootprints = await db.footprints.toArray();
-    const platformCounts = {};
-    const platformDomains = {};
-
-    allFootprints.forEach(fp => {
-      const platform = fp.platform || 'unknown';
-      platformCounts[platform] = (platformCounts[platform] || 0) + 1;
-
-      if (!platformDomains[platform]) {
-        platformDomains[platform] = new Set();
-      }
-      platformDomains[platform].add(fp.domain);
-    });
-
-    // Convert Sets to counts
-    const platformStats = {};
-    Object.keys(platformCounts).forEach(platform => {
-      platformStats[platform] = {
-        detections: platformCounts[platform],
-        domains: platformDomains[platform].size,
-      };
-    });
+    const platformStats = calculatePlatformStats(allFootprints);
 
     return {
       totalFootprints: footprintCount,
@@ -303,6 +283,37 @@ export async function getStats() {
     console.error('Error getting stats:', error);
     throw error;
   }
+}
+
+/**
+ * Calculate platform statistics from an array of footprints
+ * @param {Array} footprints - Array of footprint records
+ * @returns {Object} - Platform statistics
+ */
+export function calculatePlatformStats(footprints) {
+  const platformCounts = {};
+  const platformDomains = {};
+
+  footprints.forEach(fp => {
+    const platform = fp.platform || 'unknown';
+    platformCounts[platform] = (platformCounts[platform] || 0) + 1;
+
+    if (!platformDomains[platform]) {
+      platformDomains[platform] = new Set();
+    }
+    platformDomains[platform].add(fp.domain);
+  });
+
+  // Convert Sets to counts
+  const platformStats = {};
+  Object.keys(platformCounts).forEach(platform => {
+    platformStats[platform] = {
+      detections: platformCounts[platform],
+      domains: platformDomains[platform].size,
+    };
+  });
+
+  return platformStats;
 }
 
 /**

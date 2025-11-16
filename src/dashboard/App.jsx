@@ -3,9 +3,14 @@
  * Per PRD: Radial graph, sidebar, filters
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getFootprints, getStats } from './utils/db.js';
+import {
+  db,
+  getFootprints,
+  getStats,
+  calculatePlatformStats,
+} from './utils/db.js';
 import RadialGraph from './components/RadialGraph.jsx';
 // MapView removed - requires geolocation which was removed per user request
 // import MapView from './components/MapView.jsx';
@@ -50,7 +55,25 @@ function App() {
     return await getFootprints(filterOptions);
   }, [filter]);
 
-  const stats = useLiveQuery(async () => await getStats());
+  const baseStats = useLiveQuery(async () => await getStats());
+
+  // Calculate stats from filtered footprints to match the graph data
+  const stats = useMemo(() => {
+    if (!baseStats || !footprints) return baseStats;
+
+    // Calculate platform stats from filtered footprints
+    const platformStats = calculatePlatformStats(footprints);
+
+    // Count unique domains in filtered data
+    const uniqueDomains = new Set(footprints.map(fp => fp.domain)).size;
+
+    return {
+      ...baseStats,
+      totalFootprints: footprints.length,
+      uniqueDomains: uniqueDomains,
+      platformStats: platformStats,
+    };
+  }, [baseStats, footprints]);
 
   // Handler for platform selection from sidebar
   const handlePlatformSelect = (platformId, platformData) => {
@@ -67,7 +90,7 @@ function App() {
   };
 
   // Loading state
-  if (footprints === undefined || stats === undefined) {
+  if (footprints === undefined || baseStats === undefined) {
     return (
       <div className="app">
         <div className="loading-container">
