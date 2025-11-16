@@ -59,6 +59,41 @@
   color: var(--color-bg-dark);
 }
 
+/* Master Toggle Button */
+.toggle-all-button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-lighter);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  opacity: 0.8;
+}
+
+.toggle-all-button:hover {
+  opacity: 1;
+  background-color: var(--color-primary);
+  color: var(--color-bg-dark);
+  border-color: var(--color-primary);
+}
+
+.toggle-all-button.active {
+  opacity: 1;
+  background-color: var(--color-primary);
+  color: var(--color-bg-dark);
+  border-color: var(--color-primary);
+}
+
+.toggle-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--color-border);
+  margin: 0 var(--spacing-xs);
+}
+
 /* Export Dropdown */
 .export-dropdown {
   position: relative;
