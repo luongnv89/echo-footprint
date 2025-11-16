@@ -33,6 +33,12 @@ function BipartiteGraph({ footprints, stats }) {
   const [domainSort, setDomainSort] = useState('platforms-desc'); // 'alpha', 'platforms-desc', 'detections-desc'
   const [platformSort, setPlatformSort] = useState('domains-desc'); // 'alpha', 'domains-desc', 'detections-desc'
 
+  // Panel visibility toggles
+  const [showFilters, setShowFilters] = useState(true);
+  const [showSorting, setShowSorting] = useState(true);
+  const [showStatistics, setShowStatistics] = useState(true);
+  const [showLegend, setShowLegend] = useState(true);
+
   // Transform footprints into bipartite graph structure
   const graphData = useMemo(() => {
     if (!footprints || footprints.length === 0) {
@@ -771,12 +777,51 @@ function BipartiteGraph({ footprints, stats }) {
             <button onClick={handleExportCSV}>Export as CSV</button>
           </div>
         </div>
+        <div className="toggle-controls">
+          <button
+            className={`control-button toggle-button ${showFilters ? 'active' : ''}`}
+            onClick={() => setShowFilters(!showFilters)}
+            title={showFilters ? 'Hide filters' : 'Show filters'}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+          </button>
+          <button
+            className={`control-button toggle-button ${showSorting ? 'active' : ''}`}
+            onClick={() => setShowSorting(!showSorting)}
+            title={showSorting ? 'Hide sorting' : 'Show sorting'}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>
+            </svg>
+          </button>
+          <button
+            className={`control-button toggle-button ${showStatistics ? 'active' : ''}`}
+            onClick={() => setShowStatistics(!showStatistics)}
+            title={showStatistics ? 'Hide statistics' : 'Show statistics'}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/>
+            </svg>
+          </button>
+          <button
+            className={`control-button toggle-button ${showLegend ? 'active' : ''}`}
+            onClick={() => setShowLegend(!showLegend)}
+            title={showLegend ? 'Hide legend' : 'Show legend'}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+            </svg>
+          </button>
+        </div>
         <div className="zoom-hint">
           Drag to pan • Scroll to zoom • Click nodes to isolate
         </div>
       </div>
 
       {/* Filters */}
+      {showFilters && (
       <div className="filter-panel">
         <div className="filter-section">
           <label>Search Domains:</label>
@@ -837,8 +882,10 @@ function BipartiteGraph({ footprints, stats }) {
           </label>
         </div>
       </div>
+      )}
 
       {/* Sorting Controls */}
+      {showSorting && (
       <div className="sort-panel">
         <div className="sort-section">
           <label>Sort Domains:</label>
@@ -866,8 +913,10 @@ function BipartiteGraph({ footprints, stats }) {
           </select>
         </div>
       </div>
+      )}
 
       {/* Statistics Panel */}
+      {showStatistics && (
       <div className="statistics-panel">
         <div className="stats-title">GRAPH STATISTICS</div>
         <div className="stat-row">
@@ -915,8 +964,10 @@ function BipartiteGraph({ footprints, stats }) {
           </div>
         )}
       </div>
+      )}
 
       {/* Legend */}
+      {showLegend && (
       <div className="graph-legend">
         <div className="legend-title">LEGEND</div>
         <div className="legend-section">
@@ -965,6 +1016,7 @@ function BipartiteGraph({ footprints, stats }) {
           </div>
         </div>
       </div>
+      )}
 
       {/* SVG Canvas */}
       <svg ref={svgRef} className="bipartite-graph-svg"></svg>

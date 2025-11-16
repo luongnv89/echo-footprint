@@ -35,6 +35,30 @@
   z-index: 10;
 }
 
+/* Toggle Controls */
+.toggle-controls {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.toggle-button {
+  opacity: 0.6;
+  transition: all var(--transition-fast);
+}
+
+.toggle-button:hover {
+  opacity: 1;
+  background-color: var(--color-primary);
+  color: var(--color-bg-dark);
+}
+
+.toggle-button.active {
+  opacity: 1;
+  background-color: var(--color-primary);
+  color: var(--color-bg-dark);
+}
+
 /* Export Dropdown */
 .export-dropdown {
   position: relative;
