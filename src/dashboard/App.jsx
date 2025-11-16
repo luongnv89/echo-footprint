@@ -12,6 +12,7 @@ import {
   calculatePlatformStats,
 } from './utils/db.js';
 import RadialGraph from './components/RadialGraph.jsx';
+import BipartiteGraph from './components/BipartiteGraph.jsx';
 // MapView removed - requires geolocation which was removed per user request
 // import MapView from './components/MapView.jsx';
 import DataTable from './components/DataTable.jsx';
@@ -29,7 +30,7 @@ function App() {
     endDate: null,
   });
 
-  const [activeView, setActiveView] = useState('graph'); // 'graph', 'map', or 'table'
+  const [activeView, setActiveView] = useState('graph'); // 'graph', 'bipartite', or 'table'
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
@@ -197,6 +198,59 @@ function App() {
               </svg>
               Graph View
             </button>
+            <button
+              role="tab"
+              aria-selected={activeView === 'bipartite'}
+              aria-controls="bipartite-view"
+              className={`tab-button ${activeView === 'bipartite' ? 'active' : ''}`}
+              onClick={() => setActiveView('bipartite')}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <circle cx="4" cy="4" r="2" />
+                <circle cx="4" cy="10" r="2" />
+                <circle cx="4" cy="16" r="2" />
+                <circle cx="16" cy="6" r="2" />
+                <circle cx="16" cy="14" r="2" />
+                <line
+                  x1="6"
+                  y1="4"
+                  x2="14"
+                  y2="6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="6"
+                  y1="10"
+                  x2="14"
+                  y2="6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="6"
+                  y1="10"
+                  x2="14"
+                  y2="14"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <line
+                  x1="6"
+                  y1="16"
+                  x2="14"
+                  y2="14"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+              </svg>
+              Bipartite Graph
+            </button>
             {/* Map View disabled - requires geolocation which was removed per user request */}
             <button
               role="tab"
@@ -231,6 +285,14 @@ function App() {
                 stats={stats}
                 externalPlatformFocus={selectedPlatform}
                 onPlatformFocusChange={setSelectedPlatform}
+              />
+            </div>
+          )}
+          {activeView === 'bipartite' && (
+            <div id="bipartite-view" role="tabpanel" aria-labelledby="bipartite-tab">
+              <BipartiteGraph
+                footprints={footprints}
+                stats={stats}
               />
             </div>
           )}
