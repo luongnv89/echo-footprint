@@ -28,33 +28,27 @@ function RadialGraph({
 
   // Sync external platform focus with internal state
   useEffect(() => {
-    if (externalPlatformFocus && footprints && footprints.length > 0) {
-      // If external focus only has platformId but no specific domain, find the first domain
-      if (!externalPlatformFocus.id && externalPlatformFocus.platformId) {
-        // Find the first domain for this platform
-        const firstDomainFootprint = footprints.find(
-          fp => (fp.platform || 'facebook') === externalPlatformFocus.platformId
-        );
-
-        if (firstDomainFootprint) {
-          // Count total detections for this domain
-          const domainCount = footprints.filter(
-            fp => fp.domain === firstDomainFootprint.domain
-          ).length;
-
-          setFocusedPlatform({
-            id: firstDomainFootprint.domain,
-            label: firstDomainFootprint.domain,
-            platform: externalPlatformFocus.platformId,
-            count: domainCount,
-          });
-        }
-      } else {
-        // Use the provided focus as-is
-        setFocusedPlatform(externalPlatformFocus);
-      }
+    if (!externalPlatformFocus) {
+      setFocusedPlatform(null);
+      return;
     }
-  }, [externalPlatformFocus, footprints]);
+
+    const platformId =
+      externalPlatformFocus.platform || externalPlatformFocus.platformId;
+
+    if (!platformId) {
+      setFocusedPlatform(null);
+      return;
+    }
+
+    const selectedDomainId =
+      externalPlatformFocus.selectedDomainId || externalPlatformFocus.id || null;
+
+    setFocusedPlatform({
+      platform: platformId,
+      selectedDomainId,
+    });
+  }, [externalPlatformFocus]);
 
   useEffect(() => {
     if (!footprints || footprints.length === 0 || !svgRef.current) {
@@ -64,67 +58,79 @@ function RadialGraph({
     // Clear previous graph
     d3.select(svgRef.current).selectAll('*').remove();
 
-    // Prepare data - group by domain and track platform
+    // Prepare data - group by domain, track platform and per-platform counts
     const domainCounts = {};
     const domainPlatforms = {}; // Track which platform each domain uses
+    const platformDomainCounts = {}; // Track domain counts scoped to each platform
 
     footprints.forEach(fp => {
+      const platform = fp.platform || 'facebook';
       domainCounts[fp.domain] = (domainCounts[fp.domain] || 0) + 1;
+
       // Store the first platform seen for this domain
       if (!domainPlatforms[fp.domain]) {
-        domainPlatforms[fp.domain] = fp.platform || 'facebook';
+        domainPlatforms[fp.domain] = platform;
       }
+
+      if (!platformDomainCounts[platform]) {
+        platformDomainCounts[platform] = {};
+      }
+      platformDomainCounts[platform][fp.domain] =
+        (platformDomainCounts[platform][fp.domain] || 0) + 1;
     });
 
     let nodes, links, centerNode;
 
-    // Platform-centric view: show selected domain/platform at center
+    // Platform-centric view: show selected platform at center with its domains
     if (focusedPlatform) {
-      const platformConfig = TRACKING_PLATFORMS[focusedPlatform.platform] || {
+      const platformId = focusedPlatform.platform || focusedPlatform.platformId;
+      const platformConfig = TRACKING_PLATFORMS[platformId] || {
         color: '#4a90e2',
         name: 'Unknown',
       };
 
-      // Center node is the selected domain
+      const platformDomainMap = platformDomainCounts[platformId] || {};
+      const centerDomainCount = Object.values(platformDomainMap).reduce(
+        (sum, count) => sum + count,
+        0
+      );
+      const domainTotal = Object.keys(platformDomainMap).length;
+
+      // Center node represents the platform itself
       centerNode = {
-        id: focusedPlatform.id,
+        id: platformId,
         type: 'platform-center',
-        label: focusedPlatform.label,
-        platform: focusedPlatform.platform,
+        label: platformConfig.name,
+        platform: platformId,
         platformName: platformConfig.name,
         size: 25,
         color: platformConfig.color,
-        count: focusedPlatform.count,
+        count: centerDomainCount,
+        domainTotal,
       };
 
-      // Get all domains from the same platform
-      const platformDomains = Object.keys(domainCounts)
-        .filter(domain => {
-          const platform = domainPlatforms[domain] || 'facebook';
-          return (
-            platform === focusedPlatform.platform &&
-            domain !== focusedPlatform.id
-          );
-        })
-        .map((domain, index) => {
-          const platform = domainPlatforms[domain] || 'facebook';
-          const config = TRACKING_PLATFORMS[platform] || {
+      // Get all domains from the same platform using scoped counts
+      const platformDomains = Object.keys(platformDomainMap).map(
+        (domain, index) => {
+          const config = TRACKING_PLATFORMS[platformId] || {
             color: '#4a90e2',
             name: 'Unknown',
           };
+          const count = platformDomainMap[domain];
 
           return {
             id: domain,
             type: 'domain',
             label: domain,
-            platform: platform,
+            platform: platformId,
             platformName: config.name,
-            count: domainCounts[domain],
-            size: Math.min(Math.max(domainCounts[domain] * 2, 8), 20),
+            count,
+            size: Math.min(Math.max(count * 2, 8), 20),
             color: config.color,
             index,
           };
-        });
+        }
+      );
 
       nodes = [centerNode, ...platformDomains];
       links = platformDomains.map(node => ({
@@ -283,10 +289,9 @@ function RadialGraph({
           if (d.lastClickTime && now - d.lastClickTime < 300) {
             // Double-click: switch to platform-centric view
             const platformFocus = {
-              id: d.id,
-              label: d.label,
               platform: d.platform,
-              count: d.count,
+              platformId: d.platform,
+              selectedDomainId: d.id,
             };
             setFocusedPlatform(platformFocus);
             setSelectedNode(null);
@@ -416,6 +421,13 @@ function RadialGraph({
     }));
   }, [footprints]);
 
+  const platformViewLabel = React.useMemo(() => {
+    if (!focusedPlatform) return null;
+    const platformId = focusedPlatform.platform || focusedPlatform.platformId;
+    if (!platformId) return null;
+    return TRACKING_PLATFORMS[platformId]?.name || platformId;
+  }, [focusedPlatform]);
+
   return (
     <div className="radial-graph-container">
       <div className="graph-controls">
@@ -457,7 +469,7 @@ function RadialGraph({
         </button>
         <div className="zoom-hint">
           {focusedPlatform
-            ? `Platform view: ${focusedPlatform.label} • Double-click domain to explore`
+            ? `Platform view: ${platformViewLabel || 'Selected Platform'} • Double-click domain to explore`
             : 'Drag to pan • Scroll to zoom • Double-click domain to explore platform'}
         </div>
       </div>
@@ -501,9 +513,12 @@ function RadialGraph({
                 <p style={{ color: tooltip.data.color }}>
                   Platform: {tooltip.data.platformName}
                 </p>
-                <p style={{ fontSize: '11px', marginTop: '5px' }}>
-                  Showing all {tooltip.data.platformName} domains
-                </p>
+                {typeof tooltip.data.domainTotal === 'number' && (
+                  <p style={{ fontSize: '11px', marginTop: '5px' }}>
+                    Showing {tooltip.data.domainTotal} domain
+                    {tooltip.data.domainTotal === 1 ? '' : 's'} from this platform
+                  </p>
+                )}
               </>
             ) : (
               <>
