@@ -3,9 +3,14 @@
  * Per PRD: Radial graph, sidebar, filters
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getFootprints, getStats } from './utils/db.js';
+import {
+  db,
+  getFootprints,
+  getStats,
+  calculatePlatformStats,
+} from './utils/db.js';
 import RadialGraph from './components/RadialGraph.jsx';
 // MapView removed - requires geolocation which was removed per user request
 // import MapView from './components/MapView.jsx';
@@ -27,6 +32,7 @@ function App() {
   const [activeView, setActiveView] = useState('graph'); // 'graph', 'map', or 'table'
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
 
   // Use Dexie's useLiveQuery for reactive data
   const footprints = useLiveQuery(async () => {
@@ -49,10 +55,42 @@ function App() {
     return await getFootprints(filterOptions);
   }, [filter]);
 
-  const stats = useLiveQuery(async () => await getStats());
+  const baseStats = useLiveQuery(async () => await getStats());
+
+  // Calculate stats from filtered footprints to match the graph data
+  const stats = useMemo(() => {
+    if (!baseStats || !footprints) return baseStats;
+
+    // Calculate platform stats from filtered footprints
+    const platformStats = calculatePlatformStats(footprints);
+
+    // Count unique domains in filtered data
+    const uniqueDomains = new Set(footprints.map(fp => fp.domain)).size;
+
+    return {
+      ...baseStats,
+      totalFootprints: footprints.length,
+      uniqueDomains: uniqueDomains,
+      platformStats: platformStats,
+    };
+  }, [baseStats, footprints]);
+
+  // Handler for platform selection from sidebar
+  const handlePlatformSelect = (platformId, platformData) => {
+    // Switch to graph view if not already there
+    if (activeView !== 'graph') {
+      setActiveView('graph');
+    }
+
+    // Set the selected platform for RadialGraph
+    setSelectedPlatform({
+      platformId,
+      ...platformData,
+    });
+  };
 
   // Loading state
-  if (footprints === undefined || stats === undefined) {
+  if (footprints === undefined || baseStats === undefined) {
     return (
       <div className="app">
         <div className="loading-container">
@@ -73,6 +111,7 @@ function App() {
           onFilterChange={setFilter}
           onSettingsClick={() => setShowSettings(true)}
           onHelpClick={() => setShowHelp(true)}
+          onPlatformSelect={handlePlatformSelect}
         />
         <main className="main-content">
           <EmptyState />
@@ -97,6 +136,8 @@ function App() {
         onViewChange={setActiveView}
         onSettingsClick={() => setShowSettings(true)}
         onHelpClick={() => setShowHelp(true)}
+        onPlatformSelect={handlePlatformSelect}
+        selectedPlatform={selectedPlatform}
       />
       <main className="main-content">
         <header className="dashboard-header">
@@ -185,7 +226,12 @@ function App() {
         <section className="visualization-section">
           {activeView === 'graph' && (
             <div id="graph-view" role="tabpanel" aria-labelledby="graph-tab">
-              <RadialGraph footprints={footprints} stats={stats} />
+              <RadialGraph
+                footprints={footprints}
+                stats={stats}
+                externalPlatformFocus={selectedPlatform}
+                onPlatformFocusChange={setSelectedPlatform}
+              />
             </div>
           )}
           {/* Map View disabled - requires geolocation which was removed per user request */}
