@@ -103,8 +103,17 @@ npm run lint
 # Format code
 npm run format
 
-# Run tests
+# Run tests (watch mode)
 npm test
+
+# Run tests once (CI mode)
+npm run test:run
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests with UI
+npm run test:ui
 
 # Package extension (creates .zip)
 npm run zip
@@ -228,15 +237,73 @@ Detailed development documentation is available in the `docs/` directory:
 
 ## Testing
 
+The project uses **Vitest** as the testing framework with comprehensive unit test coverage.
+
+### Running Tests
+
 ```bash
-# Run all tests
+# Run all tests (watch mode)
 npm test
+
+# Run tests once (CI mode)
+npm run test:run
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run tests with UI
+npm run test:ui
 
 # Run specific test file
 npm test tests/unit/db.test.js
 
-# Run with coverage
-npm run test:coverage
+# Run tests matching a pattern
+npm test -- --grep "database"
+```
+
+### Test Coverage
+
+Current test coverage includes:
+- **Database Layer** - CRUD operations, quota management, settings, and geo-caching
+- **Pixel Detection** - Multi-platform tracking detection (50 platforms)
+- **Cryptography** - SHA-256 hashing and salting utilities
+- **Service Worker** - Message handling and data persistence
+- **Content Script** - Pixel detection lifecycle and error handling
+- **Geo Queue** - Rate limiting, retry logic, and caching
+
+Run `npm run test:coverage` to generate detailed HTML coverage reports in `coverage/index.html`.
+
+### Test Files
+
+```
+tests/
+├── unit/
+│   ├── db.test.js              # Database operations
+│   ├── pixel-detector.test.js  # Multi-platform detection
+│   ├── crypto.test.js          # Cryptographic utilities
+│   ├── service-worker.test.js  # Background service worker
+│   ├── content-script.test.js  # Content script lifecycle
+│   └── geo-queue.test.js       # Geolocation queue manager
+└── vitest.config.js            # Test configuration
+```
+
+### Writing Tests
+
+Tests use Vitest with jsdom for DOM simulation and fake-indexeddb for database testing:
+
+```javascript
+import { describe, it, expect, beforeEach } from 'vitest';
+
+describe('Feature Name', () => {
+  beforeEach(async () => {
+    // Setup code
+  });
+
+  it('should do something', async () => {
+    // Test code
+    expect(result).toBe(expected);
+  });
+});
 ```
 
 ## Contributing
