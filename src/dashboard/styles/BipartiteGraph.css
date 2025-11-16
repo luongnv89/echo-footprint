@@ -97,6 +97,8 @@
   border: 1px solid var(--color-border);
   z-index: 10;
   max-width: 280px;
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
 }
 
 .filter-section {
@@ -190,7 +192,7 @@
 /* Sort Panel */
 .sort-panel {
   position: absolute;
-  top: 80px;
+  top: 70px;
   right: var(--spacing-md);
   background-color: var(--color-bg-darker);
   padding: var(--spacing-md);
@@ -246,6 +248,8 @@
   z-index: 10;
   min-width: 280px;
   max-width: 320px;
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
 }
 
 .stats-title {
@@ -309,6 +313,8 @@
   border: 1px solid var(--color-border);
   z-index: 10;
   min-width: 200px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
 }
 
 .legend-title {
@@ -422,7 +428,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
   .filter-panel {
     max-width: 240px;
   }
@@ -436,16 +442,74 @@
   }
 }
 
-@media (max-width: 900px) {
-  .filter-panel,
-  .statistics-panel,
-  .graph-legend,
-  .sort-panel {
+@media (max-width: 1200px) {
+  .filter-panel {
+    max-width: 220px;
+    font-size: 11px;
+  }
+
+  .statistics-panel {
+    min-width: 220px;
+    font-size: 11px;
+  }
+
+  .graph-legend {
+    min-width: 160px;
     font-size: 10px;
   }
 
-  .stat-value {
+  .sort-panel {
+    min-width: 180px;
     font-size: 11px;
+  }
+
+  .stat-value {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1000px) {
+  /* Stack panels vertically on smaller screens to avoid overlap */
+  .filter-panel {
+    max-width: 200px;
+    max-height: 40vh;
+  }
+
+  .statistics-panel {
+    bottom: auto;
+    top: calc(100vh - 45vh);
+    left: var(--spacing-md);
+    max-height: 30vh;
+  }
+
+  .graph-legend {
+    display: none; /* Hide legend on small screens to reduce clutter */
+  }
+
+  .sort-panel {
+    top: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-panel,
+  .statistics-panel,
+  .sort-panel {
+    font-size: 10px;
+    padding: var(--spacing-sm);
+  }
+
+  .stat-value {
+    font-size: 10px;
+  }
+
+  .bipartite-controls {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .zoom-hint {
+    display: none; /* Hide hint text on very small screens */
   }
 }
 
