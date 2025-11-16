@@ -38,6 +38,23 @@ function BipartiteGraph({ footprints, stats }) {
   const [showSorting, setShowSorting] = useState(true);
   const [showStatistics, setShowStatistics] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    if (!showExportMenu) return;
+
+    const handleClickOutside = (event) => {
+      // Check if click is outside the export dropdown
+      const exportDropdown = event.target.closest('.export-dropdown');
+      if (!exportDropdown) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showExportMenu]);
 
   // Transform footprints into bipartite graph structure
   const graphData = useMemo(() => {
@@ -765,17 +782,24 @@ function BipartiteGraph({ footprints, stats }) {
           </svg>
         </button>
         <div className="export-dropdown">
-          <button className="control-button export-button" title="Export graph">
+          <button
+            className={`control-button export-button ${showExportMenu ? 'active' : ''}`}
+            onClick={() => setShowExportMenu(!showExportMenu)}
+            title="Export graph"
+          >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
               <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
             </svg>
+            <span className="button-label">Export</span>
           </button>
-          <div className="export-menu">
-            <button onClick={handleExportPNG}>Export as PNG</button>
-            <button onClick={handleExportSVG}>Export as SVG</button>
-            <button onClick={handleExportCSV}>Export as CSV</button>
-          </div>
+          {showExportMenu && (
+            <div className="export-menu">
+              <button onClick={() => { handleExportPNG(); setShowExportMenu(false); }}>Export as PNG</button>
+              <button onClick={() => { handleExportSVG(); setShowExportMenu(false); }}>Export as SVG</button>
+              <button onClick={() => { handleExportCSV(); setShowExportMenu(false); }}>Export as CSV</button>
+            </div>
+          )}
         </div>
         <div className="toggle-controls">
           <button
