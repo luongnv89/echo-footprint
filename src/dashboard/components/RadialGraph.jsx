@@ -33,8 +33,7 @@ function RadialGraph({
       if (!externalPlatformFocus.id && externalPlatformFocus.platformId) {
         // Find the first domain for this platform
         const firstDomainFootprint = footprints.find(
-          fp =>
-            (fp.platform || 'facebook') === externalPlatformFocus.platformId
+          fp => (fp.platform || 'facebook') === externalPlatformFocus.platformId
         );
 
         if (firstDomainFootprint) {
@@ -102,7 +101,10 @@ function RadialGraph({
       const platformDomains = Object.keys(domainCounts)
         .filter(domain => {
           const platform = domainPlatforms[domain] || 'facebook';
-          return platform === focusedPlatform.platform && domain !== focusedPlatform.id;
+          return (
+            platform === focusedPlatform.platform &&
+            domain !== focusedPlatform.id
+          );
         })
         .map((domain, index) => {
           const platform = domainPlatforms[domain] || 'facebook';
@@ -338,7 +340,9 @@ function RadialGraph({
       .attr('y', d => d.size + 15)
       .attr('text-anchor', 'middle')
       .attr('font-size', d => (d.type === 'platform-center' ? '14px' : '12px'))
-      .attr('font-weight', d => (d.type === 'platform-center' ? 'bold' : 'normal'))
+      .attr('font-weight', d =>
+        d.type === 'platform-center' ? 'bold' : 'normal'
+      )
       .attr('fill', '#e0e0e0')
       .attr('pointer-events', 'none');
 

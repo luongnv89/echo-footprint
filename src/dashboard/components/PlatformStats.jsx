@@ -63,10 +63,7 @@ function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
               role={onPlatformSelect ? 'button' : undefined}
               tabIndex={onPlatformSelect ? 0 : undefined}
               onKeyPress={e => {
-                if (
-                  onPlatformSelect &&
-                  (e.key === 'Enter' || e.key === ' ')
-                ) {
+                if (onPlatformSelect && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   handlePlatformClick(platformId, data);
                 }
