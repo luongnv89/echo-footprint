@@ -47,8 +47,7 @@ async function updateBadge() {
     // Format badge text (show numbers up to 999, then 999+)
     let badgeText = '';
     if (todaysFootprints > 0) {
-      badgeText =
-        todaysFootprints > 999 ? '999+' : todaysFootprints.toString();
+      badgeText = todaysFootprints > 999 ? '999+' : todaysFootprints.toString();
     }
 
     // Set badge text
