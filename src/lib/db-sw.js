@@ -189,6 +189,24 @@ export async function getUniqueDomainCount() {
 }
 
 /**
+ * Get footprint count for the current day
+ * @returns {Promise<number>} - Footprints detected since local midnight
+ */
+export async function getTodayFootprintCount() {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    return await db.footprints
+      .where('timestamp')
+      .aboveOrEqual(startOfDay.getTime())
+      .count();
+  } catch (error) {
+    console.error('[SW DB] Error getting today footprint count:', error);
+    return 0;
+  }
+}
+
+/**
  * Initialize database (creates tables if needed)
  * @returns {Promise<void>}
  */

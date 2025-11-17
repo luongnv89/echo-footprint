@@ -12,6 +12,7 @@ import {
   getFootprintCount,
   getUniqueDomainCount,
   initDatabase,
+  getTodayFootprintCount,
 } from '../lib/db-sw.js';
 // Geolocation removed per user request
 // import { queueGeolocationLookup, getQueueStats } from '../lib/geo-queue.js';
@@ -41,12 +42,13 @@ function debug(message, data = null) {
  */
 async function updateBadge() {
   try {
-    const totalFootprints = await getFootprintCount();
+    const todaysFootprints = await getTodayFootprintCount();
 
     // Format badge text (show numbers up to 999, then 999+)
     let badgeText = '';
-    if (totalFootprints > 0) {
-      badgeText = totalFootprints > 999 ? '999+' : totalFootprints.toString();
+    if (todaysFootprints > 0) {
+      badgeText =
+        todaysFootprints > 999 ? '999+' : todaysFootprints.toString();
     }
 
     // Set badge text
@@ -55,7 +57,7 @@ async function updateBadge() {
     // Set badge color (red to indicate tracking)
     await chrome.action.setBadgeBackgroundColor({ color: '#DC2626' }); // Red-600
 
-    debug('Badge updated', { totalFootprints, badgeText });
+    debug('Badge updated', { todaysFootprints, badgeText });
   } catch (error) {
     console.error('ServiceWorker: Error updating badge:', error);
   }
