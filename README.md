@@ -50,10 +50,11 @@ EchoFootPrint now tracks 50 major ad networks including:
 - ✅ **Silent Operation** - Zero configuration, works automatically
 - ✅ **Local-Only Storage** - IndexedDB storage with zero telemetry
 - ✅ **Radial Graph Visualization** - Interactive D3.js force-directed graph
+- ✅ **Bipartite Graph Visualization** - Domain ↔ Platform relationship mapping with advanced filtering
 - ✅ **Platform Breakdown** - Color-coded statistics by platform
 - ✅ **Data Table** - Raw data with sorting, filtering, and CSV export
 - ✅ **Time Filters** - View tracking by 7 days, 30 days, or all time
-- ✅ **Screenshot Export** - Export visualizations as PNG
+- ✅ **Screenshot Export** - Export visualizations as PNG/SVG
 - ✅ **Dark Mode UI** - WCAG 2.1 AA compliant interface
 - ✅ **Help & Documentation** - Built-in comprehensive help system
 
@@ -188,7 +189,15 @@ Manages:
 
 React 18 + Vite single-page application featuring:
 
-- **Radial Graph**: D3.js force-directed graph with interactive controls
+- **Radial Graph**: D3.js force-directed graph with interactive controls and platform-centric drill-down
+- **Bipartite Graph**: Advanced visualization showing domain-to-platform relationships with:
+  - Left column: Domain names with multi-platform highlighting
+  - Right column: Ad platforms with multi-domain highlighting
+  - Interactive filtering: Search domains, filter by platform, set detection thresholds
+  - Sorting options: By platform count, detection count, or alphabetical
+  - Export capabilities: PNG, SVG, and CSV formats
+  - Statistics panel: Real-time graph metrics and key insights
+  - Visual highlighting: Multi-color gradients for domains tracked by multiple platforms
 - **Platform Breakdown**: Real-time statistics with color-coding
 - **Data Table**: Sortable, filterable table with export functionality
 - **Settings**: Data management and privacy controls
@@ -334,12 +343,14 @@ Contributions are welcome! Please:
 
 ## Roadmap
 
+- [x] **Bipartite Graph Visualization** - Advanced domain-platform relationship mapping (v1.1.0)
+- [x] **Advanced Filtering** - Multi-platform and widespread platform filters (v1.1.0)
+- [x] **Enhanced Export** - PNG, SVG, and CSV export capabilities (v1.1.0)
 - [ ] Firefox support (Manifest V2 branch)
 - [ ] Export to JSON format
 - [ ] Custom domain pattern matching
-- [ ] Advanced filtering and search
 - [ ] Browser action badge with detection count
-- [ ] Network visualization improvements
+- [ ] Temporal animation for tracking evolution
 
 ## FAQ
 

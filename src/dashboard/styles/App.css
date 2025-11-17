@@ -83,6 +83,7 @@
 
 /* Ensure view containers fill the section */
 #graph-view,
+#bipartite-view,
 #map-view,
 #table-view {
   width: 100%;
