@@ -42,7 +42,9 @@ function RadialGraph({
     }
 
     const selectedDomainId =
-      externalPlatformFocus.selectedDomainId || externalPlatformFocus.id || null;
+      externalPlatformFocus.selectedDomainId ||
+      externalPlatformFocus.id ||
+      null;
 
     setFocusedPlatform({
       platform: platformId,
@@ -516,7 +518,8 @@ function RadialGraph({
                 {typeof tooltip.data.domainTotal === 'number' && (
                   <p style={{ fontSize: '11px', marginTop: '5px' }}>
                     Showing {tooltip.data.domainTotal} domain
-                    {tooltip.data.domainTotal === 1 ? '' : 's'} from this platform
+                    {tooltip.data.domainTotal === 1 ? '' : 's'} from this
+                    platform
                   </p>
                 )}
               </>

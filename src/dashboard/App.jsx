@@ -25,7 +25,7 @@ import './styles/App.css';
 
 function App() {
   const [filter, setFilter] = useState({
-    timeRange: 'all', // '1hour', '24hours', '7days', '30days', 'all', 'custom'
+    timeRange: '24hours', // '1hour', '24hours', '7days', '30days', 'all', 'custom'
     startDate: null,
     endDate: null,
   });
@@ -289,11 +289,12 @@ function App() {
             </div>
           )}
           {activeView === 'bipartite' && (
-            <div id="bipartite-view" role="tabpanel" aria-labelledby="bipartite-tab">
-              <BipartiteGraph
-                footprints={footprints}
-                stats={stats}
-              />
+            <div
+              id="bipartite-view"
+              role="tabpanel"
+              aria-labelledby="bipartite-tab"
+            >
+              <BipartiteGraph footprints={footprints} stats={stats} />
             </div>
           )}
           {/* Map View disabled - requires geolocation which was removed per user request */}

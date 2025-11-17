@@ -265,7 +265,7 @@
   cursor: pointer;
 }
 
-.checkbox-section input[type="checkbox"] {
+.checkbox-section input[type='checkbox'] {
   margin-right: var(--spacing-xs);
   cursor: pointer;
 }
@@ -496,11 +496,15 @@
 }
 
 .node circle {
-  transition: stroke-width 0.2s ease, filter 0.2s ease;
+  transition:
+    stroke-width 0.2s ease,
+    filter 0.2s ease;
 }
 
 .edge {
-  transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease;
+  transition:
+    stroke-opacity 0.2s ease,
+    stroke-width 0.2s ease;
 }
 
 .domain-node:hover circle,

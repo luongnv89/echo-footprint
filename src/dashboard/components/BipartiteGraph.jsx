@@ -34,14 +34,15 @@ function BipartiteGraph({ footprints, stats }) {
   const [platformSort, setPlatformSort] = useState('domains-desc'); // 'alpha', 'domains-desc', 'detections-desc'
 
   // Panel visibility toggles
-  const [showFilters, setShowFilters] = useState(true);
-  const [showSorting, setShowSorting] = useState(true);
-  const [showStatistics, setShowStatistics] = useState(true);
-  const [showLegend, setShowLegend] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSorting, setShowSorting] = useState(false);
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Toggle all panels at once
-  const allPanelsVisible = showFilters && showSorting && showStatistics && showLegend;
+  const allPanelsVisible =
+    showFilters && showSorting && showStatistics && showLegend;
   const toggleAllPanels = () => {
     const newState = !allPanelsVisible;
     setShowFilters(newState);
@@ -54,7 +55,7 @@ function BipartiteGraph({ footprints, stats }) {
   useEffect(() => {
     if (!showExportMenu) return;
 
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       // Check if click is outside the export dropdown
       const exportDropdown = event.target.closest('.export-dropdown');
       if (!exportDropdown) {
@@ -91,10 +92,17 @@ function BipartiteGraph({ footprints, stats }) {
           pixelTypes: new Set(),
         };
       }
-      domainMap[domain].platforms[platform] = (domainMap[domain].platforms[platform] || 0) + 1;
+      domainMap[domain].platforms[platform] =
+        (domainMap[domain].platforms[platform] || 0) + 1;
       domainMap[domain].total += 1;
-      domainMap[domain].firstSeen = Math.min(domainMap[domain].firstSeen, timestamp);
-      domainMap[domain].lastSeen = Math.max(domainMap[domain].lastSeen, timestamp);
+      domainMap[domain].firstSeen = Math.min(
+        domainMap[domain].firstSeen,
+        timestamp
+      );
+      domainMap[domain].lastSeen = Math.max(
+        domainMap[domain].lastSeen,
+        timestamp
+      );
       domainMap[domain].pixelTypes.add(fp.pixelType || 'unknown');
 
       // Update platform map
@@ -104,7 +112,8 @@ function BipartiteGraph({ footprints, stats }) {
           total: 0,
         };
       }
-      platformMap[platform].domains[domain] = (platformMap[platform].domains[domain] || 0) + 1;
+      platformMap[platform].domains[domain] =
+        (platformMap[platform].domains[domain] || 0) + 1;
       platformMap[platform].total += 1;
     });
 
@@ -132,11 +141,12 @@ function BipartiteGraph({ footprints, stats }) {
         lastSeen: data.lastSeen,
         pixelTypes: Array.from(data.pixelTypes),
         // Color: use primary platform color, or gradient for multi-platform
-        color: platformCount === 1
-          ? topPlatforms[0].color
-          : platformCount <= 3
-          ? topPlatforms.slice(0, 2).map(p => p.color)
-          : '#ff6b6b', // Red for many platforms
+        color:
+          platformCount === 1
+            ? topPlatforms[0].color
+            : platformCount <= 3
+              ? topPlatforms.slice(0, 2).map(p => p.color)
+              : '#ff6b6b', // Red for many platforms
         isMultiPlatform: platformCount >= 2,
       };
     });
@@ -252,7 +262,15 @@ function BipartiteGraph({ footprints, stats }) {
     }
 
     return { domains, platforms, edges };
-  }, [graphData, searchTerm, selectedPlatformFilter, minDetections, showMultiPlatformOnly, showWidespreadOnly, isolatedView]);
+  }, [
+    graphData,
+    searchTerm,
+    selectedPlatformFilter,
+    minDetections,
+    showMultiPlatformOnly,
+    showWidespreadOnly,
+    isolatedView,
+  ]);
 
   // Apply sorting
   const sortedData = useMemo(() => {
@@ -264,7 +282,9 @@ function BipartiteGraph({ footprints, stats }) {
         case 'alpha':
           return a.label.localeCompare(b.label);
         case 'platforms-desc':
-          return b.platformCount - a.platformCount || b.detections - a.detections;
+          return (
+            b.platformCount - a.platformCount || b.detections - a.detections
+          );
         case 'detections-desc':
           return b.detections - a.detections;
         default:
@@ -310,9 +330,10 @@ function BipartiteGraph({ footprints, stats }) {
     const g = svg.append('g');
 
     // Add zoom behavior
-    const zoom = d3.zoom()
+    const zoom = d3
+      .zoom()
       .scaleExtent([0.3, 3])
-      .on('zoom', (event) => {
+      .on('zoom', event => {
         g.attr('transform', event.transform);
       });
 
@@ -329,9 +350,12 @@ function BipartiteGraph({ footprints, stats }) {
 
     // Calculate node sizes
     const maxDomainDetections = Math.max(...domains.map(d => d.detections), 1);
-    const maxPlatformDomains = Math.max(...platforms.map(p => p.domainCount), 1);
+    const maxPlatformDomains = Math.max(
+      ...platforms.map(p => p.domainCount),
+      1
+    );
 
-    const getDomainRadius = (d) => {
+    const getDomainRadius = d => {
       const baseSize = 8;
       const maxSize = 30;
       const detectionScale = Math.sqrt(d.detections / maxDomainDetections);
@@ -339,7 +363,7 @@ function BipartiteGraph({ footprints, stats }) {
       return d.isMultiPlatform ? size * 1.2 : size; // Boost multi-platform nodes
     };
 
-    const getPlatformRadius = (p) => {
+    const getPlatformRadius = p => {
       const baseSize = 10;
       const maxSize = 35;
       const domainScale = Math.sqrt(p.domainCount / maxPlatformDomains);
@@ -371,29 +395,32 @@ function BipartiteGraph({ footprints, stats }) {
     const platformPosMap = new Map(platformNodes.map(p => [p.id, p]));
 
     // Create edge data with positions
-    const edgeData = edges.map(e => {
-      const source = domainPosMap.get(e.source);
-      const target = platformPosMap.get(e.target);
-      if (!source || !target) return null;
-      return {
-        ...e,
-        x1: source.x + source.radius,
-        y1: source.y,
-        x2: target.x - target.radius,
-        y2: target.y,
-      };
-    }).filter(e => e !== null);
+    const edgeData = edges
+      .map(e => {
+        const source = domainPosMap.get(e.source);
+        const target = platformPosMap.get(e.target);
+        if (!source || !target) return null;
+        return {
+          ...e,
+          x1: source.x + source.radius,
+          y1: source.y,
+          x2: target.x - target.radius,
+          y2: target.y,
+        };
+      })
+      .filter(e => e !== null);
 
     // Calculate edge widths
     const maxEdgeDetections = Math.max(...edgeData.map(e => e.detections), 1);
-    const getEdgeWidth = (detections) => {
+    const getEdgeWidth = detections => {
       return 1 + Math.sqrt(detections / maxEdgeDetections) * 6;
     };
 
     // Draw edges
     const edgeGroup = g.append('g').attr('class', 'edges');
 
-    const edgePaths = edgeGroup.selectAll('path')
+    const edgePaths = edgeGroup
+      .selectAll('path')
       .data(edgeData)
       .enter()
       .append('path')
@@ -407,7 +434,7 @@ function BipartiteGraph({ footprints, stats }) {
       .attr('stroke-width', d => getEdgeWidth(d.detections))
       .attr('stroke-opacity', 0.25)
       .attr('class', 'edge')
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function (event, d) {
         // Highlight edge
         d3.select(this)
           .attr('stroke-opacity', 0.9)
@@ -422,7 +449,7 @@ function BipartiteGraph({ footprints, stats }) {
           type: 'edge',
         });
       })
-      .on('mouseleave', function(event, d) {
+      .on('mouseleave', function (event, d) {
         // Reset edge
         d3.select(this)
           .attr('stroke-opacity', 0.25)
@@ -435,20 +462,22 @@ function BipartiteGraph({ footprints, stats }) {
     // Draw domain nodes
     const domainGroup = g.append('g').attr('class', 'domain-nodes');
 
-    const domainNodeGroups = domainGroup.selectAll('g')
+    const domainNodeGroups = domainGroup
+      .selectAll('g')
       .data(domainNodes)
       .enter()
       .append('g')
       .attr('class', 'node domain-node')
       .attr('transform', d => `translate(${d.x},${d.y})`)
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function (event, d) {
         // Highlight node
-        d3.select(this).select('circle')
+        d3.select(this)
+          .select('circle')
           .attr('stroke-width', 4)
           .attr('filter', 'brightness(1.3)');
 
         // Highlight connected edges
-        edgePaths.attr('stroke-opacity', e => e.source === d.id ? 0.9 : 0.05);
+        edgePaths.attr('stroke-opacity', e => (e.source === d.id ? 0.9 : 0.05));
 
         // Show tooltip
         setTooltip({
@@ -459,9 +488,10 @@ function BipartiteGraph({ footprints, stats }) {
           type: 'domain',
         });
       })
-      .on('mouseleave', function(event, d) {
+      .on('mouseleave', function (event, d) {
         // Reset node
-        d3.select(this).select('circle')
+        d3.select(this)
+          .select('circle')
           .attr('stroke-width', d.isMultiPlatform ? 3 : 2)
           .attr('filter', 'none');
 
@@ -477,21 +507,26 @@ function BipartiteGraph({ footprints, stats }) {
       });
 
     // Add circles for domain nodes
-    domainNodeGroups.append('circle')
+    domainNodeGroups
+      .append('circle')
       .attr('r', d => d.radius)
       .attr('fill', d => {
         if (Array.isArray(d.color)) {
           // Create gradient for multi-platform
           const gradientId = `gradient-${d.id.replace(/[^a-zA-Z0-9]/g, '')}`;
-          const defs = svg.select('defs').empty() ? svg.append('defs') : svg.select('defs');
-          const gradient = defs.append('linearGradient')
+          const defs = svg.select('defs').empty()
+            ? svg.append('defs')
+            : svg.select('defs');
+          const gradient = defs
+            .append('linearGradient')
             .attr('id', gradientId)
             .attr('x1', '0%')
             .attr('y1', '0%')
             .attr('x2', '100%')
             .attr('y2', '100%');
           d.color.forEach((color, i) => {
-            gradient.append('stop')
+            gradient
+              .append('stop')
               .attr('offset', `${(i / (d.color.length - 1)) * 100}%`)
               .attr('stop-color', color);
           });
@@ -499,12 +534,13 @@ function BipartiteGraph({ footprints, stats }) {
         }
         return d.color;
       })
-      .attr('stroke', d => d.isMultiPlatform ? '#ff6b6b' : '#fff')
-      .attr('stroke-width', d => d.isMultiPlatform ? 3 : 2)
+      .attr('stroke', d => (d.isMultiPlatform ? '#ff6b6b' : '#fff'))
+      .attr('stroke-width', d => (d.isMultiPlatform ? 3 : 2))
       .attr('opacity', 0.9);
 
     // Add labels for domain nodes
-    domainNodeGroups.append('text')
+    domainNodeGroups
+      .append('text')
       .text(d => {
         let label = d.label;
         if (label.startsWith('www.')) label = label.substring(4);
@@ -520,7 +556,8 @@ function BipartiteGraph({ footprints, stats }) {
       .attr('pointer-events', 'none');
 
     // Add badges for multi-platform domains
-    domainNodeGroups.filter(d => d.isMultiPlatform)
+    domainNodeGroups
+      .filter(d => d.isMultiPlatform)
       .append('text')
       .text(d => `×${d.platformCount}`)
       .attr('x', 0)
@@ -534,20 +571,22 @@ function BipartiteGraph({ footprints, stats }) {
     // Draw platform nodes
     const platformGroup = g.append('g').attr('class', 'platform-nodes');
 
-    const platformNodeGroups = platformGroup.selectAll('g')
+    const platformNodeGroups = platformGroup
+      .selectAll('g')
       .data(platformNodes)
       .enter()
       .append('g')
       .attr('class', 'node platform-node')
       .attr('transform', d => `translate(${d.x},${d.y})`)
-      .on('mouseenter', function(event, d) {
+      .on('mouseenter', function (event, d) {
         // Highlight node
-        d3.select(this).select('circle')
+        d3.select(this)
+          .select('circle')
           .attr('stroke-width', 4)
           .attr('filter', 'brightness(1.3)');
 
         // Highlight connected edges
-        edgePaths.attr('stroke-opacity', e => e.target === d.id ? 0.9 : 0.05);
+        edgePaths.attr('stroke-opacity', e => (e.target === d.id ? 0.9 : 0.05));
 
         // Show tooltip
         setTooltip({
@@ -558,9 +597,10 @@ function BipartiteGraph({ footprints, stats }) {
           type: 'platform',
         });
       })
-      .on('mouseleave', function(event, d) {
+      .on('mouseleave', function (event, d) {
         // Reset node
-        d3.select(this).select('circle')
+        d3.select(this)
+          .select('circle')
           .attr('stroke-width', d.isWidespread ? 3 : 2)
           .attr('filter', 'none');
 
@@ -576,26 +616,31 @@ function BipartiteGraph({ footprints, stats }) {
       });
 
     // Add circles for platform nodes
-    platformNodeGroups.append('circle')
+    platformNodeGroups
+      .append('circle')
       .attr('r', d => d.radius)
       .attr('fill', d => d.color)
-      .attr('stroke', d => d.isWidespread ? '#ffd700' : '#fff')
-      .attr('stroke-width', d => d.isWidespread ? 3 : 2)
+      .attr('stroke', d => (d.isWidespread ? '#ffd700' : '#fff'))
+      .attr('stroke-width', d => (d.isWidespread ? 3 : 2))
       .attr('opacity', 0.9);
 
     // Add labels for platform nodes
-    platformNodeGroups.append('text')
-      .text(d => d.label.length > 15 ? d.label.substring(0, 13) + '...' : d.label)
+    platformNodeGroups
+      .append('text')
+      .text(d =>
+        d.label.length > 15 ? d.label.substring(0, 13) + '...' : d.label
+      )
       .attr('x', d => d.radius + 8)
       .attr('y', -5)
       .attr('text-anchor', 'start')
       .attr('font-size', '12px')
-      .attr('font-weight', d => d.isWidespread ? 'bold' : 'normal')
+      .attr('font-weight', d => (d.isWidespread ? 'bold' : 'normal'))
       .attr('fill', '#e0e0e0')
       .attr('pointer-events', 'none');
 
     // Add domain count label
-    platformNodeGroups.append('text')
+    platformNodeGroups
+      .append('text')
       .text(d => `${d.domainCount} domain${d.domainCount === 1 ? '' : 's'}`)
       .attr('x', d => d.radius + 8)
       .attr('y', 10)
@@ -624,7 +669,6 @@ function BipartiteGraph({ footprints, stats }) {
       .attr('font-weight', 'bold')
       .attr('fill', '#888')
       .attr('letter-spacing', '0.1em');
-
   }, [sortedData]);
 
   // Calculate statistics
@@ -632,17 +676,29 @@ function BipartiteGraph({ footprints, stats }) {
     const { domains, platforms, edges } = sortedData;
     const multiPlatformDomains = domains.filter(d => d.isMultiPlatform).length;
     const widespreadPlatforms = platforms.filter(p => p.isWidespread).length;
-    const mostConnectedDomain = domains.reduce((max, d) => d.platformCount > (max?.platformCount || 0) ? d : max, null);
-    const mostWidespreadPlatform = platforms.reduce((max, p) => p.domainCount > (max?.domainCount || 0) ? p : max, null);
+    const mostConnectedDomain = domains.reduce(
+      (max, d) => (d.platformCount > (max?.platformCount || 0) ? d : max),
+      null
+    );
+    const mostWidespreadPlatform = platforms.reduce(
+      (max, p) => (p.domainCount > (max?.domainCount || 0) ? p : max),
+      null
+    );
 
     return {
       totalDomains: domains.length,
       totalPlatforms: platforms.length,
       totalConnections: edges.length,
       multiPlatformDomains,
-      multiPlatformPercentage: domains.length > 0 ? ((multiPlatformDomains / domains.length) * 100).toFixed(0) : 0,
+      multiPlatformPercentage:
+        domains.length > 0
+          ? ((multiPlatformDomains / domains.length) * 100).toFixed(0)
+          : 0,
       widespreadPlatforms,
-      widespreadPercentage: platforms.length > 0 ? ((widespreadPlatforms / platforms.length) * 100).toFixed(0) : 0,
+      widespreadPercentage:
+        platforms.length > 0
+          ? ((widespreadPlatforms / platforms.length) * 100).toFixed(0)
+          : 0,
       mostConnectedDomain,
       mostWidespreadPlatform,
     };
@@ -665,12 +721,19 @@ function BipartiteGraph({ footprints, stats }) {
     if (!edges || edges.length === 0) return;
 
     // CSV headers
-    const headers = ['Domain', 'Platform', 'Detections', 'First Seen', 'Last Seen'];
+    const headers = [
+      'Domain',
+      'Platform',
+      'Detections',
+      'First Seen',
+      'Last Seen',
+    ];
     const csvContent = [
       headers.join(','),
       ...edges.map(edge => {
         const domain = edge.source;
-        const platformName = TRACKING_PLATFORMS[edge.target]?.name || edge.target;
+        const platformName =
+          TRACKING_PLATFORMS[edge.target]?.name || edge.target;
         const detections = edge.detections;
         const firstSeen = new Date(edge.firstSeen).toLocaleString();
         const lastSeen = new Date(edge.lastSeen).toLocaleString();
@@ -742,7 +805,9 @@ function BipartiteGraph({ footprints, stats }) {
     // Serialize SVG
     const serializer = new XMLSerializer();
     const svgString = serializer.serializeToString(svgClone);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const svgBlob = new Blob([svgString], {
+      type: 'image/svg+xml;charset=utf-8',
+    });
 
     // Download file
     const link = document.createElement('a');
@@ -782,7 +847,10 @@ function BipartiteGraph({ footprints, stats }) {
           className="control-button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg.transition().duration(750).call(d3.zoom().transform, d3.zoomIdentity);
+            svg
+              .transition()
+              .duration(750)
+              .call(d3.zoom().transform, d3.zoomIdentity);
           }}
           title="Reset zoom"
         >
@@ -798,16 +866,37 @@ function BipartiteGraph({ footprints, stats }) {
             title="Export graph"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
-              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
+              <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
             </svg>
             <span className="button-label">Export</span>
           </button>
           {showExportMenu && (
             <div className="export-menu">
-              <button onClick={() => { handleExportPNG(); setShowExportMenu(false); }}>Export as PNG</button>
-              <button onClick={() => { handleExportSVG(); setShowExportMenu(false); }}>Export as SVG</button>
-              <button onClick={() => { handleExportCSV(); setShowExportMenu(false); }}>Export as CSV</button>
+              <button
+                onClick={() => {
+                  handleExportPNG();
+                  setShowExportMenu(false);
+                }}
+              >
+                Export as PNG
+              </button>
+              <button
+                onClick={() => {
+                  handleExportSVG();
+                  setShowExportMenu(false);
+                }}
+              >
+                Export as SVG
+              </button>
+              <button
+                onClick={() => {
+                  handleExportCSV();
+                  setShowExportMenu(false);
+                }}
+              >
+                Export as CSV
+              </button>
             </div>
           )}
         </div>
@@ -818,15 +907,25 @@ function BipartiteGraph({ footprints, stats }) {
             title={allPanelsVisible ? 'Hide all panels' : 'Show all panels'}
           >
             {allPanelsVisible ? (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
+                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
               </svg>
             ) : (
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
-                <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
-                <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z" />
+                <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z" />
+                <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z" />
               </svg>
             )}
           </button>
@@ -837,7 +936,7 @@ function BipartiteGraph({ footprints, stats }) {
             title={showFilters ? 'Hide filters' : 'Show filters'}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+              <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z" />
             </svg>
           </button>
           <button
@@ -846,7 +945,7 @@ function BipartiteGraph({ footprints, stats }) {
             title={showSorting ? 'Hide sorting' : 'Show sorting'}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z"/>
+              <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z" />
             </svg>
           </button>
           <button
@@ -855,7 +954,7 @@ function BipartiteGraph({ footprints, stats }) {
             title={showStatistics ? 'Hide statistics' : 'Show statistics'}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z"/>
+              <path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z" />
             </svg>
           </button>
           <button
@@ -864,7 +963,7 @@ function BipartiteGraph({ footprints, stats }) {
             title={showLegend ? 'Hide legend' : 'Show legend'}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+              <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
             </svg>
           </button>
         </div>
@@ -875,200 +974,234 @@ function BipartiteGraph({ footprints, stats }) {
 
       {/* Filters */}
       {showFilters && (
-      <div className="filter-panel">
-        <div className="filter-section">
-          <label>Search Domains:</label>
-          <input
-            type="text"
-            placeholder="Filter domains..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="filter-input"
-          />
-        </div>
-
-        <div className="filter-section">
-          <label>Platform:</label>
-          <select
-            value={selectedPlatformFilter}
-            onChange={(e) => setSelectedPlatformFilter(e.target.value)}
-            className="filter-select"
-          >
-            <option value="all">All Platforms</option>
-            {availablePlatforms.map(p => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-section">
-          <label>Min Detections: {minDetections}</label>
-          <input
-            type="range"
-            min="1"
-            max="50"
-            value={minDetections}
-            onChange={(e) => setMinDetections(parseInt(e.target.value))}
-            className="filter-range"
-          />
-        </div>
-
-        <div className="filter-section checkbox-section">
-          <label>
+        <div className="filter-panel">
+          <div className="filter-section">
+            <label>Search Domains:</label>
             <input
-              type="checkbox"
-              checked={showMultiPlatformOnly}
-              onChange={(e) => setShowMultiPlatformOnly(e.target.checked)}
+              type="text"
+              placeholder="Filter domains..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="filter-input"
             />
-            Multi-platform domains only (2+)
-          </label>
-        </div>
+          </div>
 
-        <div className="filter-section checkbox-section">
-          <label>
+          <div className="filter-section">
+            <label>Platform:</label>
+            <select
+              value={selectedPlatformFilter}
+              onChange={e => setSelectedPlatformFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">All Platforms</option>
+              {availablePlatforms.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-section">
+            <label>Min Detections: {minDetections}</label>
             <input
-              type="checkbox"
-              checked={showWidespreadOnly}
-              onChange={(e) => setShowWidespreadOnly(e.target.checked)}
+              type="range"
+              min="1"
+              max="50"
+              value={minDetections}
+              onChange={e => setMinDetections(parseInt(e.target.value))}
+              className="filter-range"
             />
-            Widespread platforms only (5+ domains)
-          </label>
+          </div>
+
+          <div className="filter-section checkbox-section">
+            <label>
+              <input
+                type="checkbox"
+                checked={showMultiPlatformOnly}
+                onChange={e => setShowMultiPlatformOnly(e.target.checked)}
+              />
+              Multi-platform domains only (2+)
+            </label>
+          </div>
+
+          <div className="filter-section checkbox-section">
+            <label>
+              <input
+                type="checkbox"
+                checked={showWidespreadOnly}
+                onChange={e => setShowWidespreadOnly(e.target.checked)}
+              />
+              Widespread platforms only (5+ domains)
+            </label>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Sorting Controls */}
       {showSorting && (
-      <div className="sort-panel">
-        <div className="sort-section">
-          <label>Sort Domains:</label>
-          <select
-            value={domainSort}
-            onChange={(e) => setDomainSort(e.target.value)}
-            className="sort-select"
-          >
-            <option value="platforms-desc">Most Platforms</option>
-            <option value="detections-desc">Most Detections</option>
-            <option value="alpha">Alphabetical</option>
-          </select>
-        </div>
+        <div className="sort-panel">
+          <div className="sort-section">
+            <label>Sort Domains:</label>
+            <select
+              value={domainSort}
+              onChange={e => setDomainSort(e.target.value)}
+              className="sort-select"
+            >
+              <option value="platforms-desc">Most Platforms</option>
+              <option value="detections-desc">Most Detections</option>
+              <option value="alpha">Alphabetical</option>
+            </select>
+          </div>
 
-        <div className="sort-section">
-          <label>Sort Platforms:</label>
-          <select
-            value={platformSort}
-            onChange={(e) => setPlatformSort(e.target.value)}
-            className="sort-select"
-          >
-            <option value="domains-desc">Most Domains</option>
-            <option value="detections-desc">Most Detections</option>
-            <option value="alpha">Alphabetical</option>
-          </select>
+          <div className="sort-section">
+            <label>Sort Platforms:</label>
+            <select
+              value={platformSort}
+              onChange={e => setPlatformSort(e.target.value)}
+              className="sort-select"
+            >
+              <option value="domains-desc">Most Domains</option>
+              <option value="detections-desc">Most Detections</option>
+              <option value="alpha">Alphabetical</option>
+            </select>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Statistics Panel */}
       {showStatistics && (
-      <div className="statistics-panel">
-        <div className="stats-title">GRAPH STATISTICS</div>
-        <div className="stat-row">
-          <span className="stat-label">Total Domains:</span>
-          <span className="stat-value">{stats_data.totalDomains}</span>
-        </div>
-        <div className="stat-row">
-          <span className="stat-label">Total Platforms:</span>
-          <span className="stat-value">{stats_data.totalPlatforms}</span>
-        </div>
-        <div className="stat-row">
-          <span className="stat-label">Total Connections:</span>
-          <span className="stat-value">{stats_data.totalConnections}</span>
-        </div>
-        <div className="stat-divider"></div>
-        <div className="stat-row">
-          <span className="stat-label">Multi-Platform Domains:</span>
-          <span className="stat-value highlight">
-            {stats_data.multiPlatformDomains} ({stats_data.multiPlatformPercentage}%)
-          </span>
-        </div>
-        <div className="stat-row">
-          <span className="stat-label">Widespread Platforms:</span>
-          <span className="stat-value highlight">
-            {stats_data.widespreadPlatforms} ({stats_data.widespreadPercentage}%)
-          </span>
-        </div>
-        {stats_data.mostConnectedDomain && (
-          <>
-            <div className="stat-divider"></div>
-            <div className="stat-row">
-              <span className="stat-label">Most Connected Domain:</span>
-              <span className="stat-value small">
-                {stats_data.mostConnectedDomain.label} ({stats_data.mostConnectedDomain.platformCount} platforms)
-              </span>
-            </div>
-          </>
-        )}
-        {stats_data.mostWidespreadPlatform && (
+        <div className="statistics-panel">
+          <div className="stats-title">GRAPH STATISTICS</div>
           <div className="stat-row">
-            <span className="stat-label">Most Widespread Platform:</span>
-            <span className="stat-value small">
-              {stats_data.mostWidespreadPlatform.label} ({stats_data.mostWidespreadPlatform.domainCount} domains)
+            <span className="stat-label">Total Domains:</span>
+            <span className="stat-value">{stats_data.totalDomains}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Total Platforms:</span>
+            <span className="stat-value">{stats_data.totalPlatforms}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Total Connections:</span>
+            <span className="stat-value">{stats_data.totalConnections}</span>
+          </div>
+          <div className="stat-divider"></div>
+          <div className="stat-row">
+            <span className="stat-label">Multi-Platform Domains:</span>
+            <span className="stat-value highlight">
+              {stats_data.multiPlatformDomains} (
+              {stats_data.multiPlatformPercentage}%)
             </span>
           </div>
-        )}
-      </div>
+          <div className="stat-row">
+            <span className="stat-label">Widespread Platforms:</span>
+            <span className="stat-value highlight">
+              {stats_data.widespreadPlatforms} (
+              {stats_data.widespreadPercentage}%)
+            </span>
+          </div>
+          {stats_data.mostConnectedDomain && (
+            <>
+              <div className="stat-divider"></div>
+              <div className="stat-row">
+                <span className="stat-label">Most Connected Domain:</span>
+                <span className="stat-value small">
+                  {stats_data.mostConnectedDomain.label} (
+                  {stats_data.mostConnectedDomain.platformCount} platforms)
+                </span>
+              </div>
+            </>
+          )}
+          {stats_data.mostWidespreadPlatform && (
+            <div className="stat-row">
+              <span className="stat-label">Most Widespread Platform:</span>
+              <span className="stat-value small">
+                {stats_data.mostWidespreadPlatform.label} (
+                {stats_data.mostWidespreadPlatform.domainCount} domains)
+              </span>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Legend */}
       {showLegend && (
-      <div className="graph-legend">
-        <div className="legend-title">LEGEND</div>
-        <div className="legend-section">
-          <div className="legend-subtitle">Node Size:</div>
-          <div className="legend-item">
-            <svg width="20" height="20">
-              <circle cx="10" cy="10" r="4" fill="#4a90e2" />
-            </svg>
-            <span>Few connections/detections</span>
+        <div className="graph-legend">
+          <div className="legend-title">LEGEND</div>
+          <div className="legend-section">
+            <div className="legend-subtitle">Node Size:</div>
+            <div className="legend-item">
+              <svg width="20" height="20">
+                <circle cx="10" cy="10" r="4" fill="#4a90e2" />
+              </svg>
+              <span>Few connections/detections</span>
+            </div>
+            <div className="legend-item">
+              <svg width="20" height="20">
+                <circle cx="10" cy="10" r="8" fill="#4a90e2" />
+              </svg>
+              <span>Many connections/detections</span>
+            </div>
           </div>
-          <div className="legend-item">
-            <svg width="20" height="20">
-              <circle cx="10" cy="10" r="8" fill="#4a90e2" />
-            </svg>
-            <span>Many connections/detections</span>
+          <div className="legend-section">
+            <div className="legend-subtitle">Highlights:</div>
+            <div className="legend-item">
+              <svg width="20" height="20">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="6"
+                  fill="#ff6b6b"
+                  stroke="#ff6b6b"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span>Multi-platform domain</span>
+            </div>
+            <div className="legend-item">
+              <svg width="20" height="20">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="6"
+                  fill="#4a90e2"
+                  stroke="#ffd700"
+                  strokeWidth="2"
+                />
+              </svg>
+              <span>Widespread platform</span>
+            </div>
+          </div>
+          <div className="legend-section">
+            <div className="legend-subtitle">Edge Width:</div>
+            <div className="legend-item">
+              <svg width="30" height="10">
+                <line
+                  x1="0"
+                  y1="5"
+                  x2="30"
+                  y2="5"
+                  stroke="#666"
+                  strokeWidth="1"
+                />
+              </svg>
+              <span>Few detections</span>
+            </div>
+            <div className="legend-item">
+              <svg width="30" height="10">
+                <line
+                  x1="0"
+                  y1="5"
+                  x2="30"
+                  y2="5"
+                  stroke="#666"
+                  strokeWidth="4"
+                />
+              </svg>
+              <span>Many detections</span>
+            </div>
           </div>
         </div>
-        <div className="legend-section">
-          <div className="legend-subtitle">Highlights:</div>
-          <div className="legend-item">
-            <svg width="20" height="20">
-              <circle cx="10" cy="10" r="6" fill="#ff6b6b" stroke="#ff6b6b" strokeWidth="2" />
-            </svg>
-            <span>Multi-platform domain</span>
-          </div>
-          <div className="legend-item">
-            <svg width="20" height="20">
-              <circle cx="10" cy="10" r="6" fill="#4a90e2" stroke="#ffd700" strokeWidth="2" />
-            </svg>
-            <span>Widespread platform</span>
-          </div>
-        </div>
-        <div className="legend-section">
-          <div className="legend-subtitle">Edge Width:</div>
-          <div className="legend-item">
-            <svg width="30" height="10">
-              <line x1="0" y1="5" x2="30" y2="5" stroke="#666" strokeWidth="1" />
-            </svg>
-            <span>Few detections</span>
-          </div>
-          <div className="legend-item">
-            <svg width="30" height="10">
-              <line x1="0" y1="5" x2="30" y2="5" stroke="#666" strokeWidth="4" />
-            </svg>
-            <span>Many detections</span>
-          </div>
-        </div>
-      </div>
       )}
 
       {/* SVG Canvas */}
@@ -1093,28 +1226,41 @@ function BipartiteGraph({ footprints, stats }) {
               <div className="tooltip-divider"></div>
               <p className="tooltip-subtitle">Platforms:</p>
               {tooltip.data.platforms.slice(0, 5).map((p, i) => (
-                <p key={i} style={{ color: p.color, fontSize: '11px', marginLeft: '8px' }}>
+                <p
+                  key={i}
+                  style={{
+                    color: p.color,
+                    fontSize: '11px',
+                    marginLeft: '8px',
+                  }}
+                >
                   • {p.name} ({p.count})
                 </p>
               ))}
               {tooltip.data.platforms.length > 5 && (
-                <p style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}>
+                <p
+                  style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}
+                >
                   ... {tooltip.data.platforms.length - 5} more
                 </p>
               )}
               <div className="tooltip-divider"></div>
               <p style={{ fontSize: '10px', color: '#888' }}>
-                First Seen: {new Date(tooltip.data.firstSeen).toLocaleDateString()}
+                First Seen:{' '}
+                {new Date(tooltip.data.firstSeen).toLocaleDateString()}
               </p>
               <p style={{ fontSize: '10px', color: '#888' }}>
-                Last Seen: {new Date(tooltip.data.lastSeen).toLocaleDateString()}
+                Last Seen:{' '}
+                {new Date(tooltip.data.lastSeen).toLocaleDateString()}
               </p>
             </div>
           )}
           {tooltip.type === 'platform' && (
             <div className="tooltip-content">
               <div className="tooltip-header">
-                <strong style={{ color: tooltip.data.color }}>{tooltip.data.label}</strong>
+                <strong style={{ color: tooltip.data.color }}>
+                  {tooltip.data.label}
+                </strong>
               </div>
               <p>Total Detections: {tooltip.data.detections}</p>
               <p>Unique Domains: {tooltip.data.domainCount}</p>
@@ -1126,7 +1272,9 @@ function BipartiteGraph({ footprints, stats }) {
                 </p>
               ))}
               {tooltip.data.domains.length > 5 && (
-                <p style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}>
+                <p
+                  style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}
+                >
                   ... {tooltip.data.domains.length - 5} more
                 </p>
               )}
@@ -1135,14 +1283,20 @@ function BipartiteGraph({ footprints, stats }) {
           {tooltip.type === 'edge' && (
             <div className="tooltip-content">
               <div className="tooltip-header">
-                <strong>{tooltip.data.source} → {TRACKING_PLATFORMS[tooltip.data.target]?.name || tooltip.data.target}</strong>
+                <strong>
+                  {tooltip.data.source} →{' '}
+                  {TRACKING_PLATFORMS[tooltip.data.target]?.name ||
+                    tooltip.data.target}
+                </strong>
               </div>
               <p>Detections: {tooltip.data.detections}</p>
               <p style={{ fontSize: '10px', color: '#888' }}>
-                First Detection: {new Date(tooltip.data.firstSeen).toLocaleDateString()}
+                First Detection:{' '}
+                {new Date(tooltip.data.firstSeen).toLocaleDateString()}
               </p>
               <p style={{ fontSize: '10px', color: '#888' }}>
-                Last Detection: {new Date(tooltip.data.lastSeen).toLocaleDateString()}
+                Last Detection:{' '}
+                {new Date(tooltip.data.lastSeen).toLocaleDateString()}
               </p>
             </div>
           )}
