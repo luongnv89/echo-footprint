@@ -38,7 +38,7 @@ export const TRACKING_PLATFORMS = {
       'region1.google-analytics.com',
       'region1.analytics.google.com',
     ],
-    color: '#4285f4', // Google blue
+    color: '#34A853', // Google Green (distinct from FB blue)
   },
   twitter: {
     name: 'Twitter/X',
@@ -74,7 +74,7 @@ export const TRACKING_PLATFORMS = {
       'business-api.tiktok.com',
       'analytics.tiktokv.com',
     ],
-    color: '#FF0050', // TikTok pink/red
+    color: '#000000', // TikTok Black
   },
   amazon: {
     name: 'Amazon',
@@ -131,7 +131,7 @@ export const TRACKING_PLATFORMS = {
       'analytics.live.com',
       'clarity.ms',
     ],
-    color: '#00A4EF', // Microsoft blue
+    color: '#F25022', // Microsoft Red/Orange
   },
   criteo: {
     name: 'Criteo',
@@ -154,7 +154,7 @@ export const TRACKING_PLATFORMS = {
       'px.ads.linkedin.com/collect/?pid=',
       'analytics.twitter.com/i/adsct',
     ],
-    color: '#00A8E1', // The Trade Desk blue
+    color: '#2C3E50', // Dark Slate
   },
   taboola: {
     name: 'Taboola',
@@ -176,7 +176,7 @@ export const TRACKING_PLATFORMS = {
       'images.outbrain.com',
       'tr.outbrain.com',
     ],
-    color: '#FF6200', // Outbrain orange
+    color: '#EE6513', // Outbrain orange
   },
   yahoo: {
     name: 'Yahoo DSP',
@@ -200,7 +200,7 @@ export const TRACKING_PLATFORMS = {
       'adnxs.com/seg',
       'secure.adnxs-simple.com',
     ],
-    color: '#0066FF', // Xandr blue
+    color: '#1ABC9C', // Turquoise
   },
   openx: {
     name: 'OpenX',
@@ -233,7 +233,7 @@ export const TRACKING_PLATFORMS = {
       'gads.pubmatic.com',
       'aktrack.pubmatic.com',
     ],
-    color: '#FC4C02', // PubMatic orange
+    color: '#8E44AD', // Purple
   },
   magnite: {
     name: 'Magnite',
@@ -246,7 +246,7 @@ export const TRACKING_PLATFORMS = {
       'telaria.com',
       'ads.tremorhub.com',
     ],
-    color: '#00B5E2', // Magnite cyan
+    color: '#16A085', // Greenish Teal
   },
   quantcast: {
     name: 'Quantcast',
@@ -257,7 +257,7 @@ export const TRACKING_PLATFORMS = {
       'cdn.quantcount.com',
       'tags.quantcount.com',
     ],
-    color: '#00AEEF', // Quantcast blue
+    color: '#2980B9', // Strong Blue
   },
   medianet: {
     name: 'Media.net',
@@ -268,7 +268,7 @@ export const TRACKING_PLATFORMS = {
       'media.net/tags',
       'bidder.media.net',
     ],
-    color: '#0052CC', // Media.net blue
+    color: '#D35400', // Pumpkin
   },
   adroll: {
     name: 'AdRoll',
@@ -279,7 +279,7 @@ export const TRACKING_PLATFORMS = {
       'pixel.adroll.com',
       'ipv4.d.adroll.com',
     ],
-    color: '#34C759', // AdRoll green
+    color: '#2ECC71', // Emerald
   },
   revcontent: {
     name: 'RevContent',
@@ -289,7 +289,7 @@ export const TRACKING_PLATFORMS = {
       'labs-cdn.revcontent.com',
       'img.revcontent.com',
     ],
-    color: '#FF6B6B', // RevContent red
+    color: '#C0392B', // Dark Red
   },
   inmobi: {
     name: 'InMobi',
@@ -300,7 +300,7 @@ export const TRACKING_PLATFORMS = {
       'tracking.w.inmobi.com',
       'outcome-ssp.w.inmobi.com',
     ],
-    color: '#ED1164', // InMobi pink
+    color: '#7F8C8D', // Grey
   },
   smaato: {
     name: 'Smaato',
@@ -311,7 +311,7 @@ export const TRACKING_PLATFORMS = {
       's.smaato.net',
       'c.smaato.net',
     ],
-    color: '#00D4FF', // Smaato cyan
+    color: '#F1C40F', // Yellow
   },
   unity: {
     name: 'Unity Ads',
@@ -322,7 +322,7 @@ export const TRACKING_PLATFORMS = {
       'config.unityads.unity3d.com',
       'publisher-event.unityads.unity3d.com',
     ],
-    color: '#000000', // Unity black
+    color: '#4A4A4A', // Dark Grey
   },
   ironsource: {
     name: 'IronSource',
@@ -333,7 +333,7 @@ export const TRACKING_PLATFORMS = {
       'acdn.supersonic.com',
       'track.atom-data.io',
     ],
-    color: '#0A66C2', // IronSource blue
+    color: '#8B4513', // Saddle Brown
   },
   vungle: {
     name: 'Vungle',
@@ -344,7 +344,7 @@ export const TRACKING_PLATFORMS = {
       'cdn-lb-is.vungle.com',
       'tpsv.vungle.com',
     ],
-    color: '#4CB648', // Vungle green
+    color: '#27AE60', // Green
   },
   chartboost: {
     name: 'Chartboost',
@@ -355,7 +355,7 @@ export const TRACKING_PLATFORMS = {
       'auction.chartboost.com',
       'sdk.chartboost.com',
     ],
-    color: '#27AE60', // Chartboost green
+    color: '#9B59B6', // Amethyst
   },
   moloco: {
     name: 'Moloco Ads',
@@ -376,7 +376,7 @@ export const TRACKING_PLATFORMS = {
       'events3-launch.adcolony.com',
       'androidads23.adcolony.com',
     ],
-    color: '#005EB8', // Digital Turbine blue
+    color: '#34495E', // Wet Asphalt
   },
   flurry: {
     name: 'Flurry',
@@ -406,7 +406,7 @@ export const TRACKING_PLATFORMS = {
       'ib.3lift.com',
       'segment-data.3lift.com',
     ],
-    color: '#1B73E8', // TripleLift blue
+    color: '#E67E22', // Carrot
   },
   zetaglobal: {
     name: 'Zeta Global',
@@ -439,7 +439,7 @@ export const TRACKING_PLATFORMS = {
       'udat.imrworldwide.com',
       'imrworldwide.com/cgi-bin',
     ],
-    color: '#003DA5', // Nielsen blue
+    color: '#000080', // Navy
   },
   bluekai: {
     name: 'Oracle BlueKai',
@@ -459,7 +459,7 @@ export const TRACKING_PLATFORMS = {
       'sync.mathtag.com',
       'action.mathtag.com',
     ],
-    color: '#3A5DAE', // Epsilon blue
+    color: '#FF00FF', // Magenta
   },
   acxiom: {
     name: 'Acxiom',
@@ -469,7 +469,7 @@ export const TRACKING_PLATFORMS = {
       'pixel.acxiom-online.com',
       'ads.linkedin.com/collect',
     ],
-    color: '#0066CC', // Acxiom blue
+    color: '#008080', // Teal
   },
   experian: {
     name: 'Experian Marketing Services',
@@ -480,7 +480,7 @@ export const TRACKING_PLATFORMS = {
       'exp-tas.com',
       'tapad.com/cs',
     ],
-    color: '#0033A0', // Experian blue
+    color: '#4B0082', // Indigo
   },
   stackadapt: {
     name: 'StackAdapt',
@@ -490,7 +490,7 @@ export const TRACKING_PLATFORMS = {
       'static.stackadapt.com',
       'pixel.stackadapt.com',
     ],
-    color: '#4D6CFF', // StackAdapt blue
+    color: '#FFD700', // Gold
   },
   basis: {
     name: 'Basis DSP (Centro)',
@@ -528,7 +528,7 @@ export const TRACKING_PLATFORMS = {
       's2.adform.net',
       'a2.adform.net',
     ],
-    color: '#0051C3', // Adform blue
+    color: '#00CED1', // Dark Turquoise
   },
   sovrn: {
     name: 'Sovrn',
@@ -539,7 +539,7 @@ export const TRACKING_PLATFORMS = {
       'cdn.lijit.com',
       'data.lijit.com',
     ],
-    color: '#0A7BBE', // Sovrn blue
+    color: '#B22222', // Firebrick
   },
   bidswitch: {
     name: 'BidSwitch',
@@ -549,7 +549,7 @@ export const TRACKING_PLATFORMS = {
       'sync.bidswitch.net',
       'us-east.bidswitch.net',
     ],
-    color: '#1E3A8A', // BidSwitch navy
+    color: '#4682B4', // Steel Blue
   },
   smartyads: {
     name: 'SmartyAds DSP',
@@ -559,7 +559,7 @@ export const TRACKING_PLATFORMS = {
       'pixel.smartyads.com',
       'dsp.smartyads.com',
     ],
-    color: '#00B4D8', // SmartyAds cyan
+    color: '#DA70D6', // Orchid
   },
 };
 
