@@ -45,3 +45,4 @@ web-ext-artifacts/
 *.key
 *.pub
 *.crx
+dev-docs/

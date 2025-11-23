@@ -13,7 +13,7 @@ function DataTable({ footprints, stats }) {
   const [sortBy, setSortBy] = useState('timestamp'); // 'timestamp', 'domain', 'url', 'pixelType'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Filter and sort data
   const filteredData = useMemo(() => {

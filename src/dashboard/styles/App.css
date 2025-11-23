@@ -21,11 +21,82 @@
   padding: var(--spacing-xl);
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-bg-darker);
+  position: relative;
+}
+
+.dashboard-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
 }
 
 .dashboard-header h1 {
-  margin-bottom: var(--spacing-lg);
+  margin: 0;
   color: var(--color-primary);
+}
+
+.dashboard-insights-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 170, 0.15),
+    rgba(0, 212, 170, 0.05)
+  );
+  border: 1px solid var(--color-primary);
+  border-radius: 12px;
+  min-width: 300px;
+  max-width: 520px;
+  position: absolute;
+  top: var(--spacing-xl);
+  right: var(--spacing-xl);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  z-index: 2;
+}
+
+.insight-banner-icon {
+  color: var(--color-primary);
+  font-size: 18px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.dashboard-insights-text {
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.insight-line {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.insight-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.insight-dismiss:hover,
+.insight-dismiss:focus {
+  color: var(--color-text-primary);
 }
 
 /* View Tabs */

@@ -11,6 +11,7 @@ import {
   getStats,
   calculatePlatformStats,
 } from './utils/db.js';
+import { TRACKING_PLATFORMS } from '../lib/pixel-detector.js';
 import RadialGraph from './components/RadialGraph.jsx';
 import BipartiteGraph from './components/BipartiteGraph.jsx';
 // MapView removed - requires geolocation which was removed per user request
@@ -34,6 +35,19 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
+  const [showInsights, setShowInsights] = useState(true);
+
+  // When filters change, reshow insights with updated data
+  useEffect(() => {
+    setShowInsights(true);
+  }, [filter]);
+
+  // When switching views, reshow insights (notably for bipartite)
+  useEffect(() => {
+    if (activeView === 'bipartite') {
+      setShowInsights(true);
+    }
+  }, [activeView]);
 
   // Use Dexie's useLiveQuery for reactive data
   const footprints = useLiveQuery(async () => {
@@ -75,6 +89,179 @@ function App() {
       platformStats: platformStats,
     };
   }, [baseStats, footprints]);
+
+  const insights = useMemo(() => {
+    if (!stats || !footprints || footprints.length === 0) {
+      return {
+        totalDetections: 0,
+        uniqueDomains: 0,
+        activePlatforms: 0,
+        topPlatformName: '—',
+        topPlatformShare: 0,
+        topDomain: '—',
+        topDomainDetections: 0,
+        messages: [],
+      };
+    }
+
+    const platformEntries = Object.entries(stats.platformStats || {});
+    const totalDetections = stats.totalFootprints || 0;
+    const activePlatforms = platformEntries.length;
+
+    let topPlatformName = '—';
+    let topPlatformShare = 0;
+    if (platformEntries.length && totalDetections > 0) {
+      const [topPlatformId, topPlatformData] = platformEntries.reduce(
+        (max, entry) =>
+          entry[1].detections > max[1].detections ? entry : max,
+        platformEntries[0]
+      );
+      topPlatformName =
+        TRACKING_PLATFORMS[topPlatformId]?.name || topPlatformId;
+      topPlatformShare = Math.round(
+        (topPlatformData.detections / totalDetections) * 100
+      );
+    }
+
+    // Domain-level insight
+    const domainCounts = footprints.reduce((acc, fp) => {
+      const domain = fp.domain || 'unknown';
+      acc[domain] = (acc[domain] || 0) + 1;
+      return acc;
+    }, {});
+    const domainEntries = Object.entries(domainCounts);
+    const [topDomain, topDomainDetections] =
+      domainEntries.length > 0
+        ? domainEntries.reduce(
+            (max, entry) => (entry[1] > max[1] ? entry : max),
+            domainEntries[0]
+          )
+        : ['—', 0];
+
+    // Build concise sentences (2-3)
+    const avgPerDomain =
+      stats.uniqueDomains && stats.uniqueDomains > 0
+        ? (totalDetections / stats.uniqueDomains).toFixed(1)
+        : '0';
+
+    const messages = [];
+    if (topPlatformShare > 0) {
+      messages.push(
+        `${topPlatformName} drives ${topPlatformShare}% of current detections.`
+      );
+    }
+    if (activePlatforms > 1 && avgPerDomain !== '0') {
+      messages.push(
+        `Traffic spans ${activePlatforms} platforms, averaging ${avgPerDomain} detections per domain.`
+      );
+    }
+    if (topDomainDetections > 0) {
+      messages.push(
+        `${topDomain} is your busiest domain with ${topDomainDetections} detections.`
+      );
+    }
+
+    return {
+      totalDetections: totalDetections,
+      uniqueDomains: stats.uniqueDomains || 0,
+      activePlatforms,
+      topPlatformName,
+      topPlatformShare,
+      topDomain,
+      topDomainDetections,
+      messages,
+    };
+  }, [stats, footprints]);
+
+  const bipartiteInsights = useMemo(() => {
+    if (!footprints || footprints.length === 0) {
+      return {
+        messages: ['Switch to graph and start browsing to populate the bipartite view.'],
+      };
+    }
+
+    const domainToPlatforms = new Map();
+    const platformToDomains = new Map();
+
+    footprints.forEach(fp => {
+      const domain = fp.domain || 'unknown';
+      const platform = fp.platform || 'unknown';
+
+      if (!domainToPlatforms.has(domain)) {
+        domainToPlatforms.set(domain, new Set());
+      }
+      domainToPlatforms.get(domain).add(platform);
+
+      if (!platformToDomains.has(platform)) {
+        platformToDomains.set(platform, new Set());
+      }
+      platformToDomains.get(platform).add(domain);
+    });
+
+    const totalDomains = domainToPlatforms.size;
+    const totalPlatforms = platformToDomains.size;
+    const multiPlatformDomains = [...domainToPlatforms.values()].filter(
+      set => set.size > 1
+    ).length;
+
+    const topDomainEntry = [...domainToPlatforms.entries()].reduce(
+      (max, entry) => (entry[1].size > max[1].size ? entry : max),
+      [null, new Set()]
+    );
+    const topPlatformEntry = [...platformToDomains.entries()].reduce(
+      (max, entry) => (entry[1].size > max[1].size ? entry : max),
+      [null, new Set()]
+    );
+
+    const topDomain = topDomainEntry[0] || '—';
+    const topDomainPlatforms = topDomainEntry[1].size || 0;
+    const topPlatformId = topPlatformEntry[0] || '—';
+    const topPlatformDomains = topPlatformEntry[1].size || 0;
+    const topPlatformName =
+      TRACKING_PLATFORMS[topPlatformId]?.name || topPlatformId;
+
+    const avgPlatformsPerDomain =
+      totalDomains > 0
+        ? (Array.from(domainToPlatforms.values()).reduce(
+            (sum, set) => sum + set.size,
+            0
+          ) /
+            totalDomains).toFixed(1)
+        : '0';
+
+    const topPlatformCoverage =
+      totalDomains > 0
+        ? Math.round((topPlatformDomains / totalDomains) * 100)
+        : 0;
+
+    const messages = [];
+
+    // Overview
+    messages.push(
+      `${totalPlatforms} platform${totalPlatforms === 1 ? '' : 's'} across ${totalDomains} domain${totalDomains === 1 ? '' : 's'}; avg ${avgPlatformsPerDomain} platform${avgPlatformsPerDomain === '1.0' ? '' : 's'} per domain.`
+    );
+
+    // Cross-linking
+    if (multiPlatformDomains > 0) {
+      messages.push(
+        `${multiPlatformDomains} domain${multiPlatformDomains === 1 ? '' : 's'} link to multiple platforms; ${topDomain} spans ${topDomainPlatforms} platform${topDomainPlatforms === 1 ? '' : 's'}, your most entangled node.`
+      );
+    } else {
+      messages.push(
+        `No domains connect to multiple platforms yet—tracking looks isolated per site in this window.`
+      );
+    }
+
+    // Reach
+    messages.push(
+      `${topPlatformName} reaches ${topPlatformDomains} domain${topPlatformDomains === 1 ? '' : 's'} (${topPlatformCoverage}% coverage), widest in your network.`
+    );
+
+    return { messages };
+  }, [footprints]);
+
+  const displayedInsights =
+    activeView === 'bipartite' ? bipartiteInsights.messages : insights.messages;
 
   // Handler for platform selection from sidebar
   const handlePlatformSelect = (platformId, platformData) => {
@@ -142,7 +329,37 @@ function App() {
       />
       <main className="main-content">
         <header className="dashboard-header">
-          <h1>Your Tracking Footprint</h1>
+          <div className="dashboard-header-top">
+            <h1>Privacy-first tracking visualization</h1>
+            {showInsights && (
+              <div
+                className="dashboard-insights-banner"
+                role="status"
+                aria-label="Tracking insights"
+              >
+                <div className="insight-banner-icon" aria-hidden="true">★</div>
+                <div className="dashboard-insights-text">
+                  {displayedInsights.length > 0 ? (
+                    displayedInsights.map((msg, idx) => (
+                      <p key={idx} className="insight-line">
+                        {msg}
+                      </p>
+                    ))
+                  ) : (
+                    <p className="insight-line">Start browsing to see insights.</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="insight-dismiss"
+                  aria-label="Dismiss insights"
+                  onClick={() => setShowInsights(false)}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
 
           <nav className="view-tabs" role="tablist">
             <button
@@ -309,11 +526,19 @@ function App() {
           <p>
             All data stored locally. Zero telemetry. Open source.{' '}
             <a
-              href="https://github.com/yourusername/echofootprint"
+              href="https://github.com/luongnv89/echo-footprint"
               target="_blank"
               rel="noopener noreferrer"
             >
               View on GitHub
+            </a>
+            {' • '}
+            <a
+              href="https://github.com/luongnv89/echo-footprint/blob/main/privacy-policy.md"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Privacy Policy
             </a>
           </p>
         </footer>
