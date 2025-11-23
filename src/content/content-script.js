@@ -8,6 +8,7 @@ import {
   detectFacebookPixel,
   observeDynamicPixels,
 } from '../lib/pixel-detector.js';
+import { isDomainExcluded } from './domain-utils.js';
 
 // Configuration
 const DEBUG_MODE = false; // Set to true only during development
@@ -80,10 +81,37 @@ function sendPixelDetection(detectionData) {
 /**
  * Main detection routine
  */
-function runPixelDetection() {
+function getFromStorage(keys) {
+  return new Promise(resolve => {
+    if (!chrome?.storage?.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, result => resolve(result || {}));
+  });
+}
+
+async function runPixelDetection() {
   const startTime = performance.now();
 
   debug(`Starting detection on ${window.location.hostname}`);
+
+  // Respect global pause
+  const { isPaused } = await getFromStorage(['isPaused']);
+  if (isPaused) {
+    debug('Extension is paused globally');
+    return;
+  }
+
+  // Respect domain exclusions
+  const { excludedDomains = [] } = await getFromStorage(['excludedDomains']);
+  if (isDomainExcluded(window.location.hostname, excludedDomains)) {
+    debug(
+      `Domain excluded from tracking detection: ${window.location.hostname}`,
+      excludedDomains
+    );
+    return;
+  }
 
   // Count all scripts for debugging
   const allScripts = document.querySelectorAll('script[src]');

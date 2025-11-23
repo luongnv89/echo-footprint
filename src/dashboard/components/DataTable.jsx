@@ -7,6 +7,19 @@
 import React, { useState, useMemo } from 'react';
 import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
 import '../styles/DataTable.css';
+import { sanitizeUrl, isSafeUrl } from '../utils/security.js';
+
+// Escape CSV fields and prevent formula injection
+export const escapeCSV = field => {
+  let str = String(field);
+
+  // Prevent CSV injection: prefix dangerous characters with single quote
+  if (/^[=+\-@\t\r\n]/.test(str)) {
+    str = `'${str}`;
+  }
+
+  return `"${str.replace(/"/g, '""')}"`;
+};
 
 function DataTable({ footprints, stats }) {
   const [search, setSearch] = useState('');
@@ -107,9 +120,6 @@ function DataTable({ footprints, stats }) {
         const url = fp.url || '';
         const pixelType = fp.pixelType || 'script';
 
-        // Escape CSV fields
-        const escapeCSV = field => `"${String(field).replace(/"/g, '""')}"`;
-
         return [
           escapeCSV(timestamp),
           escapeCSV(domain),
@@ -183,7 +193,8 @@ function DataTable({ footprints, stats }) {
             className="export-button"
             onClick={handleExportCSV}
             disabled={filteredData.length === 0}
-            aria-label="Export data to CSV"
+            aria-label="Export data to CSV with injection protections"
+            title="Export data to CSV (formulas escaped for security)"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
@@ -297,17 +308,40 @@ function DataTable({ footprints, stats }) {
                   <span className="domain-badge">{fp.domain}</span>
                 </td>
                 <td className="url-cell">
-                  <a
-                    href={fp.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="url-link"
-                    title={fp.url}
-                  >
-                    {fp.url.length > 60
-                      ? `${fp.url.substring(0, 60)}...`
-                      : fp.url}
-                  </a>
+                  {(() => {
+                    const url = fp.url || '';
+                    const displayUrl =
+                      url.length > 60 ? `${url.substring(0, 60)}...` : url;
+
+                    if (isSafeUrl(url)) {
+                      return (
+                        <a
+                          href={sanitizeUrl(url)}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="url-link"
+                          title={url}
+                        >
+                          {displayUrl}
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <span
+                        className="url-text-unsafe"
+                        title={`Unsafe URL blocked: ${url}`}
+                      >
+                        {displayUrl}
+                        <span
+                          className="unsafe-badge"
+                          aria-label="Unsafe URL blocked"
+                        >
+                          ⚠️
+                        </span>
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="platform-cell">
                   <span

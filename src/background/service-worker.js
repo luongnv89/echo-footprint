@@ -19,6 +19,17 @@ import {
 
 // Configuration
 const DEBUG_MODE = false; // Set to true only during development
+const BADGE_PAUSED_TEXT = '⏸';
+
+function getLocalSetting(keys) {
+  return new Promise(resolve => {
+    if (!chrome?.storage?.local) {
+      resolve({});
+      return;
+    }
+    chrome.storage.local.get(keys, result => resolve(result || {}));
+  });
+}
 
 /**
  * Log debug messages
@@ -42,6 +53,15 @@ function debug(message, data = null) {
  */
 async function updateBadge() {
   try {
+    const { isPaused } = await getLocalSetting(['isPaused']);
+
+    if (isPaused) {
+      await chrome.action.setBadgeText({ text: BADGE_PAUSED_TEXT });
+      await chrome.action.setBadgeBackgroundColor({ color: '#e74c3c' });
+      await chrome.action.setTitle({ title: 'EchoFootPrint (Paused)' });
+      return;
+    }
+
     const todaysFootprints = await getTodayFootprintCount();
 
     // Format badge text (show numbers up to 999, then 999+)
@@ -55,6 +75,7 @@ async function updateBadge() {
 
     // Set badge color (red to indicate tracking)
     await chrome.action.setBadgeBackgroundColor({ color: '#DC2626' }); // Red-600
+    await chrome.action.setTitle({ title: 'EchoFootPrint' });
 
     debug('Badge updated', { todaysFootprints, badgeText });
   } catch (error) {
@@ -238,6 +259,15 @@ chrome.runtime.onInstalled.addListener(async details => {
   } catch (error) {
     console.error('ServiceWorker: Error initializing database:', error);
   }
+
+  // Initialize pause state defaults in storage
+  if (chrome?.storage?.local) {
+    chrome.storage.local.get(['isPaused'], result => {
+      if (result.isPaused === undefined) {
+        chrome.storage.local.set({ isPaused: false });
+      }
+    });
+  }
 });
 
 /**
@@ -272,6 +302,23 @@ chrome.action.onClicked.addListener(tab => {
   chrome.tabs.create({
     url: chrome.runtime.getURL('src/dashboard/index.html'),
   });
+});
+
+chrome.commands?.onCommand.addListener(command => {
+  if (command === 'toggle-pause') {
+    chrome.storage.local.get(['isPaused'], result => {
+      const next = !result.isPaused;
+      chrome.storage.local.set({ isPaused: next }, () => {
+        updateBadge();
+      });
+    });
+  }
+});
+
+chrome.storage?.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.isPaused) {
+    updateBadge();
+  }
 });
 
 debug('Service worker initialized');

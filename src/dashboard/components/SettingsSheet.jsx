@@ -8,18 +8,53 @@ import React, { useState, useEffect } from 'react';
 import { clearAllData, checkStorageQuota } from '../utils/db.js';
 import '../styles/SettingsSheet.css';
 
+// Storage helper: uses chrome.storage.local when available, otherwise falls back to localStorage (dev preview)
+const storage = {
+  get(keys) {
+    return new Promise(resolve => {
+      if (chrome?.storage?.local) {
+        chrome.storage.local.get(keys, result => resolve(result || {}));
+      } else {
+        const result = {};
+        keys.forEach(key => {
+          const raw = window.localStorage.getItem(key);
+          try {
+            result[key] = raw ? JSON.parse(raw) : undefined;
+          } catch (e) {
+            result[key] = raw;
+          }
+        });
+        resolve(result);
+      }
+    });
+  },
+  set(entries) {
+    if (chrome?.storage?.local) {
+      chrome.storage.local.set(entries);
+      return;
+    }
+    Object.entries(entries).forEach(([key, value]) => {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    });
+  },
+};
+
 function SettingsSheet({ isOpen, onClose, stats }) {
   const [storageInfo, setStorageInfo] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [buildInfo, setBuildInfo] = useState(null);
+  const [excludedDomains, setExcludedDomains] = useState([]);
+  const [newDomain, setNewDomain] = useState('');
+  const [isPaused, setIsPaused] = useState(false);
 
   // Load storage info and build info when sheet opens
   useEffect(() => {
     if (isOpen) {
       loadStorageInfo();
       loadBuildInfo();
+      loadPrivacySettings();
     }
   }, [isOpen]);
 
@@ -45,6 +80,38 @@ function SettingsSheet({ isOpen, onClose, stats }) {
         gitCommitHash: 'unknown',
       });
     }
+  };
+
+  const loadPrivacySettings = () => {
+    storage
+      .get(['excludedDomains', 'isPaused'])
+      .then(({ excludedDomains: domains, isPaused: paused }) => {
+        setExcludedDomains(domains || []);
+        setIsPaused(paused || false);
+      });
+  };
+
+  const addDomain = domainValue => {
+    const value = domainValue ?? newDomain;
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const updated = [...new Set([...excludedDomains, trimmed])];
+    setExcludedDomains(updated);
+    storage.set({ excludedDomains: updated });
+    setNewDomain('');
+  };
+
+  const removeDomain = domain => {
+    const updated = excludedDomains.filter(d => d !== domain);
+    setExcludedDomains(updated);
+    storage.set({ excludedDomains: updated });
+  };
+
+  const togglePause = () => {
+    const next = !isPaused;
+    setIsPaused(next);
+    storage.set({ isPaused: next });
   };
 
   const handleClearData = async () => {
@@ -170,6 +237,86 @@ function SettingsSheet({ isOpen, onClose, stats }) {
           {/* Privacy Section */}
           <section className="settings-section">
             <h3>Privacy</h3>
+            <div className="setting-item">
+              <div className="setting-info">
+                <strong>Global Controls</strong>
+                <p>
+                  Pause or resume tracking detection across all sites. When
+                  paused, EchoFootPrint will not inspect pages.
+                </p>
+              </div>
+              <button
+                className={`toggle-button ${isPaused ? 'paused' : 'active'}`}
+                onClick={togglePause}
+                aria-label={isPaused ? 'Resume detection' : 'Pause detection'}
+                type="button"
+              >
+                {isPaused ? 'Resume Detection' : 'Pause Detection'}
+              </button>
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <strong>Excluded Domains</strong>
+                <p>
+                  EchoFootPrint will not run on these domains. Use this to
+                  exclude localhost, internal networks, or sensitive sites.
+                </p>
+              </div>
+            </div>
+
+            <div className="exclusion-controls">
+              <div className="exclusion-input">
+                <input
+                  type="text"
+                  placeholder="e.g., localhost, *.corp, 192.168.*.*"
+                  value={newDomain}
+                  onChange={e => setNewDomain(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addDomain()}
+                  aria-label="Add domain exclusion pattern"
+                />
+                <button onClick={() => addDomain()} type="button">
+                  Add
+                </button>
+              </div>
+              <div className="exclusion-presets">
+                <span>Quick add:</span>
+                <div className="preset-buttons">
+                  {['localhost', '127.0.0.1', '*.local', '*.internal'].map(
+                    preset => (
+                      <button
+                        key={preset}
+                        onClick={() => addDomain(preset)}
+                        type="button"
+                      >
+                        + {preset}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {excludedDomains.length > 0 ? (
+                <ul className="excluded-list">
+                  {excludedDomains.map(domain => (
+                    <li key={domain}>
+                      <span>{domain}</span>
+                      <button
+                        className="remove-exclusion"
+                        onClick={() => removeDomain(domain)}
+                        aria-label={`Remove exclusion ${domain}`}
+                        type="button"
+                      >
+                        Remove
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="excluded-empty">No domains excluded yet.</p>
+              )}
+            </div>
+
             <div className="setting-item">
               <div className="setting-info">
                 <strong>Local Storage Only</strong>
