@@ -344,6 +344,12 @@
   color: var(--color-text-primary);
 }
 
+.region-cell {
+  color: var(--color-text-primary);
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
 .geo-cell {
   white-space: nowrap;
 }

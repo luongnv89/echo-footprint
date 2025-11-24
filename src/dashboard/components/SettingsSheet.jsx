@@ -365,18 +365,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
               )}
               <div className="about-item">
                 <span className="about-label">License</span>
-                <span className="about-value">MIT</span>
-              </div>
-              <div className="about-item">
-                <span className="about-label">GitHub</span>
-                <a
-                  href="https://github.com/luongnv89/echo-footprint"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="about-link"
-                >
-                  View on GitHub
-                </a>
+                <span className="about-value">Proprietary</span>
               </div>
             </div>
           </section>

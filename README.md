@@ -5,10 +5,6 @@
 
 > Privacy-first browser extension that visualizes cross-site tracking from 50 major ad network platforms
 
-[![Version](https://img.shields.io/badge/version-1.1.0-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
-[![License](https://img.shields.io/badge/license-MIT-00d4aa.svg)](LICENSE)
-[![Chrome](https://img.shields.io/badge/chrome-extension-00d4aa.svg)](https://github.com/yourusername/echo-footprint)
-
 </div>
 
 ## Overview
@@ -62,13 +58,12 @@ EchoFootPrint now tracks 50 major ad networks including:
 
 ### Installation
 
-1. Clone this repository
-2. Install dependencies and build:
+1. Install dependencies and build the extension bundle:
    ```bash
    npm install
    npm run build
    ```
-3. Load in Chrome:
+2. Load in Chrome:
    - Open `chrome://extensions`
    - Enable "Developer mode"
    - Click "Load unpacked"
@@ -122,7 +117,7 @@ npm run zip
 
 ### Pre-commit Hooks (CI/CD Dry-Run)
 
-This project uses **Husky** to run pre-commit hooks that simulate the GitHub Actions CI/CD pipeline locally. Every commit automatically runs:
+This project uses **Husky** to run pre-commit hooks that simulate the CI/CD pipeline locally. Every commit automatically runs:
 
 1. **ESLint** - Code linting
 2. **Prettier** - Format checking
@@ -131,8 +126,8 @@ This project uses **Husky** to run pre-commit hooks that simulate the GitHub Act
 5. **Security Audit** - npm audit for vulnerabilities
 
 This ensures that:
-- ✅ Your commits will pass CI before pushing
-- ✅ You catch issues early in development
+- ✅ Commits will pass CI before pushing
+- ✅ Issues are caught early in development
 - ✅ Code quality is maintained across all commits
 
 **Setup** (automatic on `npm install`):
@@ -144,8 +139,6 @@ npm install  # Husky hooks installed automatically via "prepare" script
 ```bash
 git commit --no-verify  # Skip pre-commit checks
 ```
-
-The pre-commit checks match exactly what GitHub Actions will run, giving you immediate feedback on whether your changes will pass CI.
 
 ### Project Structure
 
@@ -207,7 +200,6 @@ React 18 + Vite single-page application featuring:
 - ✅ **100% Local Storage** - All data stored in browser IndexedDB
 - ✅ **Zero Telemetry** - No external servers, no analytics, no tracking
 - ✅ **No Blocking** - Pure visualization, doesn't interfere with websites
-- ✅ **Open Source** - MIT License, fully auditable code
 - ✅ **No Permissions Abuse** - Minimal required permissions
 
 ## Platform Detection
@@ -315,24 +307,9 @@ describe('Feature Name', () => {
 });
 ```
 
-## Contributing
+## Access & Contributions
 
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Ensure `npm run lint` and `npm test` pass
-5. Commit with clear messages
-6. Push to your fork
-7. Open a Pull Request
-
-### Code Style
-
-- Use Prettier for formatting (`npm run format`)
-- Follow ESLint rules (`npm run lint`)
-- Write tests for new features
-- Update documentation as needed
+This project is distributed privately. Please contact the maintainers for access requests or to propose changes. Internal contributors should continue using the existing branch and review process.
 
 ## Known Limitations
 
@@ -368,7 +345,7 @@ A: Yes. Settings → Danger Zone → Clear All Data.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+Proprietary and confidential. All rights reserved. Redistribution or public posting is not permitted.
 
 ## Acknowledgments
 

@@ -4,8 +4,9 @@
  * Per PRD: CSV export, domain search, timestamp sorting, WCAG compliant
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { getGeoCache } from '../utils/db.js';
 import '../styles/DataTable.css';
 import { sanitizeUrl, isSafeUrl } from '../utils/security.js';
 
@@ -23,10 +24,36 @@ export const escapeCSV = field => {
 
 function DataTable({ footprints, stats }) {
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('timestamp'); // 'timestamp', 'domain', 'url', 'pixelType'
+  const [sortBy, setSortBy] = useState('timestamp'); // 'timestamp', 'domain', 'url', 'pixelType', 'region'
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [geoMap, setGeoMap] = useState({});
+
+  // Load geolocation cache for unique domains
+  useEffect(() => {
+    async function loadGeo() {
+      if (!footprints || footprints.length === 0) {
+        setGeoMap({});
+        return;
+      }
+      const domains = [...new Set(footprints.map(fp => fp.domain).filter(Boolean))];
+      const entries = await Promise.all(
+        domains.map(async domain => [domain, await getGeoCache(domain)])
+      );
+      const map = {};
+      entries.forEach(([domain, geo]) => {
+        if (geo) map[domain] = geo;
+      });
+      setGeoMap(map);
+    }
+    loadGeo();
+  }, [footprints]);
+
+  const formatRegion = fp => {
+    const geo = geoMap[fp?.domain] || fp?.ipGeo || {};
+    return geo.city || geo.region || geo.country || 'Unknown';
+  };
 
   // Filter and sort data
   const filteredData = useMemo(() => {
@@ -35,10 +62,12 @@ function DataTable({ footprints, stats }) {
     let filtered = footprints.filter(fp => {
       if (!search) return true;
       const searchLower = search.toLowerCase();
+      const region = formatRegion(fp).toLowerCase();
       return (
         fp.domain?.toLowerCase().includes(searchLower) ||
         fp.url?.toLowerCase().includes(searchLower) ||
-        fp.pixelType?.toLowerCase().includes(searchLower)
+        fp.pixelType?.toLowerCase().includes(searchLower) ||
+        region.includes(searchLower)
       );
     });
 
@@ -51,6 +80,9 @@ function DataTable({ footprints, stats }) {
       if (sortBy === 'timestamp') {
         aVal = new Date(aVal).getTime();
         bVal = new Date(bVal).getTime();
+      } else if (sortBy === 'region') {
+        aVal = formatRegion(a).toLowerCase();
+        bVal = formatRegion(b).toLowerCase();
       } else if (typeof aVal === 'string') {
         aVal = aVal.toLowerCase();
         bVal = bVal?.toLowerCase() || '';
@@ -109,7 +141,7 @@ function DataTable({ footprints, stats }) {
     if (!filteredData || filteredData.length === 0) return;
 
     // CSV headers (includes platform column)
-    const headers = ['Timestamp', 'Domain', 'Platform', 'URL', 'Pixel Type'];
+    const headers = ['Timestamp', 'Domain', 'Platform', 'Region', 'URL', 'Pixel Type'];
     const csvContent = [
       headers.join(','),
       ...filteredData.map(fp => {
@@ -117,6 +149,7 @@ function DataTable({ footprints, stats }) {
         const domain = fp.domain || '';
         const platform =
           TRACKING_PLATFORMS[fp.platform || 'facebook']?.name || 'Unknown';
+        const region = formatRegion(fp);
         const url = fp.url || '';
         const pixelType = fp.pixelType || 'script';
 
@@ -124,6 +157,7 @@ function DataTable({ footprints, stats }) {
           escapeCSV(timestamp),
           escapeCSV(domain),
           escapeCSV(platform),
+          escapeCSV(region),
           escapeCSV(url),
           escapeCSV(pixelType),
         ].join(',');
@@ -296,6 +330,18 @@ function DataTable({ footprints, stats }) {
                   </span>
                 </button>
               </th>
+              <th>
+                <button
+                  className={`sort-button ${sortBy === 'region' ? 'active' : ''}`}
+                  onClick={() => handleSort('region')}
+                  aria-label="Sort by region"
+                >
+                  Region
+                  <span className="sort-icon">
+                    {sortBy === 'region' && sortOrder === 'asc' ? '↑' : '↓'}
+                  </span>
+                </button>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -358,6 +404,7 @@ function DataTable({ footprints, stats }) {
                   </span>
                 </td>
                 <td className="pixel-type-cell">{fp.pixelType || 'script'}</td>
+                <td className="region-cell">{formatRegion(fp)}</td>
               </tr>
             ))}
           </tbody>

@@ -3,11 +3,23 @@
  * Provides user guidance, FAQs, and documentation
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
 import '../styles/HelpSheet.css';
 
 function HelpSheet({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('getting-started');
+  const platformNames = useMemo(() => {
+    const seen = new Set();
+    return Object.values(TRACKING_PLATFORMS)
+      .map(platform => platform.name)
+      .filter(name => {
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      })
+      .sort();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -167,50 +179,25 @@ function HelpSheet({ isOpen, onClose }) {
 
               <div className="feature-item">
                 <h4>Platform Detection</h4>
-                <p>We detect tracking pixels from these platforms:</p>
-                <ul className="help-list">
-                  <li>
-                    <span style={{ color: '#1877f2' }}>●</span> Facebook/Meta
-                    (includes Instagram, WhatsApp)
-                  </li>
-                  <li>
-                    <span style={{ color: '#4285f4' }}>●</span> Google (includes
-                    YouTube, Analytics)
-                  </li>
-                  <li>
-                    <span style={{ color: '#1DA1F2' }}>●</span> Twitter/X
-                  </li>
-                  <li>
-                    <span style={{ color: '#0A66C2' }}>●</span> LinkedIn
-                  </li>
-                  <li>
-                    <span style={{ color: '#FF0050' }}>●</span> TikTok
-                  </li>
-                  <li>
-                    <span style={{ color: '#FF9900' }}>●</span> Amazon
-                  </li>
-                  <li>
-                    <span style={{ color: '#E60023' }}>●</span> Pinterest
-                  </li>
-                  <li>
-                    <span style={{ color: '#FFFC00' }}>●</span> Snapchat
-                  </li>
-                  <li>
-                    <span style={{ color: '#FF4500' }}>●</span> Reddit
-                  </li>
-                  <li>
-                    <span style={{ color: '#00A4EF' }}>●</span> Microsoft/Bing
-                  </li>
+                <p>
+                  We detect tracking pixels from {platformNames.length}{' '}
+                  platforms across social, exchanges, DSPs/SSPs, content
+                  discovery, mobile, and data management providers.
+                </p>
+                <ul className="platform-tags" aria-label="Detected platforms">
+                  {platformNames.map(name => (
+                    <li key={name} className="platform-tag">
+                      {name}
+                    </li>
+                  ))}
                 </ul>
               </div>
 
               <div className="feature-item">
-                <h4>Export & Screenshot</h4>
+                <h4>Export</h4>
                 <p>
-                  Use the <strong>Screenshot</strong> button to export the
-                  current view as a PNG image. Use the{' '}
-                  <strong>Export CSV</strong> button in the Data Table to
-                  download your data.
+                  Use the <strong>Export CSV</strong> button in the Data Table
+                  to download your data. Visual exports are currently disabled.
                 </p>
               </div>
             </section>
@@ -282,24 +269,19 @@ function HelpSheet({ isOpen, onClose }) {
               <div className="faq-item">
                 <h4>How do I report a bug or request a feature?</h4>
                 <p>
-                  Visit our GitHub repository at{' '}
-                  <a
-                    href="https://github.com/yourusername/echofootprint"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    github.com/yourusername/echofootprint
-                  </a>{' '}
-                  to file an issue or contribute.
+                  Please reach out through the support channel linked from the
+                  landing page or your installation source. Include your browser
+                  version and a short description of what you were doing when
+                  the issue occurred.
                 </p>
               </div>
 
               <div className="faq-item">
-                <h4>Is EchoFootPrint open source?</h4>
+                <h4>Is my data shared with anyone?</h4>
                 <p>
-                  Yes! EchoFootPrint is released under the MIT license. You can
-                  view the source code, contribute, or fork the project on
-                  GitHub.
+                  No. All detections are stored locally in your browser. We do
+                  not transmit data to any servers, and there is no telemetry or
+                  analytics.
                 </p>
               </div>
             </section>

@@ -5,12 +5,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import {
-  db,
-  getFootprints,
-  getStats,
-  calculatePlatformStats,
-} from './utils/db.js';
+import { db, getFootprints, getStats, calculatePlatformStats } from './utils/db.js';
 import { TRACKING_PLATFORMS } from '../lib/pixel-detector.js';
 import RadialGraph from './components/RadialGraph.jsx';
 import BipartiteGraph from './components/BipartiteGraph.jsx';
@@ -35,6 +30,14 @@ function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
   const [showInsights, setShowInsights] = useState(true);
+  const [mapLocationStats, setMapLocationStats] = useState({
+    locations: 0,
+    totalEvents: 0,
+    eventsWithGeo: 0,
+    topLocation: null,
+    topCount: 0,
+    unknownCount: 0,
+  });
 
   // When filters change, reshow insights with updated data
   useEffect(() => {
@@ -43,7 +46,7 @@ function App() {
 
   // When switching views, reshow insights (notably for bipartite)
   useEffect(() => {
-    if (activeView === 'bipartite') {
+    if (activeView === 'bipartite' || activeView === 'map') {
       setShowInsights(true);
     }
   }, [activeView]);
@@ -261,8 +264,55 @@ function App() {
     return { messages };
   }, [footprints]);
 
+  const footprintsCount = Array.isArray(footprints) ? footprints.length : 0;
+
+  const mapInsights = useMemo(() => {
+    const {
+      locations = 0,
+      totalEvents = 0,
+      eventsWithGeo = 0,
+      topLocation,
+      topCount = 0,
+      unknownCount = 0,
+    } = mapLocationStats || {};
+
+    if (!footprints || footprints.length === 0) {
+      return {
+        messages: [
+          'Browse a few sites to populate the map with geolocated detections.',
+        ],
+      };
+    }
+
+    if (!eventsWithGeo || !locations) {
+      return {
+        messages: [
+          'Geolocation data not available yet—continue browsing to see map coverage.',
+        ],
+      };
+    }
+
+    const topShare = Math.round((topCount / eventsWithGeo) * 100);
+    const unknownShare =
+      unknownCount > 0 ? Math.round((unknownCount / totalEvents) * 100) : 0;
+
+    const messages = [
+      `${locations} location${locations === 1 ? '' : 's'} detected across ${eventsWithGeo} mapped event${eventsWithGeo === 1 ? '' : 's'}.`,
+      `${topLocation || 'Top region'} holds ${topShare}% of mapped detections (${topCount} event${topCount === 1 ? '' : 's'}).`,
+      unknownCount > 0
+        ? `${unknownShare}% of detections have unknown location (cached lookup pending or unavailable).`
+        : 'Data stays local; map rendering uses cached geo lookups only.',
+    ];
+
+    return { messages };
+  }, [mapLocationStats, footprints]);
+
   const displayedInsights =
-    activeView === 'bipartite' ? bipartiteInsights.messages : insights.messages;
+    activeView === 'bipartite'
+      ? bipartiteInsights.messages
+      : activeView === 'map'
+        ? mapInsights.messages
+        : insights.messages;
 
   // Handler for platform selection from sidebar
   const handlePlatformSelect = (platformId, platformData) => {
@@ -537,7 +587,11 @@ function App() {
           )}
           {activeView === 'map' && (
             <div id="map-view" role="tabpanel" aria-labelledby="map-tab">
-              <MapView footprints={footprints} stats={stats} />
+              <MapView
+                footprints={footprints}
+                stats={stats}
+                onLocationStatsUpdate={setMapLocationStats}
+              />
             </div>
           )}
           {activeView === 'table' && (
@@ -549,15 +603,7 @@ function App() {
 
         <footer className="dashboard-footer">
           <p>
-            All data stored locally. Zero telemetry. Open source.{' '}
-            <a
-              href="https://github.com/luongnv89/echo-footprint"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              View on GitHub
-            </a>
-            {' • '}
+            All data stored locally. Zero telemetry.{' '}
             <a
               href="https://github.com/luongnv89/echo-footprint/blob/main/privacy-policy.md"
               target="_blank"

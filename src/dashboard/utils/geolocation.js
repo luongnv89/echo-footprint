@@ -244,7 +244,11 @@ async function fetchGeolocation(domain, attempt = 0) {
       },
     });
 
-    console.log(`Response status for ${domain}:`, response.status, response.statusText);
+    console.log(
+      `Response status for ${domain}:`,
+      response.status,
+      response.statusText
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -406,7 +410,10 @@ export async function getGeolocationForDomain(domain) {
 
     return await requestPromise;
   } catch (error) {
-    console.error(`Dashboard Geolocation: Error for ${normalizedDomain}:`, error);
+    console.error(
+      `Dashboard Geolocation: Error for ${normalizedDomain}:`,
+      error
+    );
     activeRequests.delete(normalizedDomain);
     return null;
   }
@@ -498,7 +505,11 @@ export async function fetchBulkGeolocation(domains, onProgress = null) {
       console.log(`Bulk fetch result for ${domain}:`, geoData);
 
       if (geoData && geoData.lat && geoData.lon) {
-        console.log(`✓ Adding ${domain} to geoMap with coords:`, geoData.lat, geoData.lon);
+        console.log(
+          `✓ Adding ${domain} to geoMap with coords:`,
+          geoData.lat,
+          geoData.lon
+        );
         geoMap[domain] = geoData;
       } else {
         console.warn(`✗ Skipping ${domain} - no valid coordinates:`, geoData);

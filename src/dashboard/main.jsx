@@ -59,7 +59,7 @@ async function init() {
     const help = document.createElement('p');
     help.style.cssText = 'font-size: 14px; color: #999;';
     help.textContent =
-      'Try refreshing the page. If the problem persists, please report it on GitHub.';
+      'Try refreshing the page. If the problem persists, contact the support team.';
 
     errorContainer.appendChild(title);
     errorContainer.appendChild(message);

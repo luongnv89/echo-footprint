@@ -26,7 +26,8 @@ L.Icon.Default.mergeOptions({
   iconAnchor: [12, 41],
 });
 
-function MapView({ footprints, stats }) {
+function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
+  const safeFootprints = Array.isArray(footprints) ? footprints : [];
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersLayerRef = useRef(null);
@@ -35,11 +36,12 @@ function MapView({ footprints, stats }) {
   const [geoData, setGeoData] = useState({});
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ current: 0, total: 0 });
+  const [locationGroups, setLocationGroups] = useState({});
 
   // Load geolocation data for all domains
   useEffect(() => {
     async function loadGeoData() {
-      const uniqueDomains = [...new Set(footprints.map(f => f.domain))];
+      const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
       console.log('MapView: Loading geolocation for domains:', uniqueDomains);
       const geoMap = {};
 
@@ -68,7 +70,10 @@ function MapView({ footprints, stats }) {
             uncachedDomains,
             progress => {
               console.log('MapView: Progress:', progress);
-              setGeoProgress({ current: progress.current, total: progress.total });
+              setGeoProgress({
+                current: progress.current,
+                total: progress.total,
+              });
             }
           );
 
@@ -85,10 +90,10 @@ function MapView({ footprints, stats }) {
       }
     }
 
-    if (footprints && footprints.length > 0) {
+    if (safeFootprints && safeFootprints.length > 0) {
       loadGeoData();
     }
-  }, [footprints]);
+  }, [safeFootprints]);
 
   // Initialize map
   useEffect(() => {
@@ -181,26 +186,68 @@ function MapView({ footprints, stats }) {
       },
     });
 
-    // Group footprints by location
-    const locationGroups = {};
+    // Group events by location
+    const grouped = {};
+    const domainSetPerLocation = {};
 
-    Object.entries(geoData).forEach(([domain, geo]) => {
+    footprints.forEach(fp => {
+      const geo = geoData[fp.domain];
+      if (!geo || typeof geo.lat !== 'number' || typeof geo.lon !== 'number') {
+        return;
+      }
       const key = `${geo.lat},${geo.lon}`;
-      if (!locationGroups[key]) {
-        locationGroups[key] = {
+      if (!grouped[key]) {
+        grouped[key] = {
           lat: geo.lat,
           lon: geo.lon,
           country: geo.country,
           region: geo.region,
           city: geo.city,
           domains: [],
+          events: 0,
         };
+        domainSetPerLocation[key] = new Set();
       }
-      locationGroups[key].domains.push(domain);
+      grouped[key].events += 1;
+      domainSetPerLocation[key].add(fp.domain);
+    });
+
+    // finalize domains arrays
+    Object.entries(domainSetPerLocation).forEach(([key, set]) => {
+      grouped[key].domains = Array.from(set);
+    });
+
+    setLocationGroups(grouped);
+
+    // Update parent with location stats
+    const eventsWithGeo = Object.values(grouped).reduce(
+      (sum, loc) => sum + loc.events,
+      0
+    );
+    const totalEvents = safeFootprints.length;
+    const top = Object.values(grouped).reduce(
+      (max, loc) =>
+        loc.events > max.count
+          ? {
+              name: loc.city || loc.region || loc.country || 'Unknown',
+              count: loc.events,
+            }
+          : max,
+      { name: null, count: 0 }
+    );
+    const topLocationName = top.name;
+    const topCount = top.count;
+    onLocationStatsUpdate({
+      locations: Object.keys(grouped).length,
+      totalEvents,
+      eventsWithGeo,
+      topLocation: topLocationName,
+      topCount,
+      unknownCount: totalEvents - eventsWithGeo,
     });
 
     // Add markers for each location
-    Object.values(locationGroups).forEach(location => {
+    Object.values(grouped).forEach(location => {
       const marker = L.marker([location.lat, location.lon]);
 
       // Create popup content
@@ -218,6 +265,7 @@ function MapView({ footprints, stats }) {
               ${location.domains.length > 5 ? `<li>...and ${location.domains.length - 5} more</li>` : ''}
             </ul>
           </div>
+          <p class="location-info">Events: ${location.events}</p>
         </div>
       `;
 
@@ -243,7 +291,22 @@ function MapView({ footprints, stats }) {
         maxZoom: 10,
       });
     }
-  }, [geoData]);
+  }, [geoData, safeFootprints, onLocationStatsUpdate]);
+  // Update parent when footprints change but geo data already present (counts might shift)
+  // If no geo data yet, report unknown stats upstream
+  useEffect(() => {
+    if (safeFootprints.length === 0) return;
+    if (Object.keys(geoData).length === 0) {
+      onLocationStatsUpdate({
+        locations: 0,
+        totalEvents: safeFootprints.length,
+        eventsWithGeo: 0,
+        topLocation: null,
+        topCount: 0,
+        unknownCount: safeFootprints.length,
+      });
+    }
+  }, [geoData, safeFootprints, onLocationStatsUpdate]);
 
   // Toggle theme
   const toggleTheme = () => {
@@ -270,7 +333,7 @@ function MapView({ footprints, stats }) {
         setGeoData({});
 
         // Force reload by updating footprints reference
-        const uniqueDomains = [...new Set(footprints.map(f => f.domain))];
+        const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
         console.log('Reloading geolocation for:', uniqueDomains);
 
         // Trigger reload
@@ -335,11 +398,11 @@ function MapView({ footprints, stats }) {
 
         <div className="map-info">
           <span className="map-stat">
-            {Object.keys(geoData).length} locations
+            {Object.keys(locationGroups).length} locations
           </span>
           <span className="map-stat-sep">•</span>
           <span className="map-stat">
-            {footprints.filter(f => geoData[f.domain]).length} tracked events
+            {safeFootprints.filter(f => geoData[f.domain]).length} tracked events
           </span>
         </div>
       </div>
