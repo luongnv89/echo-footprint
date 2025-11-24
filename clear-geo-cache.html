@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Geolocation Cache</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #00d4aa;
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #ff5252;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        .success {
+            color: #00d4aa;
+        }
+        .error {
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clear Geolocation Cache</h1>
+    <p>This will clear all cached geolocation data from IndexedDB and memory.</p>
+    <button onclick="clearCache()">Clear Geolocation Cache</button>
+    <div id="status"></div>
+
+    <script type="module">
+        // Import Dexie
+        import Dexie from 'https://cdn.jsdelivr.net/npm/dexie@4.0.1/+esm';
+
+        const db = new Dexie('EchoFootPrint');
+        db.version(2).stores({
+            footprints: '++id, timestamp, domain, url, pixelType, platform',
+            settings: 'key',
+            geoCache: 'domain, country, region',
+        });
+
+        window.clearCache = async function() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Clearing cache...';
+
+            try {
+                // Clear geoCache table
+                const count = await db.geoCache.count();
+                await db.geoCache.clear();
+
+                // Clear rate limit state
+                await db.settings.delete('geoRateLimitState');
+
+                statusDiv.innerHTML = `<span class="success">✓ Successfully cleared ${count} cached geolocation entries!</span><br>`;
+                statusDiv.innerHTML += `<span class="success">✓ Cleared rate limit state</span><br>`;
+                statusDiv.innerHTML += `<br><strong>Next steps:</strong><br>`;
+                statusDiv.innerHTML += `1. Reload the extension dashboard<br>`;
+                statusDiv.innerHTML += `2. Go to Map View<br>`;
+                statusDiv.innerHTML += `3. Watch the console for fresh API calls`;
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="error">✗ Error: ${error.message}</span>`;
+                console.error(error);
+            }
+        };
+    </script>
+</body>
+</html>

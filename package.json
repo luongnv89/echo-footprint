@@ -1,6 +1,6 @@
 {
   "name": "echofootprint",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Privacy-first browser extension that visualizes cross-site tracking from 50 major ad network platforms with 100% local processing, no data collection, and GDPR-first privacy and security",
   "type": "module",
   "scripts": {

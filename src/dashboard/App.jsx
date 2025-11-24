@@ -14,8 +14,7 @@ import {
 import { TRACKING_PLATFORMS } from '../lib/pixel-detector.js';
 import RadialGraph from './components/RadialGraph.jsx';
 import BipartiteGraph from './components/BipartiteGraph.jsx';
-// MapView removed - requires geolocation which was removed per user request
-// import MapView from './components/MapView.jsx';
+import MapView from './components/MapView.jsx';
 import DataTable from './components/DataTable.jsx';
 import PlatformStats from './components/PlatformStats.jsx';
 import SettingsSheet from './components/SettingsSheet.jsx';
@@ -31,7 +30,7 @@ function App() {
     endDate: null,
   });
 
-  const [activeView, setActiveView] = useState('graph'); // 'graph', 'bipartite', or 'table'
+  const [activeView, setActiveView] = useState('graph'); // 'graph', 'bipartite', 'map', or 'table'
   const [showSettings, setShowSettings] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState(null); // Track selected platform from sidebar
@@ -112,8 +111,7 @@ function App() {
     let topPlatformShare = 0;
     if (platformEntries.length && totalDetections > 0) {
       const [topPlatformId, topPlatformData] = platformEntries.reduce(
-        (max, entry) =>
-          entry[1].detections > max[1].detections ? entry : max,
+        (max, entry) => (entry[1].detections > max[1].detections ? entry : max),
         platformEntries[0]
       );
       topPlatformName =
@@ -176,7 +174,9 @@ function App() {
   const bipartiteInsights = useMemo(() => {
     if (!footprints || footprints.length === 0) {
       return {
-        messages: ['Switch to graph and start browsing to populate the bipartite view.'],
+        messages: [
+          'Switch to graph and start browsing to populate the bipartite view.',
+        ],
       };
     }
 
@@ -222,11 +222,12 @@ function App() {
 
     const avgPlatformsPerDomain =
       totalDomains > 0
-        ? (Array.from(domainToPlatforms.values()).reduce(
-            (sum, set) => sum + set.size,
-            0
-          ) /
-            totalDomains).toFixed(1)
+        ? (
+            Array.from(domainToPlatforms.values()).reduce(
+              (sum, set) => sum + set.size,
+              0
+            ) / totalDomains
+          ).toFixed(1)
         : '0';
 
     const topPlatformCoverage =
@@ -337,7 +338,9 @@ function App() {
                 role="status"
                 aria-label="Tracking insights"
               >
-                <div className="insight-banner-icon" aria-hidden="true">★</div>
+                <div className="insight-banner-icon" aria-hidden="true">
+                  ★
+                </div>
                 <div className="dashboard-insights-text">
                   {displayedInsights.length > 0 ? (
                     displayedInsights.map((msg, idx) => (
@@ -346,7 +349,9 @@ function App() {
                       </p>
                     ))
                   ) : (
-                    <p className="insight-line">Start browsing to see insights.</p>
+                    <p className="insight-line">
+                      Start browsing to see insights.
+                    </p>
                   )}
                 </div>
                 <button
@@ -468,7 +473,23 @@ function App() {
               </svg>
               Bipartite Graph
             </button>
-            {/* Map View disabled - requires geolocation which was removed per user request */}
+            <button
+              role="tab"
+              aria-selected={activeView === 'map'}
+              aria-controls="map-view"
+              className={`tab-button ${activeView === 'map' ? 'active' : ''}`}
+              onClick={() => setActiveView('map')}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M7 3l-5 2v11l5-2 6 2 5-2V3l-5 2-6-2zm0 2v9l6 2V7L7 5z" />
+              </svg>
+              Map View
+            </button>
             <button
               role="tab"
               aria-selected={activeView === 'table'}
@@ -514,7 +535,11 @@ function App() {
               <BipartiteGraph footprints={footprints} stats={stats} />
             </div>
           )}
-          {/* Map View disabled - requires geolocation which was removed per user request */}
+          {activeView === 'map' && (
+            <div id="map-view" role="tabpanel" aria-labelledby="map-tab">
+              <MapView footprints={footprints} stats={stats} />
+            </div>
+          )}
           {activeView === 'table' && (
             <div id="table-view" role="tabpanel" aria-labelledby="table-tab">
               <DataTable footprints={footprints} stats={stats} />

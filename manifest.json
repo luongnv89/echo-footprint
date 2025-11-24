@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "EchoFootPrint",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Visualize how 50 major ad networks track you across the web. 100% local processing, no data collection, GDPR-first privacy and security.",
   "permissions": [],
   "host_permissions": ["http://*/*", "https://*/*"],
@@ -39,6 +39,6 @@
     "128": "assets/icon-128.png"
   },
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.tile.openstreetmap.org https://unpkg.com data: blob:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://unpkg.com data: blob:; connect-src 'self' http://ip-api.com https://ip-api.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   }
 }

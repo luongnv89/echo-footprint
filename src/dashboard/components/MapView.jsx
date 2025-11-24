@@ -10,7 +10,8 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import { getGeoCache } from '../utils/db.js';
+import { getGeoCache, db } from '../utils/db.js';
+import { fetchBulkGeolocation, clearAllCaches } from '../utils/geolocation.js';
 import '../styles/MapView.css';
 
 // Fix Leaflet default marker icons
@@ -32,21 +33,56 @@ function MapView({ footprints, stats }) {
   const [mapTheme, setMapTheme] = useState('dark');
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [geoData, setGeoData] = useState({});
+  const [isLoadingGeo, setIsLoadingGeo] = useState(false);
+  const [geoProgress, setGeoProgress] = useState({ current: 0, total: 0 });
 
   // Load geolocation data for all domains
   useEffect(() => {
     async function loadGeoData() {
       const uniqueDomains = [...new Set(footprints.map(f => f.domain))];
+      console.log('MapView: Loading geolocation for domains:', uniqueDomains);
       const geoMap = {};
 
+      // First, load all cached data
       for (const domain of uniqueDomains) {
         const cached = await getGeoCache(domain);
         if (cached && cached.lat && cached.lon) {
           geoMap[domain] = cached;
+          console.log(`MapView: Cached geo data for ${domain}:`, cached);
         }
       }
 
       setGeoData(geoMap);
+
+      // Then, fetch missing geolocation data
+      const uncachedDomains = uniqueDomains.filter(d => !geoMap[d]);
+      console.log('MapView: Uncached domains:', uncachedDomains);
+
+      if (uncachedDomains.length > 0) {
+        setIsLoadingGeo(true);
+        setGeoProgress({ current: 0, total: uncachedDomains.length });
+
+        try {
+          console.log('MapView: Fetching bulk geolocation...');
+          const newGeoData = await fetchBulkGeolocation(
+            uncachedDomains,
+            progress => {
+              console.log('MapView: Progress:', progress);
+              setGeoProgress({ current: progress.current, total: progress.total });
+            }
+          );
+
+          console.log('MapView: Fetched geo data:', newGeoData);
+          // Merge with existing data
+          setGeoData(prev => ({ ...prev, ...newGeoData }));
+        } catch (error) {
+          console.error('MapView: Error fetching geolocation data:', error);
+        } finally {
+          setIsLoadingGeo(false);
+        }
+      } else {
+        console.log('MapView: All domains already cached');
+      }
     }
 
     if (footprints && footprints.length > 0) {
@@ -214,6 +250,54 @@ function MapView({ footprints, stats }) {
     setMapTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  // Clear geo cache and reload
+  const handleClearCache = async () => {
+    if (
+      confirm(
+        'Clear all cached geolocation data? This will force fresh lookups from the API.'
+      )
+    ) {
+      try {
+        // Clear memory cache
+        await clearAllCaches();
+
+        // Clear IndexedDB cache
+        await db.geoCache.clear();
+
+        console.log('Geo cache cleared, reloading data...');
+
+        // Reset state
+        setGeoData({});
+
+        // Force reload by updating footprints reference
+        const uniqueDomains = [...new Set(footprints.map(f => f.domain))];
+        console.log('Reloading geolocation for:', uniqueDomains);
+
+        // Trigger reload
+        if (uniqueDomains.length > 0) {
+          setIsLoadingGeo(true);
+          setGeoProgress({ current: 0, total: uniqueDomains.length });
+
+          const newGeoData = await fetchBulkGeolocation(
+            uniqueDomains,
+            progress => {
+              setGeoProgress({
+                current: progress.current,
+                total: progress.total,
+              });
+            }
+          );
+
+          setGeoData(newGeoData);
+          setIsLoadingGeo(false);
+        }
+      } catch (error) {
+        console.error('Error clearing cache:', error);
+        alert('Error clearing cache: ' + error.message);
+      }
+    }
+  };
+
   return (
     <div className="map-view-container">
       <div className="map-controls">
@@ -232,6 +316,21 @@ function MapView({ footprints, stats }) {
               <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
             </svg>
           )}
+        </button>
+
+        <button
+          className="map-control-button"
+          onClick={handleClearCache}
+          aria-label="Clear geolocation cache"
+          title="Clear cached geolocation data and reload"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+              clipRule="evenodd"
+            />
+          </svg>
         </button>
 
         <div className="map-info">
@@ -290,15 +389,35 @@ function MapView({ footprints, stats }) {
         </div>
       )}
 
-      {Object.keys(geoData).length === 0 && footprints.length > 0 && (
+      {isLoadingGeo && (
         <div className="map-overlay-message">
           <p>
-            Geolocation data is being fetched for tracked domains.
+            Fetching geolocation data for tracked domains...
             <br />
-            This may take a few moments...
+            {geoProgress.current} / {geoProgress.total} domains processed
           </p>
+          <div className="geo-progress-bar">
+            <div
+              className="geo-progress-fill"
+              style={{
+                width: `${geoProgress.total > 0 ? (geoProgress.current / geoProgress.total) * 100 : 0}%`,
+              }}
+            ></div>
+          </div>
         </div>
       )}
+
+      {!isLoadingGeo &&
+        Object.keys(geoData).length === 0 &&
+        footprints.length > 0 && (
+          <div className="map-overlay-message">
+            <p>
+              No geolocation data available for tracked domains.
+              <br />
+              Domains may not have resolvable IP addresses.
+            </p>
+          </div>
+        )}
     </div>
   );
 }
