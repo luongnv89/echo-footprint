@@ -14,7 +14,7 @@
     "test:run": "vitest --run",
     "test:coverage": "vitest --run --coverage",
     "test:ui": "vitest --ui",
-    "zip": "npm run build && cd dist && zip -r ../echofootprint.zip .",
+    "zip": "npm run build && rm -f echofootprint.zip && cd dist && zip -r ../echofootprint.zip .",
     "prepare": "husky"
   },
   "keywords": [
@@ -50,6 +50,7 @@
     "husky": "^9.1.7",
     "jsdom": "^27.0.1",
     "prettier": "^3.1.1",
+    "sharp": "^0.34.5",
     "vite": "^5.0.8",
     "vitest": "^1.0.4"
   }

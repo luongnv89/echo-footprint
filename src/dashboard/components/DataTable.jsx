@@ -34,7 +34,9 @@ function DataTable({ footprints, stats }) {
         setGeoMap({});
         return;
       }
-      const domains = [...new Set(footprints.map(fp => fp.domain).filter(Boolean))];
+      const domains = [
+        ...new Set(footprints.map(fp => fp.domain).filter(Boolean)),
+      ];
       const entries = await Promise.all(
         domains.map(async domain => [domain, await getGeoCache(domain)])
       );
@@ -121,8 +123,12 @@ function DataTable({ footprints, stats }) {
           bVal = b.url.toLowerCase();
           break;
         case 'platform':
-          aVal = (TRACKING_PLATFORMS[a.platform || 'facebook']?.name || 'Unknown').toLowerCase();
-          bVal = (TRACKING_PLATFORMS[b.platform || 'facebook']?.name || 'Unknown').toLowerCase();
+          aVal = (
+            TRACKING_PLATFORMS[a.platform || 'facebook']?.name || 'Unknown'
+          ).toLowerCase();
+          bVal = (
+            TRACKING_PLATFORMS[b.platform || 'facebook']?.name || 'Unknown'
+          ).toLowerCase();
           break;
         case 'pixelType':
           aVal = a.pixelType.toLowerCase();
@@ -317,11 +323,13 @@ function DataTable({ footprints, stats }) {
       <div className="results-info">
         {search ? (
           <span>
-            Showing {groupedData.length} grouped results (from {footprints.length} detections)
+            Showing {groupedData.length} grouped results (from{' '}
+            {footprints.length} detections)
           </span>
         ) : (
           <span>
-            Showing all {groupedData.length} grouped results (from {footprints.length} detections)
+            Showing all {groupedData.length} grouped results (from{' '}
+            {footprints.length} detections)
           </span>
         )}
       </div>
@@ -421,11 +429,14 @@ function DataTable({ footprints, stats }) {
             {paginatedData.map(group => {
               const isExpanded = expandedGroups.has(group.key);
               const url = group.url || '';
-              const displayUrl = url.length > 60 ? `${url.substring(0, 60)}...` : url;
+              const displayUrl =
+                url.length > 60 ? `${url.substring(0, 60)}...` : url;
               const platformName =
-                TRACKING_PLATFORMS[group.platform || 'facebook']?.name || 'Unknown';
+                TRACKING_PLATFORMS[group.platform || 'facebook']?.name ||
+                'Unknown';
               const platformColor =
-                TRACKING_PLATFORMS[group.platform || 'facebook']?.color || '#4a90e2';
+                TRACKING_PLATFORMS[group.platform || 'facebook']?.color ||
+                '#4a90e2';
 
               return (
                 <React.Fragment key={group.key}>
@@ -433,7 +444,9 @@ function DataTable({ footprints, stats }) {
                     className={`group-row ${isExpanded ? 'expanded' : ''}`}
                     onClick={() => {
                       const next = new Set(expandedGroups);
-                      next.has(group.key) ? next.delete(group.key) : next.add(group.key);
+                      next.has(group.key)
+                        ? next.delete(group.key)
+                        : next.add(group.key);
                       setExpandedGroups(next);
                     }}
                     aria-expanded={isExpanded}
@@ -474,7 +487,10 @@ function DataTable({ footprints, stats }) {
                     <td className="platform-cell">
                       <span
                         className="platform-badge"
-                        style={{ backgroundColor: platformColor, color: '#fff' }}
+                        style={{
+                          backgroundColor: platformColor,
+                          color: '#fff',
+                        }}
                       >
                         {platformName}
                       </span>
@@ -488,8 +504,8 @@ function DataTable({ footprints, stats }) {
                       <td colSpan={7}>
                         <div className="group-detail-header">
                           <span>
-                            Showing {group.count} event{group.count === 1 ? '' : 's'} for this
-                            group
+                            Showing {group.count} event
+                            {group.count === 1 ? '' : 's'} for this group
                           </span>
                         </div>
                         <div className="timeline">
@@ -499,7 +515,10 @@ function DataTable({ footprints, stats }) {
                               .slice()
                               .sort((a, b) => b.timestamp - a.timestamp)
                               .map((fp, idx) => (
-                                <div key={fp.id || idx} className="timeline-point">
+                                <div
+                                  key={fp.id || idx}
+                                  className="timeline-point"
+                                >
                                   <span className="timeline-dot" />
                                   <span className="timeline-timestamp">
                                     {formatTimestamp(fp.timestamp)}

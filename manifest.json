@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "EchoFootPrint",
   "version": "1.2.0",
-  "description": "Visualize how 50 major ad networks track you across the web. 100% local processing, no data collection, GDPR-first privacy and security.",
+  "description": "Visualize 50 major ad networks tracking you—100% local, zero telemetry, privacy-first.",
   "permissions": [],
   "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
