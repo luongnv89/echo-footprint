@@ -402,7 +402,8 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
           </span>
           <span className="map-stat-sep">•</span>
           <span className="map-stat">
-            {safeFootprints.filter(f => geoData[f.domain]).length} tracked events
+            {safeFootprints.filter(f => geoData[f.domain]).length} tracked
+            events
           </span>
         </div>
       </div>

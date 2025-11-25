@@ -13,17 +13,19 @@
       href="https://fonts.gstatic.com"
       crossorigin
     />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container header-inner">
         <div class="brand">
-          <img src="../docs/logo.svg" alt="EchoFootPrint logo" class="logo" />
+          <img src="./logo.svg" alt="EchoFootPrint logo" class="logo" />
           <span class="brand-name">EchoFootPrint</span>
         </div>
         <nav class="nav">
@@ -32,7 +34,7 @@
           <a href="#gallery">Gallery</a>
           <a href="./privacy.html">Privacy</a>
         </nav>
-        <a class="button primary" href="#install">Install Extension</a>
+        <a class="button primary" href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb">Install Extension</a>
       </div>
     </header>
 
@@ -47,32 +49,53 @@
               Zero configuration, zero telemetry—just a clear view of your footprint.
             </p>
             <div class="hero-actions">
-              <a class="button primary" href="#" aria-label="Install EchoFootPrint extension">
+              <a class="button primary" href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb" aria-label="Install EchoFootPrint extension">
                 Install Extension
               </a>
               <a class="text-link" href="#how-it-works">See how it works</a>
             </div>
             <div class="hero-badges">
-              <span class="badge">Local data only</span>
-              <span class="badge">No accounts</span>
-              <span class="badge">Private build</span>
+              <span class="badge">
+                <i data-lucide="shield-check" class="icon"></i>Local data only
+              </span>
+              <span class="badge">
+                <i data-lucide="lock" class="icon"></i>No accounts
+              </span>
+              <span class="badge">
+                <i data-lucide="eye-off" class="icon"></i>Private build
+              </span>
             </div>
           </div>
           <div class="hero-visual">
-            <div class="visual-card map-preview" role="img" aria-label="Map view preview">
-              <div class="visual-title">Map View</div>
-              <div class="map-pins">
-                <span class="pin"></span>
-                <span class="pin"></span>
-                <span class="pin"></span>
-                <span class="pin"></span>
-                <span class="pin"></span>
-              </div>
-              <div class="legend">
-                <span class="legend-dot"></span>
-                <span class="legend-text">Detected platforms mapped globally</span>
-              </div>
+            <div class="visual-card focus-frame" role="img" aria-label="Bipartite graph preview">
+              <img src="./screenshots/graph-view-focus.png" alt="Graph view screenshot" class="screenshot full" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="social-proof">
+        <div class="container proof-grid">
+          <div class="proof-item">
+            <div class="proof-badge">
+              <i data-lucide="shield-check" class="icon"></i>
+              Privacy-first, local-only
+            </div>
+            <p>Zero telemetry or accounts. All detections stay on your device.</p>
+          </div>
+          <div class="proof-item">
+            <div class="proof-badge">
+              <i data-lucide="sparkles" class="icon"></i>
+              Verified by Google
+            </div>
+            <p>Distributed through the Chrome Web Store with reviewed permissions.</p>
+          </div>
+          <div class="proof-item">
+            <div class="proof-badge">
+              <i data-lucide="users" class="icon"></i>
+              Trusted by researchers
+            </div>
+            <p>Built for journalists, analysts, and privacy teams to audit tracking.</p>
           </div>
         </div>
       </section>
@@ -139,36 +162,69 @@
             <p class="eyebrow">Views</p>
             <h2>Choose the lens that fits your analysis</h2>
           </div>
-          <div class="gallery-grid">
-            <figure class="visual-card bipartite-preview" role="img" aria-label="Bipartite graph preview">
-              <figcaption>Bipartite Graph</figcaption>
-            </figure>
-            <figure class="visual-card radial-preview" role="img" aria-label="Radial network preview">
-              <figcaption>Radial Graph</figcaption>
-            </figure>
-            <figure class="visual-card map-preview" role="img" aria-label="Map view preview">
-              <figcaption>Map View</figcaption>
-            </figure>
-            <figure class="visual-card table-preview" role="img" aria-label="Data table preview">
-              <figcaption>Data Table</figcaption>
-            </figure>
-            <figure class="visual-card settings-preview" role="img" aria-label="Settings preview">
-              <figcaption>Settings & Data Control</figcaption>
-            </figure>
+          <div class="carousel">
+            <div class="carousel-track" id="carousel-track">
+              <figure class="carousel-slide" aria-label="Radial graph detail preview">
+                <img src="./screenshots/graph-view-detail-google.png" alt="Radial graph detail screenshot" class="carousel-image" />
+                <figcaption>Radial Graph (Detail)</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Bipartite graph detail preview">
+                <img src="./screenshots/bipartie-view-detail-google.png" alt="Bipartite graph detail screenshot" class="carousel-image" />
+                <figcaption>Bipartite Graph (Detail)</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Radial graph preview">
+                <img src="./screenshots/graph-view.png" alt="Radial graph screenshot" class="carousel-image" />
+                <figcaption>Radial Graph</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Bipartite graph preview">
+                <img src="./screenshots/bipartie-view.png" alt="Bipartite graph screenshot" class="carousel-image" />
+                <figcaption>Bipartite Graph</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Map view detail preview">
+                <img src="./screenshots/map-view-detail.png" alt="Map view detail screenshot" class="carousel-image" />
+                <figcaption>Map View (Detail)</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Map view preview">
+                <img src="./screenshots/map-view.png" alt="Map view screenshot" class="carousel-image" />
+                <figcaption>Map View</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Data table detail preview">
+                <img src="./screenshots/table-view-detail.png" alt="Data table detail screenshot" class="carousel-image" />
+                <figcaption>Data Table (Detail)</figcaption>
+              </figure>
+              <figure class="carousel-slide" aria-label="Data table preview">
+                <img src="./screenshots/table-view.png" alt="Data table screenshot" class="carousel-image" />
+                <figcaption>Data Table</figcaption>
+              </figure>
+            </div>
+            <div class="carousel-controls">
+              <button class="carousel-btn" id="prev-slide" aria-label="Previous view">
+                ‹
+              </button>
+              <div class="carousel-dots" id="carousel-dots"></div>
+              <button class="carousel-btn" id="next-slide" aria-label="Next view">
+                ›
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       <section class="privacy-band">
         <div class="container privacy-content">
-          <div>
+          <div class="privacy-copy">
             <p class="eyebrow">Privacy First</p>
             <h2>Your browsing data stays on your device</h2>
             <p class="body">
               No accounts, no telemetry, no cloud sync. Clear your footprint anytime from Settings.
             </p>
+            <a class="button secondary" href="./privacy.html">Read Privacy Policy</a>
           </div>
-          <a class="button secondary" href="./privacy.html">Read Privacy Policy</a>
+          <div class="privacy-visual">
+            <div class="visual-card focus-frame" role="img" aria-label="Settings preview">
+              <img src="./screenshots/settings.png" alt="Settings screenshot" class="screenshot full" />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -178,7 +234,7 @@
             <h2>Ready to see your footprint?</h2>
             <p class="body">Install EchoFootPrint and reveal who tracks you across the web.</p>
           </div>
-          <a class="button primary" href="#" aria-label="Install EchoFootPrint extension">
+          <a class="button primary" href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb" aria-label="Install EchoFootPrint extension">
             Install Extension
           </a>
         </div>
@@ -290,6 +346,40 @@
         li.className = 'platform-tag';
         li.textContent = name;
         tagsContainer.appendChild(li);
+      });
+
+      if (window.lucide && window.lucide.createIcons) {
+        window.lucide.createIcons();
+      }
+
+      // Simple carousel
+      const track = document.getElementById('carousel-track');
+      const dotsContainer = document.getElementById('carousel-dots');
+      const slides = Array.from(track.children);
+      let currentIndex = 0;
+
+      slides.forEach((_, idx) => {
+        const dot = document.createElement('button');
+        dot.className = idx === 0 ? 'active' : '';
+        dot.addEventListener('click', () => goToSlide(idx));
+        dotsContainer.appendChild(dot);
+      });
+
+      function goToSlide(idx) {
+        currentIndex = idx;
+        track.style.transform = `translateX(-${idx * 100}%)`;
+        Array.from(dotsContainer.children).forEach((dot, i) => {
+          dot.classList.toggle('active', i === idx);
+        });
+      }
+
+      document.getElementById('prev-slide').addEventListener('click', () => {
+        const next = (currentIndex - 1 + slides.length) % slides.length;
+        goToSlide(next);
+      });
+      document.getElementById('next-slide').addEventListener('click', () => {
+        const next = (currentIndex + 1) % slides.length;
+        goToSlide(next);
       });
     </script>
   </body>

@@ -5,7 +5,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, getFootprints, getStats, calculatePlatformStats } from './utils/db.js';
+import {
+  db,
+  getFootprints,
+  getStats,
+  calculatePlatformStats,
+} from './utils/db.js';
 import { TRACKING_PLATFORMS } from '../lib/pixel-detector.js';
 import RadialGraph from './components/RadialGraph.jsx';
 import BipartiteGraph from './components/BipartiteGraph.jsx';
@@ -610,6 +615,14 @@ function App() {
               rel="noopener noreferrer"
             >
               Privacy Policy
+            </a>
+            {' • '}
+            <a
+              href="https://echo-footprint.luongnv.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              More detail
             </a>
           </p>
         </footer>
