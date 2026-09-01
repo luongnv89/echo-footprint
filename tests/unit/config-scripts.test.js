@@ -15,8 +15,8 @@ const pkg = JSON.parse(
 );
 
 describe('package.json P0 config', () => {
-  it('declares engines.node >= 20 matching CI', () => {
-    expect(pkg.engines.node).toMatch(/^>=20/);
+  it('declares engines.node >= 22 (issue #11 acceptance criteria)', () => {
+    expect(pkg.engines.node).toMatch(/^>=22/);
   });
 
   it('format script never writes; format:check and format:write exist', () => {
