@@ -1,12 +1,19 @@
 /**
  * Unit tests for content-script.js
  * Tests pixel detection lifecycle, error handling, and messaging
+ *
+ * Issue #20: pause + domain-exclusion gate (`shouldRecord`) is honored by
+ * the 3-second scan and the MutationObserver.
+ * Issue #21: detectors return all matching platforms, observer-vs-delayed
+ * dedup ensures a single pixel is recorded once.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
-// Mock chrome API
+// Mock chrome API (preserve the storage mock installed by tests/setup.js
+// so issue #20's shouldRecord() gate and issue #21's storage-backed dedup
+// have something to read).
 global.chrome = {
   runtime: {
     id: 'test-extension-id',
@@ -17,6 +24,15 @@ global.chrome = {
       }
     }),
     lastError: null,
+  },
+  storage: global.chrome?.storage || {
+    local: {
+      get: vi.fn((keys, callback) => {
+        if (callback) callback({});
+        return Promise.resolve({});
+      }),
+      set: vi.fn(),
+    },
   },
 };
 
@@ -361,5 +377,311 @@ describe('Content Script - Script Counting', () => {
 
     const scriptsWithSrc = dom.window.document.querySelectorAll('script[src]');
     expect(scriptsWithSrc.length).toBe(2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Issue #20: pause + domain-exclusion gate (shouldRecord)
+// ---------------------------------------------------------------------------
+
+describe('Content Script - shouldRecord() gate (issue #20)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    // Mock storage.get to return an empty record by default
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({});
+      return Promise.resolve({});
+    });
+    chrome.runtime.sendMessage = vi.fn((message, callback) => {
+      if (callback) callback({ success: true });
+      return Promise.resolve({ success: true });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns true when not paused and not excluded', async () => {
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+    await expect(shouldRecord()).resolves.toBe(true);
+  });
+
+  it('returns false when isPaused is true', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({ isPaused: true });
+      return Promise.resolve({ isPaused: true });
+    });
+
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+    await expect(shouldRecord()).resolves.toBe(false);
+  });
+
+  it('returns false when current hostname is in excludedDomains', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({ excludedDomains: [window.location.hostname] });
+      return Promise.resolve({ excludedDomains: [window.location.hostname] });
+    });
+
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+    await expect(shouldRecord()).resolves.toBe(false);
+  });
+
+  it('returns true when excludedDomains is empty array', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({ excludedDomains: [] });
+      return Promise.resolve({ excludedDomains: [] });
+    });
+
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+    await expect(shouldRecord()).resolves.toBe(true);
+  });
+
+  it('returns true when chrome.storage.local is unavailable', async () => {
+    const original = chrome.storage;
+    delete chrome.storage;
+
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+    await expect(shouldRecord()).resolves.toBe(true);
+
+    chrome.storage = original;
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Issue #21: all-platforms-per-scan + observer-vs-delayed dedup
+// ---------------------------------------------------------------------------
+
+describe('Content Script - multi-platform scan + dedup (issue #21)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    document.body.innerHTML = '';
+    // Mock storage returning an empty record (not paused, no exclusions)
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({});
+      return Promise.resolve({});
+    });
+    chrome.runtime.sendMessage = vi.fn((message, callback) => {
+      if (callback) callback({ success: true });
+      return Promise.resolve({ success: true });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('emits one sendMessage per matching platform (Facebook + Google)', async () => {
+    // Build a DOM with both Facebook and Google scripts
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(fb);
+    const ga = document.createElement('script');
+    ga.src = 'https://www.google-analytics.com/analytics.js';
+    document.body.appendChild(ga);
+
+    // Import the detector and run a single scan, then route through the
+    // content-script dedup logic via a small helper. (We can't drive the
+    // 3-second setTimeout directly, so we exercise the same building
+    // blocks the content script uses.)
+    const { detectFacebookPixel } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+
+    const detections = detectFacebookPixel();
+    expect(detections).toHaveLength(2);
+    const platforms = detections.map(d => d.platform).sort();
+    expect(platforms).toEqual(['facebook', 'google']);
+
+    // Simulate the content-script recordDetections loop
+    const seen = new Set();
+    for (const det of detections) {
+      const key = `${det.platform}|${det.pixelType}|${det.scriptSrc}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      chrome.runtime.sendMessage({ type: 'PIXEL_DETECTED', data: det }, () => {});
+    }
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(2);
+    const sent = chrome.runtime.sendMessage.mock.calls.map(c => c[0].data.platform).sort();
+    expect(sent).toEqual(['facebook', 'google']);
+  });
+
+  it('dedups observer vs delayed scan for the same pixel', async () => {
+    // Simulate the same pixel arriving from both the observer (dynamic) and
+    // the 3-second delayed scan (static). The dedup signature should make
+    // the second occurrence a no-op.
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+
+    // First the observer fires with a Facebook script
+    const observer = observeDynamicPixels(detection => {
+      // Simulate content-script recordDetections dedup
+      const key = `${detection.platform}|${detection.pixelType}|${detection.scriptSrc}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: detection },
+        () => {}
+      );
+    });
+
+    const seen = new Set();
+
+    // Inject a Facebook script
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(fb);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+
+    observer.disconnect();
+
+    // Now simulate the 3-second delayed scan surfacing the same Facebook script
+    const { detectFacebookPixel } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+    const detections = detectFacebookPixel();
+    for (const det of detections) {
+      const key = `${det.platform}|${det.pixelType}|${det.scriptSrc}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      chrome.runtime.sendMessage({ type: 'PIXEL_DETECTED', data: det }, () => {});
+    }
+
+    // The Facebook script was sent exactly once (by the observer).
+    // The delayed scan produced another entry with the same signature, so
+    // the dedup set filtered it out.
+    const fbMessages = chrome.runtime.sendMessage.mock.calls
+      .map(c => c[0].data)
+      .filter(d => d.platform === 'facebook');
+    expect(fbMessages).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Issue #20: observer pipeline honors the pause + exclusion gate
+// ---------------------------------------------------------------------------
+
+describe('Content Script - observer pipeline honors gate (issue #20)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    document.body.innerHTML = '';
+    chrome.runtime.sendMessage = vi.fn((message, callback) => {
+      if (callback) callback({ success: true });
+      return Promise.resolve({ success: true });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('does not sendMessage when paused', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({ isPaused: true });
+      return Promise.resolve({ isPaused: true });
+    });
+
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+
+    const observer = observeDynamicPixels(async detection => {
+      // Mirror the content-script observer pipeline
+      if (!(await shouldRecord())) return;
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: detection },
+        () => {}
+      );
+    });
+
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(fb);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    observer.disconnect();
+
+    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not sendMessage when current domain is excluded', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({ excludedDomains: [window.location.hostname] });
+      return Promise.resolve({ excludedDomains: [window.location.hostname] });
+    });
+
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+
+    const observer = observeDynamicPixels(async detection => {
+      if (!(await shouldRecord())) return;
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: detection },
+        () => {}
+      );
+    });
+
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(fb);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    observer.disconnect();
+
+    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('does sendMessage when not paused and not excluded', async () => {
+    chrome.storage.local.get = vi.fn((keys, callback) => {
+      if (callback) callback({});
+      return Promise.resolve({});
+    });
+
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+    const { shouldRecord } = await import(
+      '../../src/content/content-script.js'
+    );
+
+    const observer = observeDynamicPixels(async detection => {
+      if (!(await shouldRecord())) return;
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: detection },
+        () => {}
+      );
+    });
+
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(fb);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    observer.disconnect();
+
+    expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(1);
+    expect(chrome.runtime.sendMessage.mock.calls[0][0].data.platform).toBe(
+      'facebook'
+    );
   });
 });

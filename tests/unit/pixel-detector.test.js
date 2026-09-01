@@ -1,6 +1,10 @@
 /**
  * Unit tests for pixel-detector.js
  * Validates detection logic and performance requirements
+ *
+ * As of issues #20/#21, the detector exports return arrays of detections
+ * (one entry per matching platform) so a single scan can record every
+ * tracking platform on a page instead of only the first match.
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -40,23 +44,26 @@ describe('detectFacebookPixelScripts', () => {
     const result = detectFacebookPixelScripts();
 
     expect(result).toBeTruthy();
-    expect(result.detected).toBe(true);
-    expect(result.pixelType).toBe('script');
-    expect(result.domain).toBe('example.com');
-    expect(result.scriptSrc).toContain('connect.facebook.net');
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].detected).toBe(true);
+    expect(result[0].pixelType).toBe('script');
+    expect(result[0].domain).toBe('example.com');
+    expect(result[0].scriptSrc).toContain('connect.facebook.net');
   });
 
-  it('should return null when no Facebook script found', () => {
+  it('should return empty array when no Facebook script found', () => {
     const script = document.createElement('script');
     script.src = 'https://cdn.example.com/analytics.js';
     document.body.appendChild(script);
 
     const result = detectFacebookPixelScripts();
 
-    expect(result).toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([]);
   });
 
-  it('should detect multiple Facebook scripts', () => {
+  it('should detect multiple Facebook scripts as a single platform entry', () => {
     const script1 = document.createElement('script');
     script1.src = 'https://connect.facebook.net/en_US/fbevents.js';
     document.body.appendChild(script1);
@@ -68,8 +75,9 @@ describe('detectFacebookPixelScripts', () => {
     const result = detectFacebookPixelScripts();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('facebook');
-    expect(result.detected).toBe(true);
+    expect(result).toHaveLength(1);
+    expect(result[0].platform).toBe('facebook');
+    expect(result[0].detected).toBe(true);
   });
 
   it('should complete detection under 100ms', () => {
@@ -95,7 +103,7 @@ describe('detectFacebookPixelScripts', () => {
     const result = detectFacebookPixelScripts();
 
     expect(result).toBeTruthy();
-    expect(result.detectionLatency).toBeLessThan(100);
+    expect(result[0].detectionLatency).toBeLessThan(100);
   });
 });
 
@@ -108,8 +116,9 @@ describe('detectFacebookPixelElements', () => {
     const result = detectFacebookPixelElements();
 
     expect(result).toBeTruthy();
-    expect(result.detected).toBe(true);
-    expect(result.pixelType).toBe('beacon');
+    expect(Array.isArray(result)).toBe(true);
+    expect(result[0].detected).toBe(true);
+    expect(result[0].pixelType).toBe('beacon');
   });
 
   it.skip('should detect Facebook iframe', () => {
@@ -122,18 +131,20 @@ describe('detectFacebookPixelElements', () => {
     const result = detectFacebookPixelElements();
 
     expect(result).toBeTruthy();
-    expect(result.detected).toBe(true);
-    expect(result.pixelType).toBe('iframe');
+    expect(Array.isArray(result)).toBe(true);
+    expect(result[0].detected).toBe(true);
+    expect(result[0].pixelType).toBe('iframe');
   });
 
-  it('should return null when no Facebook elements found', () => {
+  it('should return empty array when no Facebook elements found', () => {
     const img = document.createElement('img');
     img.src = 'https://cdn.example.com/image.png';
     document.body.appendChild(img);
 
     const result = detectFacebookPixelElements();
 
-    expect(result).toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([]);
   });
 });
 
@@ -149,7 +160,8 @@ describe('detectFacebookPixel', () => {
 
     // Now tracking all domains including facebook.com (per user request)
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('facebook');
+    expect(Array.isArray(result)).toBe(true);
+    expect(result[0].platform).toBe('facebook');
   });
 
   it('should detect pixel via script method', () => {
@@ -160,7 +172,7 @@ describe('detectFacebookPixel', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.method).toBe('script');
+    expect(result[0].method).toBe('script');
   });
 
   it('should detect pixel via img method when script not present', () => {
@@ -171,7 +183,7 @@ describe('detectFacebookPixel', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.method).toBe('img');
+    expect(result[0].method).toBe('img');
   });
 
   it('should include timestamp in result', () => {
@@ -182,8 +194,8 @@ describe('detectFacebookPixel', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.timestamp).toBeGreaterThan(0);
-    expect(typeof result.timestamp).toBe('number');
+    expect(result[0].timestamp).toBeGreaterThan(0);
+    expect(typeof result[0].timestamp).toBe('number');
   });
 
   it('should handle detection errors gracefully', () => {
@@ -194,7 +206,8 @@ describe('detectFacebookPixel', () => {
 
     const result = detectFacebookPixel();
 
-    expect(result).toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([]);
   });
 });
 
@@ -211,8 +224,8 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('google');
-    expect(result.pixelType).toBe('script');
+    expect(result[0].platform).toBe('google');
+    expect(result[0].pixelType).toBe('script');
   });
 
   it('should detect Google Tag Manager', () => {
@@ -223,7 +236,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('google');
+    expect(result[0].platform).toBe('google');
   });
 
   it('should detect LinkedIn pixel', () => {
@@ -234,7 +247,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('linkedin');
+    expect(result[0].platform).toBe('linkedin');
   });
 
   it('should detect Twitter/X tracking', () => {
@@ -245,7 +258,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('twitter');
+    expect(result[0].platform).toBe('twitter');
   });
 
   it('should detect TikTok pixel', () => {
@@ -256,7 +269,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('tiktok');
+    expect(result[0].platform).toBe('tiktok');
   });
 
   it('should detect Amazon tracking', () => {
@@ -267,7 +280,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('amazon');
+    expect(result[0].platform).toBe('amazon');
   });
 
   it('should detect Pinterest pixel', () => {
@@ -278,7 +291,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('pinterest');
+    expect(result[0].platform).toBe('pinterest');
   });
 
   it('should detect Snapchat pixel', () => {
@@ -289,7 +302,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('snapchat');
+    expect(result[0].platform).toBe('snapchat');
   });
 
   it('should detect Reddit pixel', () => {
@@ -300,7 +313,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('reddit');
+    expect(result[0].platform).toBe('reddit');
   });
 
   it('should detect Microsoft/Bing tracking', () => {
@@ -311,7 +324,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('microsoft');
+    expect(result[0].platform).toBe('microsoft');
   });
 
   it('should detect Criteo pixel', () => {
@@ -322,7 +335,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('criteo');
+    expect(result[0].platform).toBe('criteo');
   });
 
   it('should detect The Trade Desk pixel', () => {
@@ -333,7 +346,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('tradedesk');
+    expect(result[0].platform).toBe('tradedesk');
   });
 
   it('should detect Taboola tracking', () => {
@@ -344,7 +357,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('taboola');
+    expect(result[0].platform).toBe('taboola');
   });
 
   it('should detect Outbrain pixel', () => {
@@ -355,7 +368,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('outbrain');
+    expect(result[0].platform).toBe('outbrain');
   });
 
   it('should detect AppNexus/Xandr tracking', () => {
@@ -366,7 +379,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('xandr');
+    expect(result[0].platform).toBe('xandr');
   });
 
   it('should detect Unity Ads', () => {
@@ -377,7 +390,7 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('unity');
+    expect(result[0].platform).toBe('unity');
   });
 
   it('should detect Oracle BlueKai pixel', () => {
@@ -388,11 +401,11 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('bluekai');
+    expect(result[0].platform).toBe('bluekai');
   });
 
-  it('should detect multiple platforms and return first match', () => {
-    // Add multiple tracking scripts
+  it('should detect multiple platforms and return all matches (issue #21)', () => {
+    // Add multiple tracking scripts from different platforms
     const fbScript = document.createElement('script');
     fbScript.src = 'https://connect.facebook.net/en_US/fbevents.js';
     document.body.appendChild(fbScript);
@@ -403,10 +416,10 @@ describe('Multi-Platform Detection', () => {
 
     const result = detectFacebookPixel();
 
-    // Should detect at least one platform
-    expect(result).toBeTruthy();
-    expect(result.platform).toBeTruthy();
-    expect(['facebook', 'google']).toContain(result.platform);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveLength(2);
+    const platforms = result.map(r => r.platform).sort();
+    expect(platforms).toEqual(['facebook', 'google']);
   });
 
   it('should include detection metadata', () => {
@@ -417,17 +430,17 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result).toHaveProperty('detected');
-    expect(result).toHaveProperty('method');
-    expect(result).toHaveProperty('domain');
-    expect(result).toHaveProperty('url');
-    expect(result).toHaveProperty('pixelType');
-    expect(result).toHaveProperty('platform');
-    expect(result).toHaveProperty('scriptSrc');
-    expect(result).toHaveProperty('detectionLatency');
-    expect(result).toHaveProperty('timestamp');
+    expect(result[0]).toHaveProperty('detected');
+    expect(result[0]).toHaveProperty('method');
+    expect(result[0]).toHaveProperty('domain');
+    expect(result[0]).toHaveProperty('url');
+    expect(result[0]).toHaveProperty('pixelType');
+    expect(result[0]).toHaveProperty('platform');
+    expect(result[0]).toHaveProperty('scriptSrc');
+    expect(result[0]).toHaveProperty('detectionLatency');
+    expect(result[0]).toHaveProperty('timestamp');
 
-    expect(result.detected).toBe(true);
+    expect(result[0].detected).toBe(true);
   });
 
   it('should detect platform via img beacon', () => {
@@ -438,8 +451,8 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.platform).toBe('google');
-    expect(result.pixelType).toBe('beacon');
+    expect(result[0].platform).toBe('google');
+    expect(result[0].pixelType).toBe('beacon');
   });
 
   it('should measure detection latency', () => {
@@ -450,18 +463,74 @@ describe('Multi-Platform Detection', () => {
     const result = detectFacebookPixel();
 
     expect(result).toBeTruthy();
-    expect(result.detectionLatency).toBeTypeOf('number');
-    expect(result.detectionLatency).toBeGreaterThanOrEqual(0);
+    expect(result[0].detectionLatency).toBeTypeOf('number');
+    expect(result[0].detectionLatency).toBeGreaterThanOrEqual(0);
   });
 
-  it('should return null when no tracking platform detected', () => {
+  it('should return empty array when no tracking platform detected', () => {
     const script = document.createElement('script');
     script.src = 'https://cdn.example.com/app.js';
     document.body.appendChild(script);
 
     const result = detectFacebookPixel();
 
-    expect(result).toBeNull();
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toEqual([]);
+  });
+
+  it('should dedup multiple script nodes for the same platform (issue #21)', () => {
+    // Add two scripts that both belong to the Facebook platform
+    const s1 = document.createElement('script');
+    s1.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(s1);
+
+    const s2 = document.createElement('script');
+    s2.src = 'https://connect.facebook.net/signals/config.js';
+    document.body.appendChild(s2);
+
+    const result = detectFacebookPixel();
+
+    // One entry per platform, not per script node
+    expect(result).toHaveLength(1);
+    expect(result[0].platform).toBe('facebook');
+  });
+
+  it('should not warn when detection latency is at or under 100ms', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation();
+
+    // Force a fixed delta of exactly 50ms; warn boundary is strictly `> 100ms`
+    let counter = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+      counter += 25;
+      return counter;
+    });
+
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(script);
+
+    detectFacebookPixel();
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('should warn when detection latency exceeds 100ms', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation();
+
+    let counter = 0;
+    vi.spyOn(performance, 'now').mockImplementation(() => {
+      counter += 60; // 60 * N > 100 by the final call
+      return counter;
+    });
+
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.body.appendChild(script);
+
+    detectFacebookPixel();
+
+    expect(warnSpy).toHaveBeenCalled();
+    expect(warnSpy.mock.calls[0][0]).toMatch(/Slow detection/);
   });
 });
 
@@ -597,5 +666,58 @@ describe('observeDynamicPixels', () => {
       expect(detectionData).toHaveProperty('platform');
       expect(detectionData.method).toBe('dynamic-script');
     }
+  });
+
+  it('should report every matching platform in a single mutation batch (issue #21)', async () => {
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+
+    const callback = vi.fn();
+    const observer = observeDynamicPixels(callback);
+
+    // Add two tracking scripts in a single mutation batch via a parent fragment
+    const fragment = document.createDocumentFragment();
+    const fb = document.createElement('script');
+    fb.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    fragment.appendChild(fb);
+    const ga = document.createElement('script');
+    ga.src = 'https://www.google-analytics.com/analytics.js';
+    fragment.appendChild(ga);
+    document.body.appendChild(fragment);
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    observer.disconnect();
+
+    expect(callback).toHaveBeenCalledTimes(2);
+    const platforms = callback.mock.calls.map(call => call[0].platform).sort();
+    expect(platforms).toEqual(['facebook', 'google']);
+  });
+
+  it('should not double-report multiple nodes of the same platform', async () => {
+    const { observeDynamicPixels } = await import(
+      '../../src/lib/pixel-detector.js'
+    );
+
+    const callback = vi.fn();
+    const observer = observeDynamicPixels(callback);
+
+    const fragment = document.createDocumentFragment();
+    const s1 = document.createElement('script');
+    s1.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    fragment.appendChild(s1);
+    const s2 = document.createElement('script');
+    s2.src = 'https://connect.facebook.net/signals/config.js';
+    fragment.appendChild(s2);
+    document.body.appendChild(fragment);
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    observer.disconnect();
+
+    // One callback per platform, not per node
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback.mock.calls[0][0].platform).toBe('facebook');
   });
 });
