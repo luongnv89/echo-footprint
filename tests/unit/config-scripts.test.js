@@ -8,7 +8,10 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const pkg = JSON.parse(
-  readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json'), 'utf8')
+  readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), '../../package.json'),
+    'utf8'
+  )
 );
 
 describe('package.json P0 config', () => {

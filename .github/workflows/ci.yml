@@ -138,7 +138,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for TruffleHog
+          fetch-depth: 0 # Fetch full history for TruffleHog
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
