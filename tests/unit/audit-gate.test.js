@@ -15,7 +15,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const auditGate = createRequire(import.meta.url)(
-  resolve(dirname(fileURLToPath(import.meta.url)), '../../scripts/audit-gate.cjs')
+  resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '../../scripts/audit-gate.cjs'
+  )
 );
 const { ALLOWLIST, isAllowlisted, allowlistEntryFor } = auditGate;
 
@@ -43,12 +46,12 @@ describe('audit-gate: ALLOWLIST', () => {
     // esbuild's current advisory is `moderate` and the gate only acts
     // on high/critical, so an esbuild entry would be a no-op. The
     // moderate advisory stays visible in the job log.
-    const pkgs = ALLOWLIST.map((e) => e.package).sort();
+    const pkgs = ALLOWLIST.map(e => e.package).sort();
     expect(pkgs).toEqual(['vite']);
   });
 
   it('vite entry points at the P2 vite 8 major bump (#2.2)', () => {
-    const vite = ALLOWLIST.find((e) => e.package === 'vite');
+    const vite = ALLOWLIST.find(e => e.package === 'vite');
     expect(vite).toBeDefined();
     expect(vite.owner).toMatch(/#?2\.2/);
   });
@@ -57,7 +60,7 @@ describe('audit-gate: ALLOWLIST', () => {
     // Sanity guard: an esbuild entry would be a no-op because the
     // gate only acts on high/critical. If a future advisory escalates
     // esbuild to high/critical, add it back with an owner and reason.
-    expect(ALLOWLIST.find((e) => e.package === 'esbuild')).toBeUndefined();
+    expect(ALLOWLIST.find(e => e.package === 'esbuild')).toBeUndefined();
   });
 
   it('keys by package name (a new advisory against an allowlisted package is also deferred)', () => {
@@ -66,7 +69,7 @@ describe('audit-gate: ALLOWLIST', () => {
     // at once) and avoids the brittle "I forgot to add a new advisory to
     // the list" failure mode. The test pins the behaviour so a future
     // refactor that switches to per-GHSA keying forces a deliberate change.
-    const pkgs = new Set(ALLOWLIST.map((e) => e.package));
+    const pkgs = new Set(ALLOWLIST.map(e => e.package));
     expect(pkgs.has('vite')).toBe(true);
   });
 
@@ -202,7 +205,9 @@ describe('audit-gate: npm-audit JSON shape contract', () => {
     // The gate only fails on high/critical — moderate entries never trigger
     // the gate regardless of allowlist membership. The script still reports
     // them via the deferred path only when they are high/critical.
-    expect(fixtureEsbuildModerate.vulnerabilities.esbuild.severity).toBe('moderate');
+    expect(fixtureEsbuildModerate.vulnerabilities.esbuild.severity).toBe(
+      'moderate'
+    );
   });
 
   it('a high-severity entry on a non-allowlisted package is blocking (lodash)', () => {

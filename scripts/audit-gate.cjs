@@ -31,11 +31,11 @@ function readStdin() {
   return new Promise((resolve, reject) => {
     let buf = '';
     process.stdin.setEncoding('utf8');
-    process.stdin.on('data', (chunk) => {
+    process.stdin.on('data', chunk => {
       buf += chunk;
     });
     process.stdin.on('end', () => resolve(buf));
-    process.stdin.on('error', (err) => reject(err));
+    process.stdin.on('error', err => reject(err));
   });
 }
 
@@ -57,7 +57,8 @@ const ALLOWLIST = [
     package: 'vite',
     ghsa: 'GHSA-4w7w-66w2-5vf9',
     owner: 'see task #2.2 (P2) — vite 8 major bump',
-    reason: 'vite <=6.4.2 has multiple Windows path-traversal and dev-server advisories; fixed in vite 7+, scheduled for the P2 vite major bump (#2.2).',
+    reason:
+      'vite <=6.4.2 has multiple Windows path-traversal and dev-server advisories; fixed in vite 7+, scheduled for the P2 vite major bump (#2.2).',
   },
   // Note: esbuild is intentionally NOT in this allowlist. Its current
   // advisory (GHSA-67mh-4wv8-2f99) is `moderate`, and the gate only
@@ -70,7 +71,7 @@ const ALLOWLIST = [
 ];
 
 const ALLOWLIST_BY_PACKAGE = new Map(
-  ALLOWLIST.map((entry) => [entry.package, entry])
+  ALLOWLIST.map(entry => [entry.package, entry])
 );
 
 function isAllowlisted(packageName) {
@@ -94,7 +95,10 @@ async function main() {
   try {
     audit = JSON.parse(raw);
   } catch (err) {
-    console.error('✗ audit-gate: npm audit JSON could not be parsed:', err.message);
+    console.error(
+      '✗ audit-gate: npm audit JSON could not be parsed:',
+      err.message
+    );
     process.exit(2);
   }
 
@@ -110,7 +114,11 @@ async function main() {
     if (severity !== 'high' && severity !== 'critical') continue;
 
     if (isAllowlisted(pkgName)) {
-      deferred.push({ package: pkgName, severity, entry: allowlistEntryFor(pkgName) });
+      deferred.push({
+        package: pkgName,
+        severity,
+        entry: allowlistEntryFor(pkgName),
+      });
       continue;
     }
 
@@ -118,33 +126,48 @@ async function main() {
   }
 
   if (deferred.length > 0) {
-    console.log(`○ audit-gate: ${deferred.length} deferred high/critical package(s) on the allowlist:`);
+    console.log(
+      `○ audit-gate: ${deferred.length} deferred high/critical package(s) on the allowlist:`
+    );
     for (const d of deferred) {
       console.log(`  - ${d.package}@${d.severity} — ${d.entry.reason}`);
-      console.log(`    owner: ${d.entry.owner} (sample advisory: ${d.entry.ghsa})`);
+      console.log(
+        `    owner: ${d.entry.owner} (sample advisory: ${d.entry.ghsa})`
+      );
     }
   }
 
   if (blocking.length > 0) {
     console.error('');
-    console.error(`✗ audit-gate: ${blocking.length} non-allowlisted high/critical package(s) — PR blocked:`);
+    console.error(
+      `✗ audit-gate: ${blocking.length} non-allowlisted high/critical package(s) — PR blocked:`
+    );
     for (const b of blocking) {
       console.error(`  - ${b.package}@${b.severity}`);
     }
     console.error('');
-    console.error('  To clear: bump or replace the affected package, or add a narrow allowlist entry to');
-    console.error('  scripts/audit-gate.cjs with an owner and reason (see ALLOWLIST).');
+    console.error(
+      '  To clear: bump or replace the affected package, or add a narrow allowlist entry to'
+    );
+    console.error(
+      '  scripts/audit-gate.cjs with an owner and reason (see ALLOWLIST).'
+    );
     process.exit(1);
   }
 
-  console.log('✓ audit-gate: no non-allowlisted high/critical vulnerabilities.');
+  console.log(
+    '✓ audit-gate: no non-allowlisted high/critical vulnerabilities.'
+  );
   process.exit(0);
 }
 
 // Allow `node scripts/audit-gate.cjs < path/to/audit.json` for local testing.
 if (require.main === module) {
-  main().catch((err) => {
-    console.error('✗ audit-gate: unexpected error:', err && err.stack ? err.stack : err);
+  main().catch(err => {
+    console.error(
+      '✗ audit-gate: unexpected error:',
+      err && err.stack ? err.stack : err
+    );
     process.exit(2);
   });
 }
