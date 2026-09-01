@@ -151,14 +151,16 @@ jobs:
       - name: Run npm audit gate
         # Hardens the security job per modernization task 1.8: no
         # `continue-on-error`, so a new high/critical dependency
-        # vulnerability fails the PR. The known-and-deferred high/critical
-        # finding (vite path-traversal) lives in the allowlist inside
-        # scripts/audit-gate.cjs with an owner and reason so the gate
-        # is auditable and easy to prune. Per issue #22, the allowlist
-        # contains only vite until the P2 vite 8 major bump (#2.2);
-        # esbuild's current advisory is moderate and the gate only acts
-        # on high/critical, so it stays out of the allowlist and is
-        # visible in the job log.
+        # vulnerability fails the PR. The deferred-risk allowlist lives
+        # in scripts/audit-gate.cjs with an owner and reason per entry
+        # so the gate is auditable and easy to prune. Per issue #26
+        # (vite 5 → 8 bump, task 2.2), the only previously-deferred
+        # high/critical finding (vite path-traversal) is now cleared
+        # and the allowlist is empty. esbuild's historical advisory
+        # was `moderate`, so the gate never acted on it; it is now
+        # cleared at the source by the esbuild 0.28.x version that
+        # vite 8 bundles. Any future high/critical advisory will fail
+        # this step directly.
         run: npm audit --json --audit-level=low | node scripts/audit-gate.cjs
 
       # TruffleHog scans for accidentally committed secrets (API keys, tokens, etc.)
