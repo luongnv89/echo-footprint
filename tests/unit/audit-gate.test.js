@@ -1,13 +1,21 @@
 /**
  * Tests for scripts/audit-gate.cjs — the CI security job's npm-audit gate
- * (modernization task 1.8).
+ * (modernization task 1.8, closed by task 2.2 in #26).
  *
  * The script is a CommonJS module run by `node scripts/audit-gate.cjs < audit.json`
  * inside the security job. It reads `npm audit --json` from stdin, filters out
- * known-and-deferred packages (vite + esbuild) on a per-package basis, and
- * exits non-zero on any remaining high/critical finding. These tests cover
- * the exported helpers (the allowlist and the package-keyed lookup) plus
- * the JSON-shape contract the gate relies on.
+ * known-and-deferred packages on a per-package basis, and exits non-zero
+ * on any remaining high/critical finding. These tests cover the exported
+ * helpers (the allowlist and the package-keyed lookup) plus the JSON-shape
+ * contract the gate relies on.
+ *
+ * As of #26 (vite 5 → 8 bump), the only previously-deferred entry
+ * (`vite <=6.4.2`) is cleared: vite 8.2.x ships esbuild 0.28, which
+ * also clears the transitive esbuild moderate advisory. The allowlist
+ * is therefore empty. The structural tests below still pin:
+ *   - any future entry must be well-formed;
+ *   - the list must not silently grow;
+ *   - the JSON-shape contract the gate relies on is stable.
  */
 import { describe, it, expect } from 'vitest';
 import { createRequire } from 'node:module';
@@ -23,9 +31,44 @@ const auditGate = createRequire(import.meta.url)(
 const { ALLOWLIST, isAllowlisted, allowlistEntryFor } = auditGate;
 
 describe('audit-gate: ALLOWLIST', () => {
-  it('is a non-empty array of well-formed entries', () => {
+  it('is an array', () => {
     expect(Array.isArray(ALLOWLIST)).toBe(true);
-    expect(ALLOWLIST.length).toBeGreaterThan(0);
+  });
+
+  it('is empty after the vite 5 → 8 bump (#26) cleared the only deferred advisory', () => {
+    // The original entry was `vite <=6.4.2` (GHSA-4w7w-66w2-5vf9), scheduled
+    // to be cleared by the P2 vite 8 major bump. After #26, vite is at 8.2.x
+    // and esbuild is at 0.28.x, so neither carries a high/critical advisory.
+    // The gate now reports any future high/critical finding directly.
+    expect(ALLOWLIST).toEqual([]);
+  });
+
+  it('contains no esbuild entry (esbuild is bundled with vite 8, no standalone advisory)', () => {
+    // The historical esbuild advisory (GHSA-67mh-4wv8-2f99) was `moderate`
+    // and the gate only acts on `high`/`critical`. After #26, esbuild is
+    // upgraded to 0.28.x and the advisory no longer applies at any
+    // severity. An esbuild entry would be a no-op, so it stays out.
+    expect(ALLOWLIST.find(e => e.package === 'esbuild')).toBeUndefined();
+  });
+
+  it('contains no vite entry (vite is now 8.x — the deferred advisory is fixed)', () => {
+    expect(ALLOWLIST.find(e => e.package === 'vite')).toBeUndefined();
+  });
+
+  it('does not silently grow — the list stays small and auditable', () => {
+    // A maintenance guard: if a future change makes this list sprawl, the
+    // test forces a deliberate edit. Two is a soft warning, not a hard cap.
+    // After #26 the list is empty, so it must stay that way unless a
+    // future advisory requires a deliberate entry.
+    expect(ALLOWLIST.length).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('audit-gate: ALLOWLIST structural contract (regression guard)', () => {
+  // These tests stay meaningful whenever a future PR adds an entry.
+  // They pin the per-entry shape (package/ghsa/owner/reason) so a sloppy
+  // future edit doesn't quietly make the gate unverifiable.
+  it('any present entry is well-formed', () => {
     for (const entry of ALLOWLIST) {
       expect(entry).toHaveProperty('package');
       expect(typeof entry.package).toBe('string');
@@ -41,28 +84,6 @@ describe('audit-gate: ALLOWLIST', () => {
     }
   });
 
-  it('contains exactly the one known-and-deferred high/critical package (vite)', () => {
-    // Per issue #22, the allowlist is `only contains vite until 2.2`.
-    // esbuild's current advisory is `moderate` and the gate only acts
-    // on high/critical, so an esbuild entry would be a no-op. The
-    // moderate advisory stays visible in the job log.
-    const pkgs = ALLOWLIST.map(e => e.package).sort();
-    expect(pkgs).toEqual(['vite']);
-  });
-
-  it('vite entry points at the P2 vite 8 major bump (#2.2)', () => {
-    const vite = ALLOWLIST.find(e => e.package === 'vite');
-    expect(vite).toBeDefined();
-    expect(vite.owner).toMatch(/#?2\.2/);
-  });
-
-  it('does not contain esbuild (its advisory is moderate — out of gate scope)', () => {
-    // Sanity guard: an esbuild entry would be a no-op because the
-    // gate only acts on high/critical. If a future advisory escalates
-    // esbuild to high/critical, add it back with an owner and reason.
-    expect(ALLOWLIST.find(e => e.package === 'esbuild')).toBeUndefined();
-  });
-
   it('keys by package name (a new advisory against an allowlisted package is also deferred)', () => {
     // This is the documented contract: a package-level allowlist matches
     // a real-world fix (one major bump clears every advisory on a package
@@ -70,22 +91,20 @@ describe('audit-gate: ALLOWLIST', () => {
     // the list" failure mode. The test pins the behaviour so a future
     // refactor that switches to per-GHSA keying forces a deliberate change.
     const pkgs = new Set(ALLOWLIST.map(e => e.package));
-    expect(pkgs.has('vite')).toBe(true);
-  });
-
-  it('does not silently grow — the list stays small and auditable', () => {
-    // A maintenance guard: if a future change makes this list sprawl, the
-    // test forces a deliberate edit. Two is a soft warning, not a hard cap.
-    expect(ALLOWLIST.length).toBeLessThanOrEqual(2);
+    for (const pkg of pkgs) {
+      expect(typeof pkg).toBe('string');
+      expect(pkg.length).toBeGreaterThan(0);
+    }
   });
 });
 
 describe('audit-gate: isAllowlisted / allowlistEntryFor', () => {
-  it('returns true for the deferred package (vite)', () => {
-    expect(isAllowlisted('vite')).toBe(true);
-  });
-
-  it('returns false for esbuild (its advisory is moderate, out of gate scope)', () => {
+  it('returns false for every previously-deferred package after #26', () => {
+    // After the vite 5 → 8 bump, the allowlist is empty: both `vite` and
+    // `esbuild` are no longer deferred. The gate treats them as in-scope,
+    // so any future high/critical advisory against them would block the
+    // security job immediately.
+    expect(isAllowlisted('vite')).toBe(false);
     expect(isAllowlisted('esbuild')).toBe(false);
   });
 
@@ -99,14 +118,8 @@ describe('audit-gate: isAllowlisted / allowlistEntryFor', () => {
     expect(isAllowlisted('Vite')).toBe(false);
   });
 
-  it('returns the full allowlist entry (with reason) for an allowlisted package', () => {
-    const entry = allowlistEntryFor('vite');
-    expect(entry).toBeDefined();
-    expect(entry.ghsa).toMatch(/^GHSA-/i);
-    expect(entry.reason.length).toBeGreaterThan(0);
-  });
-
-  it('returns undefined for a non-allowlisted package', () => {
+  it('returns undefined for any package (allowlist is empty after #26)', () => {
+    expect(allowlistEntryFor('vite')).toBeUndefined();
     expect(allowlistEntryFor('lodash')).toBeUndefined();
   });
 });
@@ -195,9 +208,11 @@ describe('audit-gate: npm-audit JSON shape contract', () => {
     expect(inScope).toEqual(['critical-pkg', 'vite']);
   });
 
-  it('a high-severity entry on an allowlisted package is deferred (vite)', () => {
-    // The package is allowlisted → isAllowlisted('vite') === true.
-    expect(isAllowlisted('vite')).toBe(true);
+  it('a high-severity entry on any package is blocking after #26 (allowlist is empty)', () => {
+    // The package is no longer allowlisted after the vite 5 → 8 bump:
+    // isAllowlisted('vite') === false. A high-severity entry now blocks
+    // the gate, which is the desired post-#26 behaviour.
+    expect(isAllowlisted('vite')).toBe(false);
     expect(fixtureViteHigh.vulnerabilities.vite.severity).toBe('high');
   });
 

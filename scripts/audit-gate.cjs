@@ -52,23 +52,18 @@ function readStdin() {
 // allowlist matches a real-world fix (e.g. one major bump clears all
 // of a package's advisories at once) and avoids the brittle
 // "I forgot to add a new advisory to the list" failure mode.
-const ALLOWLIST = [
-  {
-    package: 'vite',
-    ghsa: 'GHSA-4w7w-66w2-5vf9',
-    owner: 'see task #2.2 (P2) — vite 8 major bump',
-    reason:
-      'vite <=6.4.2 has multiple Windows path-traversal and dev-server advisories; fixed in vite 7+, scheduled for the P2 vite major bump (#2.2).',
-  },
-  // Note: esbuild is intentionally NOT in this allowlist. Its current
-  // advisory (GHSA-67mh-4wv8-2f99) is `moderate`, and the gate only
-  // acts on `high`/`critical` — so an esbuild entry would be a no-op
-  // that bloats the list and risks future drift if a new high/critical
-  // appears under the same package name. If a future advisory escalates
-  // esbuild to high/critical, add a one-line entry here with an owner
-  // and reason; until then, the moderate advisory is visible in the
-  // job log and stays out of this gate per issue #22.
-];
+//
+// As of #26 (vite 5 → 8 bump), the only previously-deferred entry
+// (`vite <=6.4.2`) is cleared: vite 8.2.x ships esbuild 0.28, which
+// also clears the transitive esbuild moderate advisory. The allowlist
+// is therefore empty; the gate now reports any future high/critical
+// finding directly.
+//
+// Note: esbuild's historical advisory (GHSA-67mh-4wv8-2f99) is
+// `moderate` and the gate only acts on `high`/`critical`, so an
+// esbuild entry was never needed here. The moderate advisory stays
+// visible in the job log and stays out of this gate per issue #22.
+const ALLOWLIST = [];
 
 const ALLOWLIST_BY_PACKAGE = new Map(
   ALLOWLIST.map(entry => [entry.package, entry])

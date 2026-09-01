@@ -9,7 +9,7 @@ export default defineConfig({
     emptyOutDir: false, // Don't empty since we build extension scripts separately
     rollupOptions: {
       input: {
-        dashboard: resolve(__dirname, 'src/dashboard/index.html'),
+        dashboard: resolve(import.meta.dirname, 'src/dashboard/index.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
@@ -24,7 +24,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
+      '@': resolve(import.meta.dirname, 'src'),
     },
   },
 });
