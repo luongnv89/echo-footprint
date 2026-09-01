@@ -89,25 +89,30 @@ db.version(1).stores({
 
 ### Setup
 
+This tree has **no `node_modules`** committed. The package manager of record
+is **npm** + `package-lock.json` (not pnpm). Use **Node 24 LTS** locally; CI
+still pins Node 20 (`.github/workflows/ci.yml`) until milestone 2.1. See
+`INSTALL.md` for the clean-checkout notes.
+
 ```bash
-# Install dependencies (pnpm preferred)
-pnpm install
+# Install dependencies from a clean checkout
+npm ci
 
 # Dev mode (loads unpacked extension)
-pnpm dev
+npm run dev
 
 # Production build
-pnpm build
+npm run build
 
 # Lint and format
-pnpm lint
-pnpm format
+npm run lint
+npm run format
 
-# Run tests
-pnpm test
+# Run tests once
+npm run test:run
 
 # Package for distribution
-pnpm zip  # Outputs dist/echofootprint.zip
+npm run zip  # Outputs echofootprint.zip
 ```
 
 ### Project Structure
@@ -138,7 +143,7 @@ src/
 ### Building and Testing
 
 **Load Extension Locally (Chrome):**
-1. Run `pnpm build` to create `dist/` folder
+1. Run `npm run build` to create `dist/` folder
 2. Open `chrome://extensions`
 3. Enable "Developer mode"
 4. Click "Load unpacked" and select `dist/` folder
@@ -154,7 +159,7 @@ src/
 node scripts/generate-test-data.js
 
 # Run Lighthouse audit
-pnpm lighthouse
+npm run lighthouse
 ```
 
 ## Key Technical Decisions
@@ -302,7 +307,7 @@ Follow semantic versioning (MAJOR.MINOR.PATCH):
 - PATCH: Bug fixes, performance improvements
 
 ### Pre-release Checklist
-- [ ] All tests passing (`pnpm test`)
+- [ ] All tests passing (`npm run test:run`)
 - [ ] Lighthouse performance ≥90
 - [ ] Accessibility audit passed (axe + manual SR)
 - [ ] Memory leak check (Chrome DevTools)
@@ -313,8 +318,8 @@ Follow semantic versioning (MAJOR.MINOR.PATCH):
 
 ### Chrome Web Store Submission
 ```bash
-pnpm build
-pnpm zip
+npm run build
+npm run zip
 # Upload dist/echofootprint.zip to Chrome Web Store dashboard
 ```
 
@@ -322,7 +327,7 @@ pnpm zip
 ```bash
 # Build Firefox variant (Manifest V2 fallback branch)
 git checkout firefox-mv2
-pnpm build:firefox
+npm run build:firefox
 web-ext lint
 # Submit to addons.mozilla.org
 ```
@@ -405,8 +410,12 @@ web-ext lint
 
 ## Current Project Status
 
-**Phase:** Pre-development (planning complete)
-**Next Milestone:** Bootstrap extension workspace and implement content script pixel sniffer
-**Target Launch:** Q1 2026
+**Phase:** Pre — agent environment (install/run notes, agent config)
+**Baseline:** RED until milestone 0.1. The Pre phase must not be used as a
+license to skip ME (modernization enablement); the baseline advances only when
+ME lands.
+**Next Milestone:** ME (0.1)
 
-The repository currently contains comprehensive planning documents but no implementation yet. When beginning development, start with Phase 0 tasks in `tasks.md` (Bootstrap Extension Workspace → Content Script Pixel Sniffer → Service Worker Event Relay).
+The extension implementation is shipped (content script, service worker,
+dashboard). The install/run commands are recorded in `INSTALL.md` (source of
+truth) and in the Setup section above.
