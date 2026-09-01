@@ -45,57 +45,70 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const [geoOptIn, setGeoOptInState] = useState(false);
 
   // Load geolocation data for all domains
-  useEffect(() => {
-    async function loadGeoData() {
-      const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
-      const geoMap = {};
+  async function loadGeoData() {
+    const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
+    const geoMap = {};
 
-      // Live lookups are strictly opt-in (default OFF): cached data is always
-      // shown, but uncached domains are only fetched after explicit consent.
-      const optIn = await getGeoOptIn();
-      setGeoOptInState(optIn);
+    // Live lookups are strictly opt-in (default OFF): cached data is always
+    // shown, but uncached domains are only fetched after explicit consent.
+    const optIn = await getGeoOptIn();
+    setGeoOptInState(optIn);
 
-      // First, load all cached data
-      for (const domain of uniqueDomains) {
-        const cached = await getGeoCache(domain);
-        if (cached && cached.lat && cached.lon) {
-          geoMap[domain] = cached;
-        }
-      }
-
-      setGeoData(geoMap);
-
-      // Then, fetch missing geolocation data (opt-in only)
-      const uncachedDomains = uniqueDomains.filter(d => !geoMap[d]);
-
-      if (optIn && uncachedDomains.length > 0) {
-        setIsLoadingGeo(true);
-        setGeoProgress({ current: 0, total: uncachedDomains.length });
-
-        try {
-          const newGeoData = await fetchBulkGeolocation(
-            uncachedDomains,
-            progress => {
-              setGeoProgress({
-                current: progress.current,
-                total: progress.total,
-              });
-            }
-          );
-
-          // Merge with existing data
-          setGeoData(prev => ({ ...prev, ...newGeoData }));
-        } catch (error) {
-          console.error('MapView: Error fetching geolocation data:', error);
-        } finally {
-          setIsLoadingGeo(false);
-        }
+    // First, load all cached data
+    for (const domain of uniqueDomains) {
+      const cached = await getGeoCache(domain);
+      if (cached && cached.lat && cached.lon) {
+        geoMap[domain] = cached;
       }
     }
 
+    setGeoData(geoMap);
+
+    // Then, fetch missing geolocation data (opt-in only)
+    const uncachedDomains = uniqueDomains.filter(d => !geoMap[d]);
+
+    if (optIn && uncachedDomains.length > 0) {
+      setIsLoadingGeo(true);
+      setGeoProgress({ current: 0, total: uncachedDomains.length });
+
+      try {
+        const newGeoData = await fetchBulkGeolocation(
+          uncachedDomains,
+          progress => {
+            setGeoProgress({
+              current: progress.current,
+              total: progress.total,
+            });
+          }
+        );
+
+        // Merge with existing data
+        setGeoData(prev => ({ ...prev, ...newGeoData }));
+      } catch (error) {
+        console.error('MapView: Error fetching geolocation data:', error);
+      } finally {
+        setIsLoadingGeo(false);
+      }
+    }
+  }
+
+  useEffect(() => {
     if (safeFootprints && safeFootprints.length > 0) {
       loadGeoData();
     }
+  }, [safeFootprints]);
+
+  // Re-check the opt-in when it is toggled in Settings (event from SettingsSheet)
+  useEffect(() => {
+    const handleOptInChange = () => {
+      if (safeFootprints && safeFootprints.length > 0) {
+        loadGeoData();
+      }
+    };
+    window.addEventListener('geo-opt-in-changed', handleOptInChange);
+    return () =>
+      window.removeEventListener('geo-opt-in-changed', handleOptInChange);
+    // re-register on footprints change so loadGeoData sees fresh data
   }, [safeFootprints]);
 
   // Initialize map
@@ -323,7 +336,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const handleClearCache = async () => {
     if (
       confirm(
-        'Clear all cached geolocation data? This will force fresh lookups from the API.'
+        'Clear all cached geolocation data? Fresh lookups happen only when map geolocation is enabled in Settings.'
       )
     ) {
       try {

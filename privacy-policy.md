@@ -35,7 +35,7 @@ The extension does **not** read or store form contents, passwords, payment detai
 
 ## 4. Sharing and Subprocessors
 
-- **Optional Map View geolocation (off by default).** The Map View can resolve the approximate location of the sites you have tracked. This feature is **disabled by default**. Only when you explicitly enable it in Settings → Privacy does the extension send the **domain names** of tracked sites to the ip-api.com geolocation service (https://ip-api.com) over HTTPS to fetch their approximate location. As with any web request, the lookup itself reveals your IP address to that service; no page contents, cookies, cookies’ identifiers, or your stored detection history are ever sent. Results are cached locally for 7 days, the lookup respects a 45 requests/minute limit, and you can disable the feature or clear the cache at any time in Settings.
+- **Optional Map View geolocation (off by default).** The Map View can resolve the approximate location of the sites you have tracked. This feature is **disabled by default**. Only when you explicitly enable it in Settings → Privacy does the extension send the **domain names** of tracked sites to the ip-api.com geolocation service (https://ip-api.com) over HTTPS to fetch their approximate location. As with any web request, the lookup itself reveals your IP address to that service; no page contents, cookie data, or your stored detection history are ever sent. Results are cached locally for 7 days, the lookup respects a 45 requests/minute limit, and you can disable the feature or clear the cache at any time in Settings.
 - The extension does **not** share data with advertisers, data brokers, or other third parties.
 - No other subprocessors are used. There is no backend.
 

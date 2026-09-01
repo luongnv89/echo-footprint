@@ -98,6 +98,8 @@ function SettingsSheet({ isOpen, onClose, stats }) {
     const next = !geoOptIn;
     setGeoOptInLocal(next);
     await setGeoOptIn(next);
+    // Let a mounted MapView react immediately
+    window.dispatchEvent(new Event('geo-opt-in-changed'));
   };
 
   const addDomain = domainValue => {
