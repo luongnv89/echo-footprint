@@ -98,7 +98,15 @@ function createIcon(size) {
   // Main foot shape
   ctx.fillStyle = primaryColor;
   ctx.beginPath();
-  ctx.ellipse(footX, footY + size * 0.08, size * 0.08, size * 0.12, 0, 0, 2 * Math.PI);
+  ctx.ellipse(
+    footX,
+    footY + size * 0.08,
+    size * 0.08,
+    size * 0.12,
+    0,
+    0,
+    2 * Math.PI
+  );
   ctx.fill();
 
   // Toes
