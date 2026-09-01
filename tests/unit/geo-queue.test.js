@@ -39,7 +39,7 @@ vi.mock('../../src/lib/db-sw.js', () => ({
 
 // Mock fetch API
 global.fetch = vi.fn(async url => {
-  const domain = url.replace('http://ip-api.com/json/', '');
+  const domain = url.replace('https://ip-api.com/json/', '');
 
   // Mock different responses based on domain
   if (domain === 'example.com') {
@@ -417,10 +417,11 @@ describe('Geolocation Queue', () => {
 
   describe('Configuration', () => {
     it('should use correct API endpoint', () => {
-      const GEO_API_URL = 'http://ip-api.com/json/';
+      const GEO_API_URL = 'https://ip-api.com/json/';
 
       expect(GEO_API_URL).toContain('ip-api.com');
       expect(GEO_API_URL).toContain('/json/');
+      expect(GEO_API_URL.startsWith('https://')).toBe(true);
     });
 
     it('should configure rate limit correctly', () => {

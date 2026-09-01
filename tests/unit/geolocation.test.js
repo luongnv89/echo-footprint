@@ -12,6 +12,7 @@ import {
   clearAllCaches,
   prewarmCache,
   fetchBulkGeolocation,
+  setGeoOptIn,
 } from '../../src/dashboard/utils/geolocation.js';
 
 // Mock db module
@@ -23,9 +24,12 @@ vi.mock('../../src/dashboard/utils/db.js', () => ({
 }));
 
 describe('Geolocation Utilities', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    // Live lookups are opt-in (default OFF); tests that exercise the fetch
+    // path enable it explicitly here.
+    await setGeoOptIn(true);
   });
 
   afterEach(async () => {
@@ -396,6 +400,67 @@ describe('Geolocation Utilities', () => {
       // Check that cached items were marked as cached
       const cachedItems = progressCalls.filter(p => p.cached === true);
       expect(cachedItems.length).toBe(3);
+    });
+  });
+
+  describe('Geo Opt-in Gate', () => {
+    it('does not fetch for uncached domains on the default path', async () => {
+      const { getGeoCache } = await import(
+        '../../src/dashboard/utils/db.js'
+      );
+      getGeoCache.mockResolvedValue(null);
+
+      // Default is OFF; set explicitly to guard against ordering drift.
+      await setGeoOptIn(false);
+
+      const result = await getGeolocationForDomain('uncached-domain.test');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+
+    it('fetches over https after explicit opt-in', async () => {
+      const { getGeoCache } = await import(
+        '../../src/dashboard/utils/db.js'
+      );
+      getGeoCache.mockResolvedValue(null);
+      global.fetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          status: 'success',
+          country: 'United States',
+          regionName: 'California',
+          city: 'Mountain View',
+          lat: 37.386,
+          lon: -122.0838,
+        }),
+      });
+
+      await setGeoOptIn(true);
+      await getGeolocationForDomain('optin-domain.test');
+
+      expect(global.fetch).toHaveBeenCalled();
+      const calledUrl = global.fetch.mock.calls[0][0];
+      expect(calledUrl.startsWith('https://ip-api.com/json/')).toBe(true);
+    });
+
+    it('returns cached data without live lookups while opted out', async () => {
+      const { getGeoCache } = await import(
+        '../../src/dashboard/utils/db.js'
+      );
+      getGeoCache.mockResolvedValue({
+        country: 'France',
+        region: 'IDF',
+        city: 'Paris',
+        lat: 48.8566,
+        lon: 2.3522,
+      });
+
+      await setGeoOptIn(false);
+      const result = await getGeolocationForDomain('cached-domain.test');
+
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ country: 'France', fromCache: true });
     });
   });
 
