@@ -597,8 +597,9 @@ function detectPlatformFromUrl(url) {
 }
 
 /**
- * Detect tracking pixel from script tags in the DOM
- * @returns {Object|null} - Detection result or null
+ * Detect tracking pixels from script tags in the DOM
+ * Returns one detection per unique platform (no DOM-node duplication).
+ * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
 export function detectFacebookPixelScripts() {
   const startTime = performance.now();
@@ -607,14 +608,17 @@ export function detectFacebookPixelScripts() {
     // Find all script tags
     const scripts = Array.from(document.querySelectorAll('script[src]'));
 
-    // Check each script for tracking platforms
-    // Early return on first match for performance
+    // Collect one entry per unique platform; break the inner loop after
+    // the first matching script for a given platform to keep detection fast.
+    const detections = [];
+    const seenPlatforms = new Set();
+
     for (const script of scripts) {
       const platform = detectPlatformFromUrl(script.src);
-      if (platform) {
+      if (platform && !seenPlatforms.has(platform)) {
+        seenPlatforms.add(platform);
         const detectionTime = performance.now() - startTime;
-
-        return {
+        detections.push({
           detected: true,
           method: 'script',
           domain: window.location.hostname || 'localhost',
@@ -624,42 +628,47 @@ export function detectFacebookPixelScripts() {
           scriptSrc: script.src,
           detectionLatency: Math.round(detectionTime * 100) / 100,
           timestamp: Date.now(),
-        };
+        });
       }
     }
 
-    return null;
+    return detections;
   } catch (error) {
     console.error('EchoFootPrint: Error detecting scripts:', error);
-    return null;
+    return [];
   }
 }
 
 /**
- * Detect tracking pixel from img/iframe elements
- * @returns {Object|null} - Detection result or null
+ * Detect tracking pixels from img/iframe elements
+ * Returns one detection per unique platform (no DOM-node duplication).
+ * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
 export function detectFacebookPixelElements() {
   const startTime = performance.now();
 
   try {
+    const detections = [];
+    const seenPlatforms = new Set();
+
     // Check for tracking pixels (img tags)
     const imgs = Array.from(document.querySelectorAll('img[src]'));
     for (const img of imgs) {
       const platform = detectPlatformFromUrl(img.src);
-      if (platform) {
+      if (platform && !seenPlatforms.has(platform)) {
+        seenPlatforms.add(platform);
         const detectionTime = performance.now() - startTime;
-
-        return {
+        detections.push({
           detected: true,
           method: 'img',
           domain: window.location.hostname || 'localhost',
           url: window.location.href,
           pixelType: 'beacon',
           platform: platform,
+          scriptSrc: img.src,
           detectionLatency: Math.round(detectionTime * 100) / 100,
           timestamp: Date.now(),
-        };
+        });
       }
     }
 
@@ -667,92 +676,98 @@ export function detectFacebookPixelElements() {
     const iframes = Array.from(document.querySelectorAll('iframe[src]'));
     for (const iframe of iframes) {
       const platform = detectPlatformFromUrl(iframe.src);
-      if (platform) {
+      if (platform && !seenPlatforms.has(platform)) {
+        seenPlatforms.add(platform);
         const detectionTime = performance.now() - startTime;
-
-        return {
+        detections.push({
           detected: true,
           method: 'iframe',
           domain: window.location.hostname || 'localhost',
           url: window.location.href,
           pixelType: 'iframe',
           platform: platform,
+          scriptSrc: iframe.src,
           detectionLatency: Math.round(detectionTime * 100) / 100,
           timestamp: Date.now(),
-        };
+        });
       }
     }
 
-    return null;
+    return detections;
   } catch (error) {
     console.error('EchoFootPrint: Error detecting elements:', error);
-    return null;
+    return [];
   }
 }
 
 /**
- * Comprehensive Facebook Pixel detection
- * Combines multiple detection methods
- * @returns {Object|null} - Detection result or null
+ * Comprehensive tracking pixel detection across all platforms.
+ * Combines script and element scans and returns one entry per platform.
+ * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
 export function detectFacebookPixel() {
   const startTime = performance.now();
 
-  // Track all domains including facebook.com (per user request)
-
   try {
     // Try script detection first (most common)
-    let result = detectFacebookPixelScripts();
-    if (result) {
-      return result;
+    const scripts = detectFacebookPixelScripts();
+    const elements = detectFacebookPixelElements();
+
+    // Merge while keeping at most one entry per platform.
+    const merged = [];
+    const seenPlatforms = new Set();
+    for (const det of [...scripts, ...elements]) {
+      if (!seenPlatforms.has(det.platform)) {
+        seenPlatforms.add(det.platform);
+        merged.push(det);
+      }
     }
 
-    // Try element detection
-    result = detectFacebookPixelElements();
-    if (result) {
-      return result;
-    }
-
-    // No pixel detected
     const detectionTime = performance.now() - startTime;
 
-    // Log performance for debugging (only if >50ms)
-    if (detectionTime > 50) {
+    // Log performance for debugging (only if >100ms per PRD)
+    if (detectionTime > 100) {
       console.warn(
         `EchoFootPrint: Slow detection on ${window.location.hostname}: ${detectionTime}ms`
       );
     }
 
-    return null;
+    return merged;
   } catch (error) {
     console.error('EchoFootPrint: Detection error:', error);
-    return null;
+    return [];
   }
 }
 
 /**
- * Setup MutationObserver to detect dynamically loaded pixels
- * @param {Function} callback - Called when pixel is detected
+ * Setup MutationObserver to detect dynamically loaded pixels.
+ * Reports every newly-added tracking script in the mutation batch
+ * (one callback per platform per batch). The caller is responsible
+ * for deduplicating detections against any prior scan in this page
+ * (see `recordDetections` in content-script.js).
+ * @param {Function} callback - Called with a detection object per platform
  * @returns {MutationObserver} - Observer instance
  */
 export function observeDynamicPixels(callback) {
   const observer = new MutationObserver(mutations => {
-    // Track all domains including facebook.com (per user request)
+    // Track every matching platform added by this mutation batch
+    // (no first-match short-circuit — see issue #21).
+    const seenPlatforms = new Set();
 
     for (const mutation of mutations) {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Check if any added nodes are scripts with tracking domains
         for (const node of mutation.addedNodes) {
           if (node.tagName === 'SCRIPT' && node.src) {
             const platform = detectPlatformFromUrl(node.src);
-            if (platform) {
+            if (platform && !seenPlatforms.has(platform)) {
+              seenPlatforms.add(platform);
               callback({
                 detected: true,
                 method: 'dynamic-script',
                 domain: window.location.hostname || 'localhost',
                 url: window.location.href,
                 pixelType: 'script',
-                platform: platform, // New: platform identifier
+                platform: platform,
                 scriptSrc: node.src,
                 timestamp: Date.now(),
               });
