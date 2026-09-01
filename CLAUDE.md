@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **EchoFootPrint** is a privacy-first browser extension that visualizes Facebook/Meta tracking across the web through an interactive client-side dashboard. The extension operates with zero configuration, storing all data locally in IndexedDB with no external telemetry.
 
 **Key Principles:**
+
 - **Privacy-first:** All data stays local, no cloud sync, optional AES-GCM encryption
 - **Zero configuration:** Works silently from installation with no user setup
 - **Manifest V3:** Modern Chrome extension architecture with service workers
@@ -49,15 +50,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 db.version(1).stores({
   footprints: '++id, timestamp, domain, url, pixelType, ipGeo',
   settings: 'key',
-  geoCache: 'domain, country, region'
+  geoCache: 'domain, country, region',
 });
 ```
 
 **Key Indexes:**
+
 - `timestamp`: For time-range filters (7 days, 30 days, all time)
 - `domain`: For aggregation and deduplication
 
 **Storage Limits:**
+
 - Soft cap: 500MB with warning at 80%
 - Data retention: User-controlled via "Clear All" button
 - Background cleanup: Optional >12-month archival via `chrome.alarms`
@@ -65,12 +68,14 @@ db.version(1).stores({
 ### Critical Technical Constraints
 
 **Manifest V3 Limitations:**
+
 - Service workers are short-lived; never rely on in-memory state
 - Must use IndexedDB or `chrome.storage.local` (10MB limit unsuitable for records)
 - WebAssembly blocked (can't use argon2; use Web Crypto API for encryption)
 - All code must be bundled (no remote code execution)
 
 **Performance Targets:**
+
 - Pixel detection: <100ms per page
 - Dashboard load: <1s (1k records), <3s (10k records)
 - Graph rendering: 60fps (500 nodes), 30fps (1000+ nodes)
@@ -78,6 +83,7 @@ db.version(1).stores({
 - Dashboard memory: <50MB (1k nodes)
 
 **Browser Permissions (minimal):**
+
 ```json
 {
   "permissions": ["storage", "webNavigation"],
@@ -143,17 +149,20 @@ src/
 ### Building and Testing
 
 **Load Extension Locally (Chrome):**
+
 1. Run `npm run build` to create `dist/` folder
 2. Open `chrome://extensions`
 3. Enable "Developer mode"
 4. Click "Load unpacked" and select `dist/` folder
 
 **Testing Pixel Detection:**
+
 - Visit sites with Facebook Pixel (e.g., major e-commerce sites)
 - Open extension dashboard to verify domains appear
 - Check service worker logs: `chrome://extensions` → "Inspect views: service worker"
 
 **Performance Testing:**
+
 ```bash
 # Generate synthetic load (10k records)
 node scripts/generate-test-data.js
@@ -165,24 +174,28 @@ npm run lighthouse
 ## Key Technical Decisions
 
 ### Why Dexie.js over raw IndexedDB?
+
 - Simplifies schema management and version migrations
 - Promise-based API integrates with React hooks
 - Handles quota exceeded errors gracefully
 - Well-tested in production extensions (200+ GitHub references)
 
 ### Why D3.js for graph visualization?
+
 - Industry standard for force-directed layouts
 - Handles 500+ nodes at 60fps with proper optimization
 - Rich ecosystem of examples (Observable HQ)
 - Better performance than Three.js for 2D use case
 
 ### Why Leaflet over Mapbox GL JS?
+
 - Smaller bundle size (~40KB vs ~200KB)
 - No API key required for basic tiles
 - Better accessibility support
 - Simpler API for clustering use case
 
 ### Why React for dashboard (not vanilla JS)?
+
 - Complex state management (filters, pagination, settings)
 - Component reusability across graph/map/table views
 - Better developer experience for future contributors
@@ -193,6 +206,7 @@ npm run lighthouse
 ### Adding a New Pixel Detection Pattern
 
 1. Update `src/lib/pixel-detector.js`:
+
 ```javascript
 export function detectFacebookPixel() {
   const fbDomains = [
@@ -211,13 +225,16 @@ export function detectFacebookPixel() {
 ### Modifying IndexedDB Schema
 
 1. Increment version in `src/dashboard/utils/db.js`:
+
 ```javascript
-db.version(2).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, ipGeo, newField',
-  // ...
-}).upgrade(tx => {
-  // Migration logic for existing records
-});
+db.version(2)
+  .stores({
+    footprints: '++id, timestamp, domain, url, pixelType, ipGeo, newField',
+    // ...
+  })
+  .upgrade(tx => {
+    // Migration logic for existing records
+  });
 ```
 
 2. Test migration with existing data
@@ -228,14 +245,17 @@ db.version(2).stores({
 1. Create component in `src/dashboard/components/NewView.js`
 2. Register tab in `src/dashboard/main.js`
 3. Query data via Dexie hooks:
+
 ```javascript
 const { data } = useLiveQuery(() => db.footprints.toArray());
 ```
+
 4. Follow WCAG 2.1 AA guidelines (keyboard nav, ARIA labels, color contrast)
 
 ### Implementing Geolocation Cache
 
 **Service worker pattern:**
+
 ```javascript
 async function handlePixelDetection(data) {
   const cachedGeo = await db.geoCache.get(data.domain);
@@ -248,6 +268,7 @@ async function handlePixelDetection(data) {
 ```
 
 **Rate limiting (45 req/min):**
+
 - Use queue with timestamps
 - Implement exponential backoff on 429 errors
 - Fall back to "Unknown" after 3 retries
@@ -255,6 +276,7 @@ async function handlePixelDetection(data) {
 ## Security Best Practices
 
 ### Facebook ID Hashing
+
 ```javascript
 // src/dashboard/utils/crypto.js
 async function hashFacebookID(userId) {
@@ -268,12 +290,14 @@ async function hashFacebookID(userId) {
 ```
 
 ### Optional AES-GCM Encryption
+
 - User-provided passphrase (never stored)
 - PBKDF2 key derivation (100k iterations)
 - Encrypt before writing to IndexedDB
 - Unlock prompt on dashboard open
 
 ### Content Security Policy
+
 ```json
 {
   "content_security_policy": {
@@ -285,6 +309,7 @@ async function hashFacebookID(userId) {
 ## Accessibility Requirements
 
 **WCAG 2.1 AA Compliance:**
+
 - All interactive elements keyboard accessible (Tab, Enter, Esc)
 - Color contrast ≥4.5:1 for text, ≥3:1 for large text
 - ARIA labels on all graph nodes and map markers
@@ -293,6 +318,7 @@ async function hashFacebookID(userId) {
 - Screen reader tested (VoiceOver, NVDA)
 
 **Dark Mode by Default:**
+
 - Background: `#1a1a1a`
 - Text: `#e0e0e0`
 - Accent: `#00d4aa`
@@ -301,12 +327,15 @@ async function hashFacebookID(userId) {
 ## Release Process
 
 ### Versioning
+
 Follow semantic versioning (MAJOR.MINOR.PATCH):
+
 - MAJOR: Breaking changes (schema migrations, permission changes)
 - MINOR: New features (map view, encryption)
 - PATCH: Bug fixes, performance improvements
 
 ### Pre-release Checklist
+
 - [ ] All tests passing (`npm run test:run`)
 - [ ] Lighthouse performance ≥90
 - [ ] Accessibility audit passed (axe + manual SR)
@@ -317,6 +346,7 @@ Follow semantic versioning (MAJOR.MINOR.PATCH):
 - [ ] Create GitHub release with notes
 
 ### Chrome Web Store Submission
+
 ```bash
 npm run build
 npm run zip
@@ -324,6 +354,7 @@ npm run zip
 ```
 
 ### Firefox AMO Submission
+
 ```bash
 # Build Firefox variant (Manifest V2 fallback branch)
 git checkout firefox-mv2
@@ -335,6 +366,7 @@ web-ext lint
 ## Important Files
 
 ### Configuration
+
 - `manifest.json` - Extension permissions and entry points (Chrome/Edge)
 - `vite.config.js` - Build configuration for bundling
 - `package.json` - Dependencies and scripts
@@ -342,6 +374,7 @@ web-ext lint
 - `.prettierrc` - Code formatting
 
 ### Documentation
+
 - `phase-1-requirements/prd.md` - Product requirements (feature specs, acceptance criteria)
 - `phase-1-requirements/tad.md` - Technical architecture (system design, security)
 - `phase-1-requirements/IMPLEMENTATION_GUIDE.md` - Step-by-step development guide
@@ -353,32 +386,39 @@ web-ext lint
 ## Gotchas and Known Issues
 
 ### Service Worker Termination
+
 **Problem:** Service worker terminates after 30s of inactivity
 **Solution:** Always persist state to IndexedDB; never rely on global variables
 
 ### Content Script Injection Timing
+
 **Problem:** Script may inject before DOM ready
 **Solution:** Use `run_at: "document_end"` in manifest and listen for DOMContentLoaded
 
 ### D3 Performance Degradation
+
 **Problem:** Graph lags with 1000+ nodes
 **Solution:** Implement node clustering or limit visible nodes; use `requestAnimationFrame`
 
 ### IndexedDB Quota Exceeded
+
 **Problem:** Writes fail when storage full
 **Solution:** Monitor `navigator.storage.estimate()`, show warning at 80%, enforce 500MB cap
 
 ### Geo API Rate Limiting
+
 **Problem:** ip-api.com returns 429 (45 req/min limit)
 **Solution:** Cache all results, implement exponential backoff, display "Unknown" gracefully
 
 ### Ad Blocker Interference
+
 **Problem:** uBlock Origin may block Facebook domains before detection
 **Solution:** Document compatibility; detection runs before blocking in most cases
 
 ## Reference Links
 
 ### Technical Documentation
+
 - [Chrome Extension Manifest V3](https://developer.chrome.com/docs/extensions/mv3/)
 - [Dexie.js Documentation](https://dexie.org/docs/)
 - [D3.js Force-Directed Graph](https://observablehq.com/@d3/force-directed-graph)
@@ -386,11 +426,13 @@ web-ext lint
 - [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)
 
 ### Inspiration Projects
+
 - [Lightbeam (archived)](https://github.com/mozilla/lightbeam-we) - Original tracker visualizer
 - [Privacy Badger](https://github.com/EFForg/privacybadger) - Algorithmic blocking
 - [Ghostery](https://github.com/ghostery/ghostery-extension) - Commercial tracker blocker
 
 ### Community Resources
+
 - [r/privacy](https://reddit.com/r/privacy) - Privacy community
 - [Chrome Extension Developers](https://groups.google.com/a/chromium.org/g/chromium-extensions)
 - [HackerNews](https://news.ycombinator.com) - Launch platform

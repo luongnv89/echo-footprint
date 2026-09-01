@@ -8,7 +8,7 @@ EchoFootPrint is a privacy-first browser extension that helps you understand how
 
 ## 0. Data Controller and Contact
 
-- **Controller:** EchoFootPrint project maintainer  
+- **Controller:** EchoFootPrint project maintainer
 - **Contact:** Open an issue at https://github.com/luongnv89/echo-footprint or use the contact details in the repository.
 
 ## 1. Data the Extension Accesses
@@ -46,10 +46,12 @@ The extension does **not** read or store form contents, passwords, payment detai
 ## 6. User Controls and Data Subject Rights
 
 Inside the extension:
+
 - Clear all stored detections from Settings (danger zone / clear data).
 - Export your data (e.g., CSV) for your own use.
 
 GDPR rights (where applicable):
+
 - Access, rectification, erasure, restriction, objection, and data portability.
 - Because data never leaves your device, exercising these rights generally means using the in-extension delete/export tools or uninstalling the extension.
 - You may lodge a complaint with your supervisory authority if you believe your rights are violated.

@@ -28,7 +28,9 @@ async function resizeFile(filePath) {
   const outPath = path.join(dir, `${base}-1280x800${ext}`);
 
   console.log(`Resizing ${filePath} -> ${outPath}`);
-  await sharp(filePath).resize(TARGET_WIDTH, TARGET_HEIGHT, { fit: 'cover' }).toFile(outPath);
+  await sharp(filePath)
+    .resize(TARGET_WIDTH, TARGET_HEIGHT, { fit: 'cover' })
+    .toFile(outPath);
 }
 
 async function run() {

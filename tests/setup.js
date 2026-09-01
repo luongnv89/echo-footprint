@@ -28,7 +28,7 @@ global.chrome = {
         if (callback) callback();
         return Promise.resolve();
       }),
-      clear: vi.fn((callback) => {
+      clear: vi.fn(callback => {
         if (callback) callback();
         return Promise.resolve();
       }),

@@ -17,14 +17,20 @@ let gitBranch = 'unknown';
 let buildTimestamp = new Date().toISOString();
 
 try {
-  gitCommitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
-  gitBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf-8' }).trim();
+  gitCommitHash = execSync('git rev-parse --short HEAD', {
+    encoding: 'utf-8',
+  }).trim();
+  gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+    encoding: 'utf-8',
+  }).trim();
 } catch (error) {
   console.warn('⚠ Could not get git information:', error.message);
 }
 
 // Read package.json for base version
-const packageJson = JSON.parse(fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8'));
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(rootDir, 'package.json'), 'utf-8')
+);
 const baseVersion = packageJson.version;
 const versionWithCommit = `${baseVersion}+${gitCommitHash}`;
 
@@ -71,7 +77,9 @@ try {
   console.log('✓ Created extension icons (16, 48, 128)');
 } catch (error) {
   console.warn('⚠ Could not create icons with canvas:', error.message);
-  console.log('⚠ Icons may not display properly. Install canvas module: npm install canvas');
+  console.log(
+    '⚠ Icons may not display properly. Install canvas module: npm install canvas'
+  );
 }
 
 console.log('✓ Build helper complete');

@@ -126,16 +126,19 @@ This project uses **Husky** to run pre-commit hooks that simulate the CI/CD pipe
 5. **Security Audit** - npm audit for vulnerabilities
 
 This ensures that:
+
 - ✅ Commits will pass CI before pushing
 - ✅ Issues are caught early in development
 - ✅ Code quality is maintained across all commits
 
 **Setup** (automatic on `npm install`):
+
 ```bash
 npm install  # Husky hooks installed automatically via "prepare" script
 ```
 
 **Bypass** (not recommended):
+
 ```bash
 git commit --no-verify  # Skip pre-commit checks
 ```
@@ -265,6 +268,7 @@ npm test -- --grep "database"
 ### Test Coverage
 
 Current test coverage includes:
+
 - **Database Layer** - CRUD operations, quota management, settings, and geo-caching
 - **Pixel Detection** - Multi-platform tracking detection (50 platforms)
 - **Cryptography** - SHA-256 hashing and salting utilities

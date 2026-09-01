@@ -52,7 +52,9 @@ describe('Crypto Utilities', () => {
     });
 
     it('should reject undefined userId', async () => {
-      await expect(hashFacebookID(undefined)).rejects.toThrow('Invalid user ID');
+      await expect(hashFacebookID(undefined)).rejects.toThrow(
+        'Invalid user ID'
+      );
     });
 
     it('should reject non-string userId', async () => {
