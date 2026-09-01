@@ -59,12 +59,14 @@ const ALLOWLIST = [
     owner: 'see task #2.2 (P2) — vite 8 major bump',
     reason: 'vite <=6.4.2 has multiple Windows path-traversal and dev-server advisories; fixed in vite 7+, scheduled for the P2 vite major bump (#2.2).',
   },
-  {
-    package: 'esbuild',
-    ghsa: 'GHSA-67mh-4wv8-2f99',
-    owner: 'accepted risk — dev-time only, build server not exposed in production',
-    reason: 'esbuild <=0.24.2 dev-server SSRF; the build is bundled (vite build) and the dev server is not exposed to network traffic in CI or shipped artifacts.',
-  },
+  // Note: esbuild is intentionally NOT in this allowlist. Its current
+  // advisory (GHSA-67mh-4wv8-2f99) is `moderate`, and the gate only
+  // acts on `high`/`critical` — so an esbuild entry would be a no-op
+  // that bloats the list and risks future drift if a new high/critical
+  // appears under the same package name. If a future advisory escalates
+  // esbuild to high/critical, add a one-line entry here with an owner
+  // and reason; until then, the moderate advisory is visible in the
+  // job log and stays out of this gate per issue #22.
 ];
 
 const ALLOWLIST_BY_PACKAGE = new Map(

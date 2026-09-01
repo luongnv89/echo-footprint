@@ -38,9 +38,13 @@ describe('audit-gate: ALLOWLIST', () => {
     }
   });
 
-  it('contains exactly the two known-and-deferred packages (vite + esbuild)', () => {
+  it('contains exactly the one known-and-deferred high/critical package (vite)', () => {
+    // Per issue #22, the allowlist is `only contains vite until 2.2`.
+    // esbuild's current advisory is `moderate` and the gate only acts
+    // on high/critical, so an esbuild entry would be a no-op. The
+    // moderate advisory stays visible in the job log.
     const pkgs = ALLOWLIST.map((e) => e.package).sort();
-    expect(pkgs).toEqual(['esbuild', 'vite']);
+    expect(pkgs).toEqual(['vite']);
   });
 
   it('vite entry points at the P2 vite 8 major bump (#2.2)', () => {
@@ -49,10 +53,11 @@ describe('audit-gate: ALLOWLIST', () => {
     expect(vite.owner).toMatch(/#?2\.2/);
   });
 
-  it('esbuild entry documents the dev-only, bundled-build accepted risk', () => {
-    const esbuild = ALLOWLIST.find((e) => e.package === 'esbuild');
-    expect(esbuild).toBeDefined();
-    expect(esbuild.reason).toMatch(/dev|build/i);
+  it('does not contain esbuild (its advisory is moderate — out of gate scope)', () => {
+    // Sanity guard: an esbuild entry would be a no-op because the
+    // gate only acts on high/critical. If a future advisory escalates
+    // esbuild to high/critical, add it back with an owner and reason.
+    expect(ALLOWLIST.find((e) => e.package === 'esbuild')).toBeUndefined();
   });
 
   it('keys by package name (a new advisory against an allowlisted package is also deferred)', () => {
@@ -63,20 +68,22 @@ describe('audit-gate: ALLOWLIST', () => {
     // refactor that switches to per-GHSA keying forces a deliberate change.
     const pkgs = new Set(ALLOWLIST.map((e) => e.package));
     expect(pkgs.has('vite')).toBe(true);
-    expect(pkgs.has('esbuild')).toBe(true);
   });
 
   it('does not silently grow — the list stays small and auditable', () => {
     // A maintenance guard: if a future change makes this list sprawl, the
-    // test forces a deliberate edit. Three is a soft warning, not a hard cap.
-    expect(ALLOWLIST.length).toBeLessThanOrEqual(3);
+    // test forces a deliberate edit. Two is a soft warning, not a hard cap.
+    expect(ALLOWLIST.length).toBeLessThanOrEqual(2);
   });
 });
 
 describe('audit-gate: isAllowlisted / allowlistEntryFor', () => {
-  it('returns true for the deferred packages', () => {
+  it('returns true for the deferred package (vite)', () => {
     expect(isAllowlisted('vite')).toBe(true);
-    expect(isAllowlisted('esbuild')).toBe(true);
+  });
+
+  it('returns false for esbuild (its advisory is moderate, out of gate scope)', () => {
+    expect(isAllowlisted('esbuild')).toBe(false);
   });
 
   it('returns false for any other package', () => {
@@ -87,7 +94,6 @@ describe('audit-gate: isAllowlisted / allowlistEntryFor', () => {
 
   it('is case-sensitive (npm package names are)', () => {
     expect(isAllowlisted('Vite')).toBe(false);
-    expect(isAllowlisted('ESBUILD')).toBe(false);
   });
 
   it('returns the full allowlist entry (with reason) for an allowlisted package', () => {
