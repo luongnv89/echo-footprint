@@ -97,8 +97,8 @@ db.version(1).stores({
 
 This tree has **no `node_modules`** committed. The package manager of record
 is **npm** + `package-lock.json` (not pnpm). Use **Node 24 LTS** locally; CI
-still pins Node 20 (`.github/workflows/ci.yml`) until milestone 2.1. See
-`INSTALL.md` for the clean-checkout notes.
+also pins Node 24 in `.github/workflows/ci.yml` (milestone 2.1, issue #25).
+See `INSTALL.md` for the clean-checkout notes.
 
 ```bash
 # Install dependencies from a clean checkout
