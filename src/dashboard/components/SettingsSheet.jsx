@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { clearAllData, checkStorageQuota } from '../utils/db.js';
+import { getGeoOptIn, setGeoOptIn } from '../utils/geolocation.js';
 import '../styles/SettingsSheet.css';
 
 // Storage helper: uses chrome.storage.local when available, otherwise falls back to localStorage (dev preview)
@@ -48,6 +49,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
   const [excludedDomains, setExcludedDomains] = useState([]);
   const [newDomain, setNewDomain] = useState('');
   const [isPaused, setIsPaused] = useState(false);
+  const [geoOptIn, setGeoOptInLocal] = useState(false);
 
   // Load storage info and build info when sheet opens
   useEffect(() => {
@@ -89,6 +91,13 @@ function SettingsSheet({ isOpen, onClose, stats }) {
         setExcludedDomains(domains || []);
         setIsPaused(paused || false);
       });
+    getGeoOptIn().then(setGeoOptInLocal);
+  };
+
+  const toggleGeoOptIn = async () => {
+    const next = !geoOptIn;
+    setGeoOptInLocal(next);
+    await setGeoOptIn(next);
   };
 
   const addDomain = domainValue => {
@@ -315,6 +324,31 @@ function SettingsSheet({ isOpen, onClose, stats }) {
               ) : (
                 <p className="excluded-empty">No domains excluded yet.</p>
               )}
+            </div>
+
+            <div className="setting-item">
+              <div className="setting-info">
+                <strong>Map Geolocation</strong>
+                <p>
+                  Off by default. When enabled, Map View sends the domain names
+                  of tracked sites to https://ip-api.com over HTTPS to resolve
+                  their approximate location. Only domains are sent — never page
+                  contents or your stored data. Results are cached locally.
+                </p>
+              </div>
+              <button
+                className={`toggle-button ${geoOptIn ? 'active' : 'paused'}`}
+                onClick={toggleGeoOptIn}
+                aria-label={
+                  geoOptIn
+                    ? 'Disable map geolocation lookups'
+                    : 'Enable map geolocation lookups'
+                }
+                aria-pressed={geoOptIn}
+                type="button"
+              >
+                {geoOptIn ? 'Enabled' : 'Disabled'}
+              </button>
             </div>
 
             <div className="setting-item">

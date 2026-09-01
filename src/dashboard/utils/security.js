@@ -4,6 +4,27 @@
  */
 
 /**
+ * Escape a string for safe interpolation into HTML (e.g. Leaflet popups).
+ * External data (geolocation fields, domain names) must never be interpolated
+ * into bindPopup HTML unescaped.
+ * @param {*} value
+ * @returns {string} HTML-safe string
+ */
+export function escapeHtml(value) {
+  return String(value ?? '').replace(
+    /[&<>"']/g,
+    ch =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[ch]
+  );
+}
+
+/**
  * Sanitize URL to allow only safe protocols.
  * @param {string} url
  * @returns {string} Safe URL or '#' when invalid/blocked
