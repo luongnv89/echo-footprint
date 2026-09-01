@@ -44,7 +44,7 @@ export default [
   ...compat.extends(
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
-    'prettier',
+    'prettier'
   ),
 
   // Project-wide settings. The `files` key is intentionally omitted so the
