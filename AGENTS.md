@@ -14,7 +14,7 @@ be relaxed.
 
 ## Commands
 
-- Package manager of record: **npm** + `package-lock.json`, never pnpm. Use Node 24 LTS locally; CI pins Node 20 until 2.1.
+- Package manager of record: **npm** + `package-lock.json`, never pnpm. Use Node 24 LTS locally; CI also pins Node 24 (milestone 2.1, issue #25).
 - Install: `npm ci` (a clean checkout has no `node_modules`).
 - Build/test/lint: `npm run build`, `npm run test:run`, `npm run lint` — exact usage in `INSTALL.md` / `CLAUDE.md`.
 

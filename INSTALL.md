@@ -8,7 +8,7 @@ them in sync here.
 
 - This tree has **no `node_modules`** committed. Install everything with `npm ci`.
 - The package manager of record is **npm** + `package-lock.json` — **not pnpm**.
-- Node must be **>=22** (`engines.node`); CI pins Node 20 in
+- Node must be **>=24** (`engines.node`); CI pins Node 24 in
   `.github/workflows/ci.yml` (npm warns on the mismatch — the warning is what
   makes local/CI divergence visible).
 
