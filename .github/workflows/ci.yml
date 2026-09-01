@@ -30,7 +30,7 @@ jobs:
         run: npm run lint
 
       - name: Check formatting
-        run: npm run format -- --check
+        run: npm run format:check
 
   test:
     name: Run Tests
@@ -50,7 +50,15 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test -- --run
+        run: npm run test:run 2>&1 | tee test-output.txt
+
+      - name: Record pass rate in job summary
+        if: always()
+        run: |
+          if [ -s test-output.txt ]; then
+            printf '## Test pass rate\n\n' >> "$GITHUB_STEP_SUMMARY"
+            grep -E "Test Files|Tests " test-output.txt >> "$GITHUB_STEP_SUMMARY" || echo "No summary found" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload test coverage
         if: always()
@@ -118,7 +126,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./echofootprint.zip
+          asset_path: ./echofootprint-chrome/echofootprint.zip
           asset_name: echofootprint-${{ github.event.release.tag_name }}.zip
           asset_content_type: application/zip
 
