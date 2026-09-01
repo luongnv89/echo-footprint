@@ -111,6 +111,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     if: github.event_name == 'release'
+    permissions:
+      contents: write # required by softprops/action-gh-release to upload assets
 
     steps:
       - name: Checkout code
@@ -121,15 +123,14 @@ jobs:
         with:
           name: echofootprint-chrome
 
+      - name: Rename asset for release
+        run: mv echofootprint.zip echofootprint-${{ github.event.release.tag_name }}.zip
+
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./echofootprint.zip
-          asset_name: echofootprint-${{ github.event.release.tag_name }}.zip
-          asset_content_type: application/zip
+          tag_name: ${{ github.event.release.tag_name }}
+          files: echofootprint-${{ github.event.release.tag_name }}.zip
 
   security:
     name: Security Audit

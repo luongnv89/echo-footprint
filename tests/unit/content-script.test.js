@@ -509,11 +509,16 @@ describe('Content Script - multi-platform scan + dedup (issue #21)', () => {
       const key = `${det.platform}|${det.pixelType}|${det.scriptSrc}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      chrome.runtime.sendMessage({ type: 'PIXEL_DETECTED', data: det }, () => {});
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: det },
+        () => {}
+      );
     }
 
     expect(chrome.runtime.sendMessage).toHaveBeenCalledTimes(2);
-    const sent = chrome.runtime.sendMessage.mock.calls.map(c => c[0].data.platform).sort();
+    const sent = chrome.runtime.sendMessage.mock.calls
+      .map(c => c[0].data.platform)
+      .sort();
     expect(sent).toEqual(['facebook', 'google']);
   });
 
@@ -557,7 +562,10 @@ describe('Content Script - multi-platform scan + dedup (issue #21)', () => {
       const key = `${det.platform}|${det.pixelType}|${det.scriptSrc}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      chrome.runtime.sendMessage({ type: 'PIXEL_DETECTED', data: det }, () => {});
+      chrome.runtime.sendMessage(
+        { type: 'PIXEL_DETECTED', data: det },
+        () => {}
+      );
     }
 
     // The Facebook script was sent exactly once (by the observer).
