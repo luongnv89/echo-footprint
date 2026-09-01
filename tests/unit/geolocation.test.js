@@ -405,9 +405,7 @@ describe('Geolocation Utilities', () => {
 
   describe('Geo Opt-in Gate', () => {
     it('does not fetch for uncached domains on the default path', async () => {
-      const { getGeoCache } = await import(
-        '../../src/dashboard/utils/db.js'
-      );
+      const { getGeoCache } = await import('../../src/dashboard/utils/db.js');
       getGeoCache.mockResolvedValue(null);
 
       // Default is OFF; set explicitly to guard against ordering drift.
@@ -420,9 +418,7 @@ describe('Geolocation Utilities', () => {
     });
 
     it('fetches over https after explicit opt-in', async () => {
-      const { getGeoCache } = await import(
-        '../../src/dashboard/utils/db.js'
-      );
+      const { getGeoCache } = await import('../../src/dashboard/utils/db.js');
       getGeoCache.mockResolvedValue(null);
       global.fetch.mockResolvedValue({
         ok: true,
@@ -445,9 +441,7 @@ describe('Geolocation Utilities', () => {
     });
 
     it('returns cached data without live lookups while opted out', async () => {
-      const { getGeoCache } = await import(
-        '../../src/dashboard/utils/db.js'
-      );
+      const { getGeoCache } = await import('../../src/dashboard/utils/db.js');
       getGeoCache.mockResolvedValue({
         country: 'France',
         region: 'IDF',
