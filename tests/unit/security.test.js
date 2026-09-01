@@ -1,5 +1,40 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeUrl, isSafeUrl } from '../../src/dashboard/utils/security.js';
+import {
+  sanitizeUrl,
+  isSafeUrl,
+  escapeHtml,
+} from '../../src/dashboard/utils/security.js';
+
+describe('escapeHtml', () => {
+  it('escapes HTML-special characters', () => {
+    expect(escapeHtml('<script>alert(1)</script>')).toBe(
+      '&lt;script&gt;alert(1)&lt;/script&gt;'
+    );
+  });
+
+  it('escapes ampersands, quotes and apostrophes', () => {
+    expect(escapeHtml('a & b "c" \'d\'')).toBe(
+      'a &amp; b &quot;c&quot; &#39;d&#39;'
+    );
+  });
+
+  it('leaves safe geo/domain strings unchanged', () => {
+    expect(escapeHtml('example.com')).toBe('example.com');
+    expect(escapeHtml('San Francisco')).toBe('San Francisco');
+  });
+
+  it('handles null and undefined by returning an empty string', () => {
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
+  });
+
+  it('defangs an XSS payload aimed at Leaflet popup HTML', () => {
+    const payload = '<img src=x onerror=alert(document.cookie)>';
+    const escaped = escapeHtml(payload);
+    expect(escaped).not.toContain('<img');
+    expect(escaped).toBe('&lt;img src=x onerror=alert(document.cookie)&gt;');
+  });
+});
 
 describe('sanitizeUrl', () => {
   it('allows valid http URLs', () => {

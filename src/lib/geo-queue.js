@@ -1,13 +1,13 @@
 /**
  * Geolocation Queue Manager
- * Fetches geolocation data for domains using ip-api.com
+ * Fetches geolocation data for domains using https://ip-api.com
  * Per PRD: 45 req/min rate limit, exponential backoff, cache results
  */
 
 import { getGeoCache, setGeoCache } from './db-sw.js';
 
 // Configuration
-const GEO_API_URL = 'http://ip-api.com/json/';
+const GEO_API_URL = 'https://ip-api.com/json/';
 const RATE_LIMIT_PER_MINUTE = 45;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_RETRIES = 3;
@@ -81,7 +81,7 @@ function calculateBackoff(attempt) {
 }
 
 /**
- * Fetch geolocation for a domain from ip-api.com
+ * Fetch geolocation for a domain from https://ip-api.com
  * @param {string} domain - Domain to lookup
  * @param {number} attempt - Current retry attempt (0-indexed)
  * @returns {Promise<Object|null>} - Geolocation data or null

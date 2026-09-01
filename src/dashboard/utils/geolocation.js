@@ -1,6 +1,6 @@
 /**
  * Dashboard Geolocation Utilities
- * Fetches geolocation data for domains using ip-api.com
+ * Fetches geolocation data for domains using https://ip-api.com (opt-in, off by default)
  * Implements sophisticated rate limiting (45 req/min) and multi-layer caching
  *
  * Features:
@@ -14,7 +14,7 @@
 import { getGeoCache, setGeoCache, getSetting, setSetting } from './db.js';
 
 // Configuration
-const GEO_API_URL = 'http://ip-api.com/json/';
+const GEO_API_URL = 'https://ip-api.com/json/';
 const GEO_API_FIELDS = 'status,message,country,regionName,city,lat,lon,isp,org';
 const RATE_LIMIT_PER_MINUTE = 45;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -24,6 +24,11 @@ const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000; // 1 second
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const RATE_LIMIT_STATE_KEY = 'geoRateLimitState';
+const GEO_OPT_IN_KEY = 'geoOptIn';
+
+// Live geolocation lookups are strictly opt-in (default OFF): the default path
+// must never send visited domains to a third party (F-SEC-001).
+let geoOptIn = false;
 
 // In-memory cache for ultra-fast lookups (cleared on page refresh)
 const memoryCache = new Map();
@@ -54,6 +59,9 @@ async function initialize() {
         ts => now - ts < RATE_LIMIT_WINDOW_MS
       );
     }
+    // Restore opt-in preference (default OFF)
+    const optIn = await getSetting(GEO_OPT_IN_KEY);
+    geoOptIn = optIn === true;
     isInitialized = true;
   } catch (error) {
     console.error('Failed to initialize geolocation system:', error);
@@ -220,12 +228,38 @@ function calculateBackoff(attempt) {
 }
 
 /**
- * Fetch geolocation for a domain from ip-api.com
+ * Get the opt-in state for live geolocation lookups.
+ * @returns {Promise<boolean>} - True when the user opted in
+ */
+export async function getGeoOptIn() {
+  await initialize();
+  return geoOptIn;
+}
+
+/**
+ * Set the opt-in state for live geolocation lookups (persisted).
+ * @param {boolean} enabled
+ */
+export async function setGeoOptIn(enabled) {
+  await initialize();
+  geoOptIn = enabled === true;
+  try {
+    await setSetting(GEO_OPT_IN_KEY, geoOptIn);
+  } catch (error) {
+    console.error('Failed to persist geolocation opt-in:', error);
+  }
+}
+
+/**
+ * Fetch geolocation for a domain from https://ip-api.com (requires opt-in)
  * @param {string} domain - Domain to lookup
  * @param {number} attempt - Current retry attempt (0-indexed)
  * @returns {Promise<Object|null>} - Geolocation data or null
  */
 async function fetchGeolocation(domain, attempt = 0) {
+  // Opt-in gate: no live lookups unless the user explicitly enabled them
+  if (!geoOptIn) return null;
+
   try {
     // Wait for rate limit
     await waitForRateLimit();
@@ -320,7 +354,7 @@ function normalizeDomain(domain) {
   // Remove protocol
   normalized = normalized.replace(/^https?:\/\//, '');
 
-  // Remove www. prefix for geolocation lookup (www. can cause issues with ip-api.com)
+  // Remove www. prefix for geolocation lookup (www. can cause issues with the API)
   // But keep it for display purposes
   // Actually, we should NOT remove www for the API call - let's keep the domain as-is
   // The API can handle www. prefixes
@@ -374,7 +408,11 @@ export async function getGeolocationForDomain(domain) {
           };
         }
 
-        // Fetch from API
+        // Fetch from API (only after explicit opt-in)
+        if (!geoOptIn) {
+          return null;
+        }
+
         const geoData = await fetchGeolocation(normalizedDomain);
 
         if (geoData) {

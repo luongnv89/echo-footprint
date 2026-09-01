@@ -11,7 +11,12 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { getGeoCache, db } from '../utils/db.js';
-import { fetchBulkGeolocation, clearAllCaches } from '../utils/geolocation.js';
+import {
+  fetchBulkGeolocation,
+  clearAllCaches,
+  getGeoOptIn,
+} from '../utils/geolocation.js';
+import { escapeHtml } from '../utils/security.js';
 import '../styles/MapView.css';
 
 // Fix Leaflet default marker icons
@@ -37,62 +42,73 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const [isLoadingGeo, setIsLoadingGeo] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ current: 0, total: 0 });
   const [locationGroups, setLocationGroups] = useState({});
+  const [geoOptIn, setGeoOptInState] = useState(false);
 
   // Load geolocation data for all domains
-  useEffect(() => {
-    async function loadGeoData() {
-      const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
-      console.log('MapView: Loading geolocation for domains:', uniqueDomains);
-      const geoMap = {};
+  async function loadGeoData() {
+    const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
+    const geoMap = {};
 
-      // First, load all cached data
-      for (const domain of uniqueDomains) {
-        const cached = await getGeoCache(domain);
-        if (cached && cached.lat && cached.lon) {
-          geoMap[domain] = cached;
-          console.log(`MapView: Cached geo data for ${domain}:`, cached);
-        }
-      }
+    // Live lookups are strictly opt-in (default OFF): cached data is always
+    // shown, but uncached domains are only fetched after explicit consent.
+    const optIn = await getGeoOptIn();
+    setGeoOptInState(optIn);
 
-      setGeoData(geoMap);
-
-      // Then, fetch missing geolocation data
-      const uncachedDomains = uniqueDomains.filter(d => !geoMap[d]);
-      console.log('MapView: Uncached domains:', uncachedDomains);
-
-      if (uncachedDomains.length > 0) {
-        setIsLoadingGeo(true);
-        setGeoProgress({ current: 0, total: uncachedDomains.length });
-
-        try {
-          console.log('MapView: Fetching bulk geolocation...');
-          const newGeoData = await fetchBulkGeolocation(
-            uncachedDomains,
-            progress => {
-              console.log('MapView: Progress:', progress);
-              setGeoProgress({
-                current: progress.current,
-                total: progress.total,
-              });
-            }
-          );
-
-          console.log('MapView: Fetched geo data:', newGeoData);
-          // Merge with existing data
-          setGeoData(prev => ({ ...prev, ...newGeoData }));
-        } catch (error) {
-          console.error('MapView: Error fetching geolocation data:', error);
-        } finally {
-          setIsLoadingGeo(false);
-        }
-      } else {
-        console.log('MapView: All domains already cached');
+    // First, load all cached data
+    for (const domain of uniqueDomains) {
+      const cached = await getGeoCache(domain);
+      if (cached && cached.lat && cached.lon) {
+        geoMap[domain] = cached;
       }
     }
 
+    setGeoData(geoMap);
+
+    // Then, fetch missing geolocation data (opt-in only)
+    const uncachedDomains = uniqueDomains.filter(d => !geoMap[d]);
+
+    if (optIn && uncachedDomains.length > 0) {
+      setIsLoadingGeo(true);
+      setGeoProgress({ current: 0, total: uncachedDomains.length });
+
+      try {
+        const newGeoData = await fetchBulkGeolocation(
+          uncachedDomains,
+          progress => {
+            setGeoProgress({
+              current: progress.current,
+              total: progress.total,
+            });
+          }
+        );
+
+        // Merge with existing data
+        setGeoData(prev => ({ ...prev, ...newGeoData }));
+      } catch (error) {
+        console.error('MapView: Error fetching geolocation data:', error);
+      } finally {
+        setIsLoadingGeo(false);
+      }
+    }
+  }
+
+  useEffect(() => {
     if (safeFootprints && safeFootprints.length > 0) {
       loadGeoData();
     }
+  }, [safeFootprints]);
+
+  // Re-check the opt-in when it is toggled in Settings (event from SettingsSheet)
+  useEffect(() => {
+    const handleOptInChange = () => {
+      if (safeFootprints && safeFootprints.length > 0) {
+        loadGeoData();
+      }
+    };
+    window.addEventListener('geo-opt-in-changed', handleOptInChange);
+    return () =>
+      window.removeEventListener('geo-opt-in-changed', handleOptInChange);
+    // re-register on footprints change so loadGeoData sees fresh data
   }, [safeFootprints]);
 
   // Initialize map
@@ -250,17 +266,20 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
     Object.values(grouped).forEach(location => {
       const marker = L.marker([location.lat, location.lon]);
 
-      // Create popup content
+      // Create popup content — every external geo/domain string is escaped
+      // before interpolation (bindPopup renders raw HTML)
       const popupContent = `
         <div class="map-popup">
-          <h3>${location.city || location.region || location.country}</h3>
-          <p class="location-info">${location.country}</p>
+          <h3>${escapeHtml(
+            location.city || location.region || location.country
+          )}</h3>
+          <p class="location-info">${escapeHtml(location.country)}</p>
           <div class="domains-list">
             <strong>Tracking Domains (${location.domains.length}):</strong>
             <ul>
               ${location.domains
                 .slice(0, 5)
-                .map(d => `<li>${d}</li>`)
+                .map(d => `<li>${escapeHtml(d)}</li>`)
                 .join('')}
               ${location.domains.length > 5 ? `<li>...and ${location.domains.length - 5} more</li>` : ''}
             </ul>
@@ -317,7 +336,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const handleClearCache = async () => {
     if (
       confirm(
-        'Clear all cached geolocation data? This will force fresh lookups from the API.'
+        'Clear all cached geolocation data? Fresh lookups happen only when map geolocation is enabled in Settings.'
       )
     ) {
       try {
@@ -327,17 +346,14 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
         // Clear IndexedDB cache
         await db.geoCache.clear();
 
-        console.log('Geo cache cleared, reloading data...');
-
         // Reset state
         setGeoData({});
 
-        // Force reload by updating footprints reference
+        // Refetch only when live lookups are opted in
+        const optIn = await getGeoOptIn();
         const uniqueDomains = [...new Set(safeFootprints.map(f => f.domain))];
-        console.log('Reloading geolocation for:', uniqueDomains);
 
-        // Trigger reload
-        if (uniqueDomains.length > 0) {
+        if (optIn && uniqueDomains.length > 0) {
           setIsLoadingGeo(true);
           setGeoProgress({ current: 0, total: uniqueDomains.length });
 
@@ -475,11 +491,19 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
         Object.keys(geoData).length === 0 &&
         footprints.length > 0 && (
           <div className="map-overlay-message">
-            <p>
-              No geolocation data available for tracked domains.
-              <br />
-              Domains may not have resolvable IP addresses.
-            </p>
+            {geoOptIn ? (
+              <p>
+                No geolocation data available for tracked domains.
+                <br />
+                Domains may not have resolvable IP addresses.
+              </p>
+            ) : (
+              <p>
+                Map geolocation is off by default.
+                <br />
+                Enable it in Settings → Privacy to resolve domain locations.
+              </p>
+            )}
           </div>
         )}
     </div>

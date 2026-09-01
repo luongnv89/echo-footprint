@@ -306,7 +306,7 @@ function App() {
       `${topLocation || 'Top region'} holds ${topShare}% of mapped detections (${topCount} event${topCount === 1 ? '' : 's'}).`,
       unknownCount > 0
         ? `${unknownShare}% of detections have unknown location (cached lookup pending or unavailable).`
-        : 'Data stays local; map rendering uses cached geo lookups only.',
+        : 'Data stays local; map geolocation is opt-in and only sends tracked domain names over HTTPS.',
     ];
 
     return { messages };
@@ -608,7 +608,8 @@ function App() {
 
         <footer className="dashboard-footer">
           <p>
-            All data stored locally. Zero telemetry.{' '}
+            All data stored locally. Zero telemetry. Optional map geolocation
+            (off by default) uses https://ip-api.com.{' '}
             <a
               href="https://github.com/luongnv89/echo-footprint/blob/main/privacy-policy.md"
               target="_blank"

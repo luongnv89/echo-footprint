@@ -30,13 +30,14 @@ The extension does **not** read or store form contents, passwords, payment detai
 ## 3. How Data Is Stored and Processed
 
 - All data stays **locally on your device** in your browser’s IndexedDB.
-- No data is sent to external servers, third-party analytics, or cloud storage.
-- No cross-border transfers occur because nothing leaves your device unless you export it.
+- No data is sent to external servers, third-party analytics, or cloud storage, **with one exception you control**: the optional Map View geolocation lookup described in Section 4. Nothing else leaves your device unless you export it.
+- Aside from that optional lookup, no cross-border transfers occur because nothing else leaves your device unless you export it.
 
 ## 4. Sharing and Subprocessors
 
+- **Optional Map View geolocation (off by default).** The Map View can resolve the approximate location of the sites you have tracked. This feature is **disabled by default**. Only when you explicitly enable it in Settings → Privacy does the extension send the **domain names** of tracked sites to the ip-api.com geolocation service (https://ip-api.com) over HTTPS to fetch their approximate location. As with any web request, the lookup itself reveals your IP address to that service; no page contents, cookie data, or your stored detection history are ever sent. Results are cached locally for 7 days, the lookup respects a 45 requests/minute limit, and you can disable the feature or clear the cache at any time in Settings.
 - The extension does **not** share data with advertisers, data brokers, or other third parties.
-- No subprocessors are used. There is no backend.
+- No other subprocessors are used. There is no backend.
 
 ## 5. Retention
 
