@@ -148,9 +148,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+      - name: Run npm audit gate
+        # Hardens the security job per modernization task 1.8: no
+        # `continue-on-error`, so a new high/critical dependency
+        # vulnerability fails the PR. Known-and-deferred advisories
+        # (vite path-traversal, esbuild dev-server SSRF) live in the
+        # allowlist inside scripts/audit-gate.cjs with an owner and
+        # reason so the gate is auditable and easy to prune. Prune the
+        # vite entry on the P2 vite 8 major bump (#2.2).
+        run: npm audit --json --audit-level=low | node scripts/audit-gate.cjs
 
       # TruffleHog scans for accidentally committed secrets (API keys, tokens, etc.)
       # Separate steps for push/PR events to use correct commit SHAs
