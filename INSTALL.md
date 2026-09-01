@@ -8,8 +8,9 @@ them in sync here.
 
 - This tree has **no `node_modules`** committed. Install everything with `npm ci`.
 - The package manager of record is **npm** + `package-lock.json` — **not pnpm**.
-- Use **Node 24 LTS** locally (LTS/current as of this phase). CI still pins
-  Node 20 in `.github/workflows/ci.yml` until milestone 2.1.
+- Node must be **>=22** (`engines.node`); CI pins Node 20 in
+  `.github/workflows/ci.yml` (npm warns on the mismatch — the warning is what
+  makes local/CI divergence visible).
 
 ## Commands
 
@@ -30,8 +31,9 @@ npm run lint
 Additional helpers:
 
 ```bash
-npm run format            # Prettier write (CI checks with `npm run format -- --check`)
-npm run zip               # npm run build + package dist/ into echofootprint.zip
+npm run format:check    # Prettier check only (CI + husky), never writes
+npm run format:write     # Prettier auto-fix (local use only)
+npm run zip              # npm run build + package dist/ into dist/echofootprint.zip
 npm run test:coverage     # vitest --run --coverage
 npm run dev               # Vite dev server
 ```

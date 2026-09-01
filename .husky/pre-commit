@@ -19,10 +19,10 @@ echo ""
 
 # 2. Lint Job - Prettier format check
 echo "🎨 [2/5] Checking code formatting (matches CI lint job)..."
-if npm run format -- --check; then
+if npm run format:check; then
   echo "✅ Prettier format check passed"
 else
-  echo "❌ Prettier format check failed - run 'npm run format' to fix"
+  echo "❌ Prettier format check failed - run 'npm run format:write' to fix"
   FAILED=1
 fi
 echo ""

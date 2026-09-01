@@ -106,13 +106,13 @@ npm run build
 
 # Lint and format
 npm run lint
-npm run format
+npm run format:check
 
 # Run tests once
 npm run test:run
 
 # Package for distribution
-npm run zip  # Outputs echofootprint.zip
+npm run zip  # Outputs dist/echofootprint.zip
 ```
 
 ### Project Structure

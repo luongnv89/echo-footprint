@@ -30,7 +30,7 @@ jobs:
         run: npm run lint
 
       - name: Check formatting
-        run: npm run format -- --check
+        run: npm run format:check
 
   test:
     name: Run Tests
@@ -50,7 +50,16 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test -- --run
+        shell: bash # explicit bash runs with -eo pipefail, so a vitest failure fails the step through the tee pipe
+        run: npm run test:run 2>&1 | tee test-output.txt
+
+      - name: Record pass rate in job summary
+        if: always()
+        run: |
+          if [ -s test-output.txt ]; then
+            printf '## Test pass rate\n\n' >> "$GITHUB_STEP_SUMMARY"
+            grep -E "Test Files|Tests " test-output.txt >> "$GITHUB_STEP_SUMMARY" || echo "No summary found" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload test coverage
         if: always()
@@ -130,7 +139,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for TruffleHog
+          fetch-depth: 0 # Fetch full history for TruffleHog
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
