@@ -12,8 +12,19 @@
 export function matchesDomainPattern(domain, pattern) {
   if (!domain || !pattern) return false;
 
-  const normalizedDomain = domain.trim().toLowerCase();
   const normalizedPattern = pattern.trim().toLowerCase();
+
+  // Length limit (≤200 chars)
+  if (normalizedPattern.length > 200) return false;
+
+  // Reject patterns with unfiltered metacharacters (<>{}[])
+  if (/[<>\{\}\[\]]/.test(normalizedPattern)) return false;
+
+  // Cap * count (≤10)
+  const starCount = (normalizedPattern.match(/\*/g) || []).length;
+  if (starCount > 10) return false;
+
+  const normalizedDomain = domain.trim().toLowerCase();
 
   if (normalizedDomain === normalizedPattern) return true;
 

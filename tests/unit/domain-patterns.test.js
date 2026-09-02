@@ -24,6 +24,26 @@ describe('matchesDomainPattern', () => {
     expect(matchesDomainPattern('Example.com', 'EXAMPLE.COM')).toBe(true);
     expect(matchesDomainPattern('Example.com', '*.EXAMPLE.COM')).toBe(false);
   });
+
+  it('rejects patterns exceeding 200 chars', () => {
+    const longPattern = 'a'.repeat(201);
+    expect(matchesDomainPattern('example.com', longPattern)).toBe(false);
+    expect(matchesDomainPattern('a'.repeat(200), 'a'.repeat(200))).toBe(true);
+  });
+
+  it('rejects patterns with unfiltered metacharacters', () => {
+    expect(matchesDomainPattern('example.com', '*<>[]{}()')).toBe(false);
+    expect(matchesDomainPattern('example.com', 'test{}')).toBe(false);
+    expect(matchesDomainPattern('example.com', 'test[]')).toBe(false);
+    expect(matchesDomainPattern('example.com', 'test<>')).toBe(false);
+    expect(matchesDomainPattern('test', 'test()')).toBe(true); // () is allowed (not in <>{}[]), regex group still matches base
+  });
+
+  it('limits star count to 10', () => {
+    expect(matchesDomainPattern('example.com', '*'.repeat(11))).toBe(false);
+    expect(matchesDomainPattern('example.com', '*'.repeat(10))).toBe(true);
+    expect(matchesDomainPattern('foo***bar', 'foo***bar')).toBe(true);
+  });
 });
 
 describe('isDomainExcluded', () => {
