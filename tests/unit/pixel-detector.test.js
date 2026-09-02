@@ -647,7 +647,7 @@ describe('Multi-Platform Detection', () => {
 describe('TRACKING_PLATFORMS Configuration', () => {
   it('should define 50 tracking platforms', async () => {
     const { TRACKING_PLATFORMS } = await import(
-      '../../src/lib/pixel-detector.js'
+      '../../src/lib/tracking-platforms.js'
     );
 
     const platformCount = Object.keys(TRACKING_PLATFORMS).length;
@@ -657,7 +657,7 @@ describe('TRACKING_PLATFORMS Configuration', () => {
 
   it('should have valid platform configurations', async () => {
     const { TRACKING_PLATFORMS } = await import(
-      '../../src/lib/pixel-detector.js'
+      '../../src/lib/tracking-platforms.js'
     );
 
     for (const [platformId, config] of Object.entries(TRACKING_PLATFORMS)) {
@@ -674,7 +674,7 @@ describe('TRACKING_PLATFORMS Configuration', () => {
 
   it('should have unique platform IDs', async () => {
     const { TRACKING_PLATFORMS } = await import(
-      '../../src/lib/pixel-detector.js'
+      '../../src/lib/tracking-platforms.js'
     );
 
     const platformIds = Object.keys(TRACKING_PLATFORMS);
@@ -685,7 +685,7 @@ describe('TRACKING_PLATFORMS Configuration', () => {
 
   it('should include all major ad networks', async () => {
     const { TRACKING_PLATFORMS } = await import(
-      '../../src/lib/pixel-detector.js'
+      '../../src/lib/tracking-platforms.js'
     );
 
     const expectedPlatforms = [
@@ -708,6 +708,13 @@ describe('TRACKING_PLATFORMS Configuration', () => {
     for (const platform of expectedPlatforms) {
       expect(TRACKING_PLATFORMS).toHaveProperty(platform);
     }
+  });
+
+  it('keeps pixel-detector re-exporting the same catalog (back-compat)', async () => {
+    const fromCatalog = await import('../../src/lib/tracking-platforms.js');
+    const fromDetector = await import('../../src/lib/pixel-detector.js');
+
+    expect(fromDetector.TRACKING_PLATFORMS).toBe(fromCatalog.TRACKING_PLATFORMS);
   });
 });
 

@@ -1,6 +1,12 @@
 /**
  * EchoFootPrint Dashboard - Main App Component
  * Per PRD: Radial graph, sidebar, filters
+ *
+ * After issue #33, App is pure orchestration: state, data queries,
+ * insight hooks, and JSX composition. The platform catalog moved to
+ * `src/lib/tracking-platforms.js`; insight reduction moved to
+ * `src/dashboard/hooks/useDashboardInsights.js`; the view-tabs and
+ * insights-banner JSX moved to their own components.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -11,7 +17,6 @@ import {
   getStats,
   calculatePlatformStats,
 } from './utils/db.js';
-import { TRACKING_PLATFORMS } from '../lib/pixel-detector.js';
 import RadialGraph from './components/RadialGraph.jsx';
 import BipartiteGraph from './components/BipartiteGraph.jsx';
 import MapView from './components/MapView.jsx';
@@ -21,6 +26,14 @@ import SettingsSheet from './components/SettingsSheet.jsx';
 import HelpSheet from './components/HelpSheet.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import EmptyState from './components/EmptyState.jsx';
+import ViewTabs from './components/ViewTabs.jsx';
+import InsightsBanner from './components/InsightsBanner.jsx';
+import {
+  useOverviewInsights,
+  useBipartiteInsights,
+  useMapInsights,
+  selectDisplayedInsights,
+} from './hooks/useDashboardInsights.js';
 import './styles/App.css';
 
 function App() {
@@ -97,227 +110,16 @@ function App() {
     };
   }, [baseStats, footprints]);
 
-  const insights = useMemo(() => {
-    if (!stats || !footprints || footprints.length === 0) {
-      return {
-        totalDetections: 0,
-        uniqueDomains: 0,
-        activePlatforms: 0,
-        topPlatformName: '—',
-        topPlatformShare: 0,
-        topDomain: '—',
-        topDomainDetections: 0,
-        messages: [],
-      };
-    }
+  const overviewInsights = useOverviewInsights(stats, footprints);
+  const bipartiteInsights = useBipartiteInsights(footprints);
+  const mapInsights = useMapInsights(mapLocationStats, footprints);
 
-    const platformEntries = Object.entries(stats.platformStats || {});
-    const totalDetections = stats.totalFootprints || 0;
-    const activePlatforms = platformEntries.length;
-
-    let topPlatformName = '—';
-    let topPlatformShare = 0;
-    if (platformEntries.length && totalDetections > 0) {
-      const [topPlatformId, topPlatformData] = platformEntries.reduce(
-        (max, entry) => (entry[1].detections > max[1].detections ? entry : max),
-        platformEntries[0]
-      );
-      topPlatformName =
-        TRACKING_PLATFORMS[topPlatformId]?.name || topPlatformId;
-      topPlatformShare = Math.round(
-        (topPlatformData.detections / totalDetections) * 100
-      );
-    }
-
-    // Domain-level insight
-    const domainCounts = footprints.reduce((acc, fp) => {
-      const domain = fp.domain || 'unknown';
-      acc[domain] = (acc[domain] || 0) + 1;
-      return acc;
-    }, {});
-    const domainEntries = Object.entries(domainCounts);
-    const [topDomain, topDomainDetections] =
-      domainEntries.length > 0
-        ? domainEntries.reduce(
-            (max, entry) => (entry[1] > max[1] ? entry : max),
-            domainEntries[0]
-          )
-        : ['—', 0];
-
-    // Build concise sentences (2-3)
-    const avgPerDomain =
-      stats.uniqueDomains && stats.uniqueDomains > 0
-        ? (totalDetections / stats.uniqueDomains).toFixed(1)
-        : '0';
-
-    const messages = [];
-    if (topPlatformShare > 0) {
-      messages.push(
-        `${topPlatformName} drives ${topPlatformShare}% of current detections.`
-      );
-    }
-    if (activePlatforms > 1 && avgPerDomain !== '0') {
-      messages.push(
-        `Traffic spans ${activePlatforms} platforms, averaging ${avgPerDomain} detections per domain.`
-      );
-    }
-    if (topDomainDetections > 0) {
-      messages.push(
-        `${topDomain} is your busiest domain with ${topDomainDetections} detections.`
-      );
-    }
-
-    return {
-      totalDetections: totalDetections,
-      uniqueDomains: stats.uniqueDomains || 0,
-      activePlatforms,
-      topPlatformName,
-      topPlatformShare,
-      topDomain,
-      topDomainDetections,
-      messages,
-    };
-  }, [stats, footprints]);
-
-  const bipartiteInsights = useMemo(() => {
-    if (!footprints || footprints.length === 0) {
-      return {
-        messages: [
-          'Switch to graph and start browsing to populate the bipartite view.',
-        ],
-      };
-    }
-
-    const domainToPlatforms = new Map();
-    const platformToDomains = new Map();
-
-    footprints.forEach(fp => {
-      const domain = fp.domain || 'unknown';
-      const platform = fp.platform || 'unknown';
-
-      if (!domainToPlatforms.has(domain)) {
-        domainToPlatforms.set(domain, new Set());
-      }
-      domainToPlatforms.get(domain).add(platform);
-
-      if (!platformToDomains.has(platform)) {
-        platformToDomains.set(platform, new Set());
-      }
-      platformToDomains.get(platform).add(domain);
-    });
-
-    const totalDomains = domainToPlatforms.size;
-    const totalPlatforms = platformToDomains.size;
-    const multiPlatformDomains = [...domainToPlatforms.values()].filter(
-      set => set.size > 1
-    ).length;
-
-    const topDomainEntry = [...domainToPlatforms.entries()].reduce(
-      (max, entry) => (entry[1].size > max[1].size ? entry : max),
-      [null, new Set()]
-    );
-    const topPlatformEntry = [...platformToDomains.entries()].reduce(
-      (max, entry) => (entry[1].size > max[1].size ? entry : max),
-      [null, new Set()]
-    );
-
-    const topDomain = topDomainEntry[0] || '—';
-    const topDomainPlatforms = topDomainEntry[1].size || 0;
-    const topPlatformId = topPlatformEntry[0] || '—';
-    const topPlatformDomains = topPlatformEntry[1].size || 0;
-    const topPlatformName =
-      TRACKING_PLATFORMS[topPlatformId]?.name || topPlatformId;
-
-    const avgPlatformsPerDomain =
-      totalDomains > 0
-        ? (
-            Array.from(domainToPlatforms.values()).reduce(
-              (sum, set) => sum + set.size,
-              0
-            ) / totalDomains
-          ).toFixed(1)
-        : '0';
-
-    const topPlatformCoverage =
-      totalDomains > 0
-        ? Math.round((topPlatformDomains / totalDomains) * 100)
-        : 0;
-
-    const messages = [];
-
-    // Overview
-    messages.push(
-      `${totalPlatforms} platform${totalPlatforms === 1 ? '' : 's'} across ${totalDomains} domain${totalDomains === 1 ? '' : 's'}; avg ${avgPlatformsPerDomain} platform${avgPlatformsPerDomain === '1.0' ? '' : 's'} per domain.`
-    );
-
-    // Cross-linking
-    if (multiPlatformDomains > 0) {
-      messages.push(
-        `${multiPlatformDomains} domain${multiPlatformDomains === 1 ? '' : 's'} link to multiple platforms; ${topDomain} spans ${topDomainPlatforms} platform${topDomainPlatforms === 1 ? '' : 's'}, your most entangled node.`
-      );
-    } else {
-      messages.push(
-        `No domains connect to multiple platforms yet—tracking looks isolated per site in this window.`
-      );
-    }
-
-    // Reach
-    messages.push(
-      `${topPlatformName} reaches ${topPlatformDomains} domain${topPlatformDomains === 1 ? '' : 's'} (${topPlatformCoverage}% coverage), widest in your network.`
-    );
-
-    return { messages };
-  }, [footprints]);
-
-  const footprintsCount = Array.isArray(footprints) ? footprints.length : 0;
-
-  const mapInsights = useMemo(() => {
-    const {
-      locations = 0,
-      totalEvents = 0,
-      eventsWithGeo = 0,
-      topLocation,
-      topCount = 0,
-      unknownCount = 0,
-    } = mapLocationStats || {};
-
-    if (!footprints || footprints.length === 0) {
-      return {
-        messages: [
-          'Browse a few sites to populate the map with geolocated detections.',
-        ],
-      };
-    }
-
-    if (!eventsWithGeo || !locations) {
-      return {
-        messages: [
-          'Geolocation data not available yet—continue browsing to see map coverage.',
-        ],
-      };
-    }
-
-    const topShare = Math.round((topCount / eventsWithGeo) * 100);
-    const unknownShare =
-      unknownCount > 0 ? Math.round((unknownCount / totalEvents) * 100) : 0;
-
-    const messages = [
-      `${locations} location${locations === 1 ? '' : 's'} detected across ${eventsWithGeo} mapped event${eventsWithGeo === 1 ? '' : 's'}.`,
-      `${topLocation || 'Top region'} holds ${topShare}% of mapped detections (${topCount} event${topCount === 1 ? '' : 's'}).`,
-      unknownCount > 0
-        ? `${unknownShare}% of detections have unknown location (cached lookup pending or unavailable).`
-        : 'Data stays local; map geolocation is opt-in and only sends tracked domain names over HTTPS.',
-    ];
-
-    return { messages };
-  }, [mapLocationStats, footprints]);
-
-  const displayedInsights =
-    activeView === 'bipartite'
-      ? bipartiteInsights.messages
-      : activeView === 'map'
-        ? mapInsights.messages
-        : insights.messages;
+  const displayedInsights = selectDisplayedInsights(
+    activeView,
+    overviewInsights,
+    bipartiteInsights,
+    mapInsights
+  );
 
   // Handler for platform selection from sidebar
   const handlePlatformSelect = (platformId, platformData) => {
@@ -387,187 +189,14 @@ function App() {
         <header className="dashboard-header">
           <div className="dashboard-header-top">
             <h1>Privacy-first tracking visualization</h1>
-            {showInsights && (
-              <div
-                className="dashboard-insights-banner"
-                role="status"
-                aria-label="Tracking insights"
-              >
-                <div className="insight-banner-icon" aria-hidden="true">
-                  ★
-                </div>
-                <div className="dashboard-insights-text">
-                  {displayedInsights.length > 0 ? (
-                    displayedInsights.map((msg, idx) => (
-                      <p key={idx} className="insight-line">
-                        {msg}
-                      </p>
-                    ))
-                  ) : (
-                    <p className="insight-line">
-                      Start browsing to see insights.
-                    </p>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="insight-dismiss"
-                  aria-label="Dismiss insights"
-                  onClick={() => setShowInsights(false)}
-                >
-                  ×
-                </button>
-              </div>
-            )}
+            <InsightsBanner
+              messages={displayedInsights}
+              visible={showInsights}
+              onDismiss={() => setShowInsights(false)}
+            />
           </div>
 
-          <nav className="view-tabs" role="tablist">
-            <button
-              role="tab"
-              aria-selected={activeView === 'graph'}
-              aria-controls="graph-view"
-              className={`tab-button ${activeView === 'graph' ? 'active' : ''}`}
-              onClick={() => setActiveView('graph')}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <circle cx="10" cy="10" r="2" />
-                <circle cx="4" cy="6" r="2" />
-                <circle cx="16" cy="6" r="2" />
-                <circle cx="4" cy="14" r="2" />
-                <circle cx="16" cy="14" r="2" />
-                <line
-                  x1="10"
-                  y1="10"
-                  x2="6"
-                  y2="7"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="10"
-                  y1="10"
-                  x2="14"
-                  y2="7"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="10"
-                  y1="10"
-                  x2="6"
-                  y2="13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="10"
-                  y1="10"
-                  x2="14"
-                  y2="13"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-              Graph View
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeView === 'bipartite'}
-              aria-controls="bipartite-view"
-              className={`tab-button ${activeView === 'bipartite' ? 'active' : ''}`}
-              onClick={() => setActiveView('bipartite')}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <circle cx="4" cy="4" r="2" />
-                <circle cx="4" cy="10" r="2" />
-                <circle cx="4" cy="16" r="2" />
-                <circle cx="16" cy="6" r="2" />
-                <circle cx="16" cy="14" r="2" />
-                <line
-                  x1="6"
-                  y1="4"
-                  x2="14"
-                  y2="6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="6"
-                  y1="10"
-                  x2="14"
-                  y2="6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="6"
-                  y1="10"
-                  x2="14"
-                  y2="14"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <line
-                  x1="6"
-                  y1="16"
-                  x2="14"
-                  y2="14"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-              Bipartite Graph
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeView === 'map'}
-              aria-controls="map-view"
-              className={`tab-button ${activeView === 'map' ? 'active' : ''}`}
-              onClick={() => setActiveView('map')}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M7 3l-5 2v11l5-2 6 2 5-2V3l-5 2-6-2zm0 2v9l6 2V7L7 5z" />
-              </svg>
-              Map View
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeView === 'table'}
-              aria-controls="table-view"
-              className={`tab-button ${activeView === 'table' ? 'active' : ''}`}
-              onClick={() => setActiveView('table')}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  d="M3 3h14v14H3V3zm0 4h14M7 7v10"
-                  stroke="currentColor"
-                  fill="none"
-                  strokeWidth="1.5"
-                />
-              </svg>
-              Data Table
-            </button>
-          </nav>
+          <ViewTabs activeView={activeView} onViewChange={setActiveView} />
         </header>
 
         <section className="visualization-section">

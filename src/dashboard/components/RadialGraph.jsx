@@ -7,7 +7,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { getGeoCache } from '../utils/db.js';
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/RadialGraph.css';
 
 function RadialGraph({

@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/HelpSheet.css';
 
 function HelpSheet({ isOpen, onClose }) {

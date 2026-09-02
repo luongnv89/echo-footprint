@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import { escapeCSV, toCSV, downloadTextFile } from '../utils/csv.js';
 import {
   buildBipartiteGraph,

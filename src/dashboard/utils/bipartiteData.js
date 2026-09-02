@@ -9,7 +9,7 @@
  * the human-readable name and brand color.
  */
 
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 
 /**
  * Convert raw footprint records into a bipartite graph structure.
