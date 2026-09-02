@@ -21,7 +21,7 @@ function Sidebar({
   selectedPlatform,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [buildVersion, setBuildVersion] = useState('v1.1.0');
+  const [buildVersion, setBuildVersion] = useState('vunknown');
 
   // Load build info with commit hash
   useEffect(() => {
@@ -31,8 +31,15 @@ function Sidebar({
         setBuildVersion(`v${buildInfo.versionWithCommit}`);
       })
       .catch(() => {
-        // Fallback to package.json version if build-info.json not found
-        setBuildVersion('v1.1.0');
+        // Fallback to manifest.json version if build-info.json not found
+        fetch('/manifest.json')
+          .then(res => res.json())
+          .then(manifest => {
+            setBuildVersion(`v${manifest.version}`);
+          })
+          .catch(() => {
+            setBuildVersion('vunknown');
+          });
       });
   }, []);
 

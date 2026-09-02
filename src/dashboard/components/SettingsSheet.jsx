@@ -75,12 +75,26 @@ function SettingsSheet({ isOpen, onClose, stats }) {
       const info = await response.json();
       setBuildInfo(info);
     } catch (error) {
-      console.error('Failed to load build info:', error);
-      setBuildInfo({
-        version: '1.1.0',
-        versionWithCommit: '1.1.0',
-        gitCommitHash: 'unknown',
-      });
+      console.error(
+        'Failed to load build info, falling back to manifest:',
+        error
+      );
+      try {
+        const manifestResp = await fetch('/manifest.json');
+        const manifest = await manifestResp.json();
+        setBuildInfo({
+          version: manifest.version,
+          versionWithCommit: manifest.version,
+          gitCommitHash: 'unknown',
+        });
+      } catch (manifestError) {
+        console.error('Failed to load manifest as fallback:', manifestError);
+        setBuildInfo({
+          version: 'unknown',
+          versionWithCommit: 'unknown',
+          gitCommitHash: 'unknown',
+        });
+      }
     }
   };
 
@@ -379,7 +393,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                       : ''
                   }
                 >
-                  {buildInfo?.versionWithCommit || '1.1.0'}
+                  {buildInfo?.versionWithCommit || 'unknown'}
                 </span>
               </div>
               {buildInfo?.gitBranch && (
