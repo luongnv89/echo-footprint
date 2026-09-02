@@ -153,9 +153,8 @@ export async function getFootprintCount() {
  */
 export async function getUniqueDomainCount() {
   try {
-    const footprints = await db.footprints.toArray();
-    const domains = new Set(footprints.map(f => f.domain));
-    return domains.size;
+    const uniqueDomains = await db.footprints.orderBy('domain').uniqueKeys();
+    return uniqueDomains.length;
   } catch (error) {
     console.error('[SW DB] Error getting unique domain count:', error);
     return 0;

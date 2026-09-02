@@ -98,9 +98,7 @@ export async function getFootprints(filter = {}) {
  */
 export async function getUniqueDomains() {
   try {
-    const footprints = await db.footprints.toArray();
-    const domains = new Set(footprints.map(f => f.domain));
-    return Array.from(domains);
+    return await db.footprints.orderBy('domain').uniqueKeys();
   } catch (error) {
     console.error('Error getting unique domains:', error);
     throw error;
@@ -113,13 +111,11 @@ export async function getUniqueDomains() {
  */
 export async function getDomainCounts() {
   try {
-    const footprints = await db.footprints.toArray();
+    const domainKeys = await db.footprints.orderBy('domain').keys();
     const counts = {};
-
-    footprints.forEach(f => {
-      counts[f.domain] = (counts[f.domain] || 0) + 1;
+    domainKeys.forEach(domain => {
+      counts[domain] = (counts[domain] || 0) + 1;
     });
-
     return counts;
   } catch (error) {
     console.error('Error getting domain counts:', error);
@@ -241,7 +237,7 @@ export async function getStats() {
       .reverse()
       .first();
 
-    // Get platform breakdown
+    // Get platform breakdown (full scan required for compound grouping by platform+domain)
     const allFootprints = await db.footprints.toArray();
     const platformStats = calculatePlatformStats(allFootprints);
 
