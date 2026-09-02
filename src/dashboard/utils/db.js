@@ -5,39 +5,13 @@
  */
 
 import Dexie from 'dexie';
+import { applySchema, DB_NAME } from '../../db/schema.js';
 
 // Initialize Dexie database
-export const db = new Dexie('EchoFootPrint');
+export const db = new Dexie(DB_NAME);
 
-// Define schema
-// Version 1: Original schema
-db.version(1).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, ipGeo',
-  settings: 'key', // Key-value store for settings
-  geoCache: 'domain, country, region', // Cache for geolocation lookups
-});
-
-// Version 2: Add platform field for multi-platform tracking support
-db.version(2)
-  .stores({
-    footprints: '++id, timestamp, domain, url, pixelType, platform',
-    settings: 'key',
-    geoCache: 'domain, country, region',
-  })
-  .upgrade(tx => {
-    // Migrate existing footprints: backfill platform as 'facebook'
-    console.log('[Dashboard DB] Migrating to version 2: adding platform field');
-    return tx
-      .table('footprints')
-      .toCollection()
-      .modify(footprint => {
-        if (!footprint.platform) {
-          footprint.platform = 'facebook';
-        }
-        // Remove ipGeo field (geolocation was removed per user request)
-        delete footprint.ipGeo;
-      });
-  });
+// Attach the shared schema (single source of truth: src/db/schema.js)
+applySchema(db);
 
 // Storage quota configuration (500MB = 524,288,000 bytes)
 const STORAGE_SOFT_CAP = 500 * 1024 * 1024; // 500 MB

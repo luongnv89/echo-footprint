@@ -14,8 +14,6 @@ import {
   initDatabase,
   getTodayFootprintCount,
 } from '../lib/db-sw.js';
-// Geolocation removed per user request
-// import { queueGeolocationLookup, getQueueStats } from '../lib/geo-queue.js';
 
 // Configuration
 const DEBUG_MODE = false; // Set to true only during development
