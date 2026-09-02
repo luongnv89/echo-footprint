@@ -48,7 +48,7 @@ This ZIP is what you upload to the Chrome Web Store.
 Use the prepared copy in:
 
 - `docs/chrome-web-store-listing.md` – title, short description, full description, assets, and data usage answers.
-- `https://echo-footprint.luongnv.com/privacy.html` – hosted Privacy Policy URL.
+- `https://luongnv.com/echo-footprint/privacy.html` – hosted Privacy Policy URL (GitHub Pages).
 
 Before submission:
 
