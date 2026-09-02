@@ -546,9 +546,17 @@ describe('App dashboard shell — tab rendering', () => {
     expect(bipartiteTab).toBeDefined();
     act(() => bipartiteTab.click());
     await act(async () => {
-      await Promise.resolve();
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
-    const panel = document.getElementById('bipartite-view');
+    // Poll briefly for the lazy-loaded panel to mount.
+    let panel = null;
+    for (let i = 0; i < 20; i++) {
+      panel = document.getElementById('bipartite-view');
+      if (panel) break;
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+      });
+    }
     expect(panel).not.toBeNull();
     expect(panel.getAttribute('role')).toBe('tabpanel');
   });
