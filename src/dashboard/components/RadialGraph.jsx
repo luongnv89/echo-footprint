@@ -25,6 +25,7 @@ function RadialGraph({
     y: 0,
     data: null,
   });
+  const prevNodesRef = useRef([]);
 
   // Sync external platform focus with internal state
   useEffect(() => {
@@ -57,8 +58,8 @@ function RadialGraph({
       return;
     }
 
-    // Clear previous graph
-    d3.select(svgRef.current).selectAll('*').remove();
+    // Incremental data-join: previous positions preserved via prevNodesRef
+    // The SVG and defs are rebuilt/reused as needed by the join below.
 
     // Prepare data - group by domain, track platform and per-platform counts
     const domainCounts = {};
@@ -178,6 +179,26 @@ function RadialGraph({
       }));
     }
 
+    // Preserve previous node positions for smooth incremental updates
+    const prevNodesMap = new Map(
+      (prevNodesRef.current || []).map(n => [n.id, n])
+    );
+    nodes = nodes.map(n => {
+      const prev = prevNodesMap.get(n.id);
+      if (prev && typeof prev.x === 'number' && typeof prev.y === 'number') {
+        return {
+          ...n,
+          x: prev.x,
+          y: prev.y,
+          vx: prev.vx || 0,
+          vy: prev.vy || 0,
+          fx: prev.fx !== undefined ? prev.fx : null,
+          fy: prev.fy !== undefined ? prev.fy : null,
+        };
+      }
+      return n;
+    });
+
     // Setup SVG
     const svg = d3.select(svgRef.current);
     const container = svg.node().parentElement;
@@ -207,164 +228,217 @@ function RadialGraph({
         d3.forceCollide().radius(d => d.size + 10)
       );
 
-    // Create arrow markers for links
-    svg
-      .append('defs')
-      .append('marker')
-      .attr('id', 'arrowhead')
-      .attr('viewBox', '-0 -5 10 10')
-      .attr('refX', 15)
-      .attr('refY', 0)
-      .attr('orient', 'auto')
-      .attr('markerWidth', 8)
-      .attr('markerHeight', 8)
-      .append('svg:path')
-      .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-      .attr('fill', '#666');
+    // Create/reuse arrow markers (only once)
+    if (svg.select('defs').empty()) {
+      svg
+        .append('defs')
+        .append('marker')
+        .attr('id', 'arrowhead')
+        .attr('viewBox', '-0 -5 10 10')
+        .attr('refX', 15)
+        .attr('refY', 0)
+        .attr('orient', 'auto')
+        .attr('markerWidth', 8)
+        .attr('markerHeight', 8)
+        .append('svg:path')
+        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+        .attr('fill', '#666');
+    }
 
-    // Create container for zoom
-    const g = svg.append('g');
-
-    // Add zoom behavior
-    const zoom = d3
-      .zoom()
-      .scaleExtent([0.5, 3])
-      .on('zoom', event => {
-        g.attr('transform', event.transform);
-      });
-
-    svg.call(zoom);
-
-    // Create links
-    const link = g
-      .append('g')
-      .attr('class', 'links')
-      .selectAll('line')
-      .data(links)
-      .enter()
-      .append('line')
-      .attr('stroke', '#666')
-      .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', d => Math.min(d.value / 2, 3))
-      .attr('marker-end', 'url(#arrowhead)');
-
-    // Create node groups
-    const node = g
-      .append('g')
-      .attr('class', 'nodes')
-      .selectAll('g')
-      .data(nodes)
-      .enter()
-      .append('g')
-      .attr('class', 'node')
-      .call(
-        d3
-          .drag()
-          .on('start', dragstarted)
-          .on('drag', dragged)
-          .on('end', dragended)
-      )
-      .on('mouseenter', function (event, d) {
-        // Show tooltip
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          data: d,
+    // Create/reuse zoom group (only set up zoom behavior once)
+    let g = svg.select('g.zoom-group');
+    if (g.empty()) {
+      g = svg.append('g').attr('class', 'zoom-group');
+      const zoom = d3
+        .zoom()
+        .scaleExtent([0.5, 3])
+        .on('zoom', event => {
+          g.attr('transform', event.transform);
         });
+      svg.call(zoom);
+    }
 
-        // Highlight node
-        d3.select(this).select('circle').attr('stroke-width', 3);
-      })
-      .on('mouseleave', function () {
-        // Hide tooltip
-        setTooltip({ visible: false, x: 0, y: 0, data: null });
+    // Reuse links subgroup; create only if missing
+    let linksGroup = g.select('g.links');
+    if (linksGroup.empty()) {
+      linksGroup = g.append('g').attr('class', 'links');
+    }
 
-        // Remove highlight
-        d3.select(this).select('circle').attr('stroke-width', 2);
-      })
-      .on('click', (event, d) => {
-        // Double-click on domain node to focus on platform
-        if (d.type === 'domain') {
-          // Check if this is a double-click (within 300ms)
-          const now = Date.now();
-          if (d.lastClickTime && now - d.lastClickTime < 300) {
-            // Double-click: switch to platform-centric view
-            const platformFocus = {
-              platform: d.platform,
-              platformId: d.platform,
-              selectedDomainId: d.id,
-            };
-            setFocusedPlatform(platformFocus);
-            setSelectedNode(null);
-            // Notify parent
-            if (onPlatformFocusChange) {
-              onPlatformFocusChange(platformFocus);
-            }
-          } else {
-            // Single click: show detail panel
-            d.lastClickTime = now;
-            setSelectedNode(d);
-          }
-        } else {
-          setSelectedNode(d);
-        }
-      });
+    // Reuse nodes subgroup; create only if missing
+    let nodesGroup = g.select('g.nodes');
+    if (nodesGroup.empty()) {
+      nodesGroup = g.append('g').attr('class', 'nodes');
+    }
 
-    // Add circles to nodes
-    node
-      .append('circle')
-      .attr('r', d => d.size)
-      .attr('fill', d => d.color)
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2);
+    // Helper to format node label text
+    function formatNodeLabel(d) {
+      if (d.type === 'user') return d.label;
+      if (d.type === 'platform-center') return d.platformName;
+      let domain = d.label;
+      if (domain.startsWith('www.')) domain = domain.substring(4);
+      const parts = domain.split('.');
+      if (parts.length > 2) domain = parts.slice(-2).join('.');
+      return domain;
+    }
 
-    // Add labels to nodes
-    node
-      .append('text')
-      .text(d => {
-        if (d.type === 'user') return d.label;
-        if (d.type === 'platform-center') return d.platformName;
+    // Keyed identity for links: source-target pair
+    function linkKey(d) {
+      const s =
+        d.source && d.source.id
+          ? d.source.id
+          : typeof d.source === 'string'
+            ? d.source
+            : '';
+      const t =
+        d.target && d.target.id
+          ? d.target.id
+          : typeof d.target === 'string'
+            ? d.target
+            : '';
+      return s + '-' + t;
+    }
 
-        // Extract meaningful domain name
-        let domain = d.label;
+    // Incremental data-join for links
+    const link = linksGroup
+      .selectAll('line')
+      .data(links, linkKey)
+      .join(
+        enter =>
+          enter
+            .append('line')
+            .attr('stroke', '#666')
+            .attr('stroke-opacity', 0.6)
+            .attr('stroke-width', d => Math.min(d.value / 2, 3))
+            .attr('marker-end', 'url(#arrowhead)'),
+        update => update.attr('stroke-width', d => Math.min(d.value / 2, 3)),
+        exit =>
+          exit.transition().duration(300).attr('stroke-opacity', 0).remove()
+      );
 
-        // Remove www. prefix
-        if (domain.startsWith('www.')) {
-          domain = domain.substring(4);
-        }
+    // Keyed identity for nodes
+    function nodeKey(d) {
+      return d.id;
+    }
 
-        // For very long domains, show just the main part (e.g., "google.com" instead of "analytics.google.com")
-        const parts = domain.split('.');
-        if (parts.length > 2) {
-          // Show last 2 parts (e.g., "linkedin.com" from "snap.linkedin.com")
-          domain = parts.slice(-2).join('.');
-        }
-
-        return domain;
-      })
-      .attr('x', 0)
-      .attr('y', d => d.size + 15)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', d => (d.type === 'platform-center' ? '14px' : '12px'))
-      .attr('font-weight', d =>
-        d.type === 'platform-center' ? 'bold' : 'normal'
-      )
-      .attr('fill', '#e0e0e0')
-      .attr('pointer-events', 'none');
-
-    // Add count badges for domain nodes and platform-center
-    node
-      .filter(d => d.type === 'domain' || d.type === 'platform-center')
-      .append('text')
-      .text(d => d.count)
-      .attr('x', 0)
-      .attr('y', 5)
-      .attr('text-anchor', 'middle')
-      .attr('font-size', d => (d.type === 'platform-center' ? '12px' : '10px'))
-      .attr('font-weight', 'bold')
-      .attr('fill', '#fff')
-      .attr('pointer-events', 'none');
+    // Incremental data-join for nodes (keyed by node.id)
+    const node = nodesGroup
+      .selectAll('g.node')
+      .data(nodes, nodeKey)
+      .join(
+        enter => {
+          const enterG = enter
+            .append('g')
+            .attr('class', 'node')
+            .attr('opacity', 0)
+            .attr(
+              'transform',
+              d =>
+                `translate(${typeof d.x === 'number' ? d.x : width / 2},${
+                  typeof d.y === 'number' ? d.y : height / 2
+                })`
+            )
+            .call(
+              d3
+                .drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended)
+            )
+            .on('mouseenter', function (event, d) {
+              setTooltip({
+                visible: true,
+                x: event.pageX,
+                y: event.pageY,
+                data: d,
+              });
+              d3.select(this).select('circle').attr('stroke-width', 3);
+            })
+            .on('mouseleave', function () {
+              setTooltip({ visible: false, x: 0, y: 0, data: null });
+              d3.select(this).select('circle').attr('stroke-width', 2);
+            })
+            .on('click', (event, d) => {
+              if (d.type === 'domain') {
+                const now = Date.now();
+                if (d.lastClickTime && now - d.lastClickTime < 300) {
+                  const platformFocus = {
+                    platform: d.platform,
+                    platformId: d.platform,
+                    selectedDomainId: d.id,
+                  };
+                  setFocusedPlatform(platformFocus);
+                  setSelectedNode(null);
+                  if (onPlatformFocusChange) {
+                    onPlatformFocusChange(platformFocus);
+                  }
+                } else {
+                  d.lastClickTime = now;
+                  setSelectedNode(d);
+                }
+              } else {
+                setSelectedNode(d);
+              }
+            });
+          enterG
+            .append('circle')
+            .attr('r', d => d.size)
+            .attr('fill', d => d.color)
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2);
+          enterG
+            .append('text')
+            .attr('class', 'node-label')
+            .text(formatNodeLabel)
+            .attr('x', 0)
+            .attr('y', d => d.size + 15)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', d =>
+              d.type === 'platform-center' ? '14px' : '12px'
+            )
+            .attr('font-weight', d =>
+              d.type === 'platform-center' ? 'bold' : 'normal'
+            )
+            .attr('fill', '#e0e0e0')
+            .attr('pointer-events', 'none');
+          enterG
+            .filter(d => d.type === 'domain' || d.type === 'platform-center')
+            .append('text')
+            .attr('class', 'node-count')
+            .text(d => d.count)
+            .attr('x', 0)
+            .attr('y', 5)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', d =>
+              d.type === 'platform-center' ? '12px' : '10px'
+            )
+            .attr('font-weight', 'bold')
+            .attr('fill', '#fff')
+            .attr('pointer-events', 'none');
+          return enterG.transition().duration(500).attr('opacity', 1);
+        },
+        update => {
+          // Update existing nodes' inner attributes smoothly
+          update
+            .select('circle')
+            .attr('r', d => d.size)
+            .attr('fill', d => d.color);
+          update
+            .select('.node-label')
+            .text(formatNodeLabel)
+            .attr('font-size', d =>
+              d.type === 'platform-center' ? '14px' : '12px'
+            )
+            .attr('font-weight', d =>
+              d.type === 'platform-center' ? 'bold' : 'normal'
+            );
+          update
+            .select('.node-count')
+            .filter(d => d.type === 'domain' || d.type === 'platform-center')
+            .text(d => d.count);
+          return update;
+        },
+        exit => exit.transition().duration(300).attr('opacity', 0).remove()
+      );
 
     // Update positions on simulation tick
     simulation.on('tick', () => {
@@ -407,6 +481,8 @@ function RadialGraph({
     // Cleanup
     return () => {
       simulation.stop();
+      // Persist final node positions for smooth incremental updates on next render
+      prevNodesRef.current = nodes.map(n => ({ ...n }));
     };
   }, [footprints, focusedPlatform]);
 
