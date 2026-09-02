@@ -30,9 +30,10 @@ function EmptyState() {
       <h2>No Tracking Detected Yet</h2>
 
       <p className="empty-state-description">
-        EchoFootPrint is silently monitoring your browsing for tracking pixels
-        from 50 major ad networks including Facebook, Google, The Trade Desk,
-        Criteo, Taboola, LinkedIn, TikTok, Amazon, Unity Ads, and many more.
+        EchoFootPrint silently monitors your browsing for tracking pixels from
+        50 major ad networks.
+      </p>
+      <p className="empty-state-description">
         Visit some websites to start seeing your tracking footprint.
       </p>
 
