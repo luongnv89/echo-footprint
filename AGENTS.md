@@ -21,7 +21,7 @@ be relaxed.
 ## Layout
 
 - `src/content/` — content script (pixel sniffing). `src/background/` — MV3 service worker (persist state to IndexedDB; never rely on in-memory globals).
-- `src/dashboard/` — React 18 + Vite dashboard (D3 radial graph, Leaflet map, data table). `src/lib/` — shared detection logic.
+- `src/dashboard/` — React 19 + Vite dashboard (D3 radial graph, bipartite graph, Leaflet map, data table). `src/lib/` — shared detection logic.
 - `tests/` — Vitest suite; `vitest.config.js` at root.
 - `dist/` is build output; `docs/` holds historical phase docs. `.gitissue/` is operator state — leave it alone.
 

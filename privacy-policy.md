@@ -4,7 +4,7 @@
 
 _Last updated: November 2025 (GDPR refresh)_
 
-EchoFootPrint is a privacy-first browser extension that helps you understand how ad and analytics platforms track you across the web. The extension has **no backend and no accompanying website**; everything runs locally in your browser.
+EchoFootPrint is a privacy-first browser extension that helps you understand how ad and analytics platforms track you across the web. The extension has **no backend**; everything runs locally in your browser. A static informational website (https://echo-footprint.luongnv.com/) hosts this policy and the project overview. It is a plain set of pages: the extension never sends it any data, and it is not needed for the extension to work.
 
 ## 0. Data Controller and Contact
 
