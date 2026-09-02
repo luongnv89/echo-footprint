@@ -5,39 +5,13 @@
  */
 
 import Dexie from 'dexie';
+import { applySchema, DB_NAME } from '../db/schema.js';
 
-// Initialize Dexie database (shared schema with dashboard)
-const db = new Dexie('EchoFootPrint');
+// Initialize Dexie database (shared schema with dashboard, see src/db/schema.js)
+const db = new Dexie(DB_NAME);
 
-// Define schema (must match dashboard/utils/db.js)
-// Version 1: Original schema
-db.version(1).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, ipGeo',
-  settings: 'key',
-  geoCache: 'domain, country, region',
-});
-
-// Version 2: Add platform field for multi-platform tracking support
-db.version(2)
-  .stores({
-    footprints: '++id, timestamp, domain, url, pixelType, platform',
-    settings: 'key',
-    geoCache: 'domain, country, region',
-  })
-  .upgrade(tx => {
-    // Migrate existing footprints: backfill platform as 'facebook'
-    console.log('[SW DB] Migrating to version 2: adding platform field');
-    return tx
-      .table('footprints')
-      .toCollection()
-      .modify(footprint => {
-        if (!footprint.platform) {
-          footprint.platform = 'facebook';
-        }
-        // Remove ipGeo field (geolocation was removed per user request)
-        delete footprint.ipGeo;
-      });
-  });
+// Attach the shared schema (single source of truth: src/db/schema.js)
+applySchema(db);
 
 /**
  * Sanitize string input to prevent XSS
