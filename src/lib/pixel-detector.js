@@ -553,12 +553,7 @@ export const TRACKING_PLATFORMS = {
   },
   smartyads: {
     name: 'SmartyAds DSP',
-    domains: [
-      'n1.smartyads.com',
-      'as.us.criteo.com',
-      'pixel.smartyads.com',
-      'dsp.smartyads.com',
-    ],
+    domains: ['n1.smartyads.com', 'pixel.smartyads.com', 'dsp.smartyads.com'],
     color: '#DA70D6', // Orchid
   },
 };

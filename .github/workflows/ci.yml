@@ -51,7 +51,7 @@ jobs:
 
       - name: Run tests
         shell: bash # explicit bash runs with -eo pipefail, so a vitest failure fails the step through the tee pipe
-        run: npm run test:run 2>&1 | tee test-output.txt
+        run: npm run test:coverage 2>&1 | tee test-output.txt
 
       - name: Record pass rate in job summary
         if: always()

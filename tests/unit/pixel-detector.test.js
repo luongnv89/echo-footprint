@@ -338,6 +338,22 @@ describe('Multi-Platform Detection', () => {
     expect(result[0].platform).toBe('criteo');
   });
 
+  it('should not misclassify as.us.criteo.com as smartyads (issue #35, F-BUG-003)', () => {
+    // The host as.us.criteo.com is a Criteo CDN endpoint. It was once
+    // listed under TRACKING_PLATFORMS.smartyads.domains, which made
+    // every match resolve to 'smartyads' via the first-encountered
+    // literal-key map. After removing it from smartyads, this URL must
+    // not classify as smartyads.
+    const script = document.createElement('script');
+    script.src = 'https://as.us.criteo.com/dispatcher/dispatcher.aspx';
+    document.body.appendChild(script);
+
+    const result = detectFacebookPixel();
+
+    const platforms = result.map(r => r.platform);
+    expect(platforms).not.toContain('smartyads');
+  });
+
   it('should detect The Trade Desk pixel', () => {
     const script = document.createElement('script');
     script.src = 'https://insight.adsrvr.org/track/up';
