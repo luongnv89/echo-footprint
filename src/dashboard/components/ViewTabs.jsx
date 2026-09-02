@@ -131,6 +131,7 @@ export default function ViewTabs({ activeView, onViewChange }) {
       {VIEWS.map(view => (
         <button
           key={view.id}
+          id={`${view.id}-tab`}
           role="tab"
           aria-selected={activeView === view.id}
           aria-controls={`${view.id}-view`}

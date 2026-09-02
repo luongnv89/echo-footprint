@@ -189,7 +189,16 @@ function App() {
       <main className="main-content">
         <header className="dashboard-header">
           <div className="dashboard-header-top">
-            <h1>Privacy-first tracking visualization</h1>
+            <h1>
+              {activeView === 'graph' &&
+                'Network visualization of your tracking footprint'}
+              {activeView === 'bipartite' &&
+                'Bipartite graph of platforms and domains'}
+              {activeView === 'map' &&
+                'Geographic distribution of tracking events'}
+              {activeView === 'table' &&
+                'Detailed table of all detected tracking pixels'}
+            </h1>
             <InsightsBanner
               messages={displayedInsights}
               visible={showInsights}
