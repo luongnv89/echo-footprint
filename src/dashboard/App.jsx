@@ -9,7 +9,7 @@
  * insights-banner JSX moved to their own components.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useMemo, lazy } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   db,
@@ -17,10 +17,11 @@ import {
   getStats,
   calculatePlatformStats,
 } from './utils/db.js';
-import RadialGraph from './components/RadialGraph.jsx';
-import BipartiteGraph from './components/BipartiteGraph.jsx';
-import MapView from './components/MapView.jsx';
-import DataTable from './components/DataTable.jsx';
+const RadialGraph = lazy(() => import('./components/RadialGraph.jsx'));
+const BipartiteGraph = lazy(() => import('./components/BipartiteGraph.jsx'));
+const MapView = lazy(() => import('./components/MapView.jsx'));
+const DataTable = lazy(() => import('./components/DataTable.jsx'));
+import SkeletonPlaceholder from './components/SkeletonPlaceholder.jsx';
 import PlatformStats from './components/PlatformStats.jsx';
 import SettingsSheet from './components/SettingsSheet.jsx';
 import HelpSheet from './components/HelpSheet.jsx';
@@ -200,39 +201,41 @@ function App() {
         </header>
 
         <section className="visualization-section">
-          {activeView === 'graph' && (
-            <div id="graph-view" role="tabpanel" aria-labelledby="graph-tab">
-              <RadialGraph
-                footprints={footprints}
-                stats={stats}
-                externalPlatformFocus={selectedPlatform}
-                onPlatformFocusChange={setSelectedPlatform}
-              />
-            </div>
-          )}
-          {activeView === 'bipartite' && (
-            <div
-              id="bipartite-view"
-              role="tabpanel"
-              aria-labelledby="bipartite-tab"
-            >
-              <BipartiteGraph footprints={footprints} stats={stats} />
-            </div>
-          )}
-          {activeView === 'map' && (
-            <div id="map-view" role="tabpanel" aria-labelledby="map-tab">
-              <MapView
-                footprints={footprints}
-                stats={stats}
-                onLocationStatsUpdate={setMapLocationStats}
-              />
-            </div>
-          )}
-          {activeView === 'table' && (
-            <div id="table-view" role="tabpanel" aria-labelledby="table-tab">
-              <DataTable footprints={footprints} stats={stats} />
-            </div>
-          )}
+          <Suspense fallback={<SkeletonPlaceholder />}>
+            {activeView === 'graph' && (
+              <div id="graph-view" role="tabpanel" aria-labelledby="graph-tab">
+                <RadialGraph
+                  footprints={footprints}
+                  stats={stats}
+                  externalPlatformFocus={selectedPlatform}
+                  onPlatformFocusChange={setSelectedPlatform}
+                />
+              </div>
+            )}
+            {activeView === 'bipartite' && (
+              <div
+                id="bipartite-view"
+                role="tabpanel"
+                aria-labelledby="bipartite-tab"
+              >
+                <BipartiteGraph footprints={footprints} stats={stats} />
+              </div>
+            )}
+            {activeView === 'map' && (
+              <div id="map-view" role="tabpanel" aria-labelledby="map-tab">
+                <MapView
+                  footprints={footprints}
+                  stats={stats}
+                  onLocationStatsUpdate={setMapLocationStats}
+                />
+              </div>
+            )}
+            {activeView === 'table' && (
+              <div id="table-view" role="tabpanel" aria-labelledby="table-tab">
+                <DataTable footprints={footprints} stats={stats} />
+              </div>
+            )}
+          </Suspense>
         </section>
 
         <footer className="dashboard-footer">
