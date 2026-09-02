@@ -81,8 +81,8 @@ EchoFootPrint now tracks 50 major ad networks including:
 
 ### Prerequisites
 
-- Node.js 20+
-- npm or pnpm
+- Node.js 24 LTS (`engines.node` requires >=24; CI pins Node 24)
+- npm — the package manager of record, with `package-lock.json` committed
 
 ### Commands
 
@@ -183,7 +183,7 @@ Manages:
 
 ### Dashboard
 
-React 18 + Vite single-page application featuring:
+React 19 + Vite single-page application featuring:
 
 - **Radial Graph**: D3.js force-directed graph with interactive controls and platform-centric drill-down
 - **Bipartite Graph**: Advanced visualization showing domain-to-platform relationships with:
@@ -270,11 +270,15 @@ npm test -- --grep "database"
 Current test coverage includes:
 
 - **Database Layer** - CRUD operations, quota management, settings, and geo-caching
+- **Schema** - Shared Dexie version chain and the v1 to v2 upgrade
 - **Pixel Detection** - Multi-platform tracking detection (50 platforms)
-- **Cryptography** - SHA-256 hashing and salting utilities
 - **Service Worker** - Message handling and data persistence
 - **Content Script** - Pixel detection lifecycle and error handling
-- **Geo Queue** - Rate limiting, retry logic, and caching
+- **Geolocation** - Opt-in lookups, rate limiting, retry logic, and caching
+- **Security** - HTML and URL escaping and validation helpers
+- **Domain Patterns** - Exclusion-list matching
+- **Dashboard** - Characterization tests and the insights hook
+- **Config** - `package.json` script/engine guards and the audit gate
 
 Run `npm run test:coverage` to generate detailed HTML coverage reports in `coverage/index.html`.
 
@@ -282,15 +286,24 @@ Run `npm run test:coverage` to generate detailed HTML coverage reports in `cover
 
 ```
 tests/
-├── unit/
-│   ├── db.test.js              # Database operations
-│   ├── pixel-detector.test.js  # Multi-platform detection
-│   ├── crypto.test.js          # Cryptographic utilities
-│   ├── service-worker.test.js  # Background service worker
-│   ├── content-script.test.js  # Content script lifecycle
-│   └── geo-queue.test.js       # Geolocation queue manager
-└── vitest.config.js            # Test configuration
+├── setup.js                                 # Shared test setup
+└── unit/
+    ├── audit-gate.test.js                   # npm audit gate script
+    ├── config-scripts.test.js               # package.json scripts and engines
+    ├── content-script.test.js               # Content script lifecycle
+    ├── csv-export.test.js                   # CSV export
+    ├── dashboard-characterization.test.jsx  # Dashboard behavior
+    ├── db-schema.test.js                    # Shared Dexie schema and upgrades
+    ├── db.test.js                           # Database operations
+    ├── domain-patterns.test.js              # Domain exclusion matching
+    ├── geolocation.test.js                  # Opt-in geolocation, rate limit
+    ├── insights-hook.test.js                # useDashboardInsights
+    ├── pixel-detector.test.js               # Multi-platform detection
+    ├── security.test.js                     # Escaping and URL validation
+    └── service-worker.test.js               # Background service worker
 ```
+
+`vitest.config.js` at the repository root holds the test configuration.
 
 ### Writing Tests
 
@@ -349,6 +362,8 @@ A: Yes. Settings → Danger Zone → Clear All Data.
 
 ## License
 
+`UNLICENSED` — the same license string as `"license": "UNLICENSED"` in `package.json`.
+
 Proprietary and confidential. All rights reserved. Redistribution or public posting is not permitted.
 
 ## Acknowledgments
@@ -359,7 +374,7 @@ Proprietary and confidential. All rights reserved. Redistribution or public post
 
 ## Status
 
-**Current Version**: 1.1.0
+**Current Version**: 1.2.0
 **Status**: Production-ready with 50-platform detection
 **Next Milestone**: Chrome Web Store submission
 

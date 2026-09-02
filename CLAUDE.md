@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**EchoFootPrint** is a privacy-first browser extension that visualizes Facebook/Meta tracking across the web through an interactive client-side dashboard. The extension operates with zero configuration, storing all data locally in IndexedDB with no external telemetry.
+**EchoFootPrint** is a privacy-first browser extension that visualizes cross-site tracking from 50 major ad and analytics platforms through an interactive client-side dashboard. The platform catalog lives in `src/lib/tracking-platforms.js`. The extension operates with zero configuration, storing all data locally in IndexedDB with no external telemetry.
 
 **Key Principles:**
 
-- **Privacy-first:** All data stays local, no cloud sync, optional AES-GCM encryption
+- **Privacy-first:** All data stays local, no cloud sync, no user identifiers collected
 - **Zero configuration:** Works silently from installation with no user setup
 - **Manifest V3:** Modern Chrome extension architecture with service workers
-- **Open source:** MIT licensed with transparency as a core value
+- **License:** `UNLICENSED` — proprietary and confidential, all rights reserved. This
+  string must stay identical in `package.json`, `README.md` and this file.
 
 ## Architecture Overview
 
@@ -19,45 +20,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **Content Script** (`src/content/content-script.js`)
    - Injected into all web pages via `<all_urls>` permission
-   - Detects Facebook Pixel by monitoring DOM for `connect.facebook.net` and `fbcdn.net` scripts
-   - Captures Facebook ID from `c_user` cookie on facebook.com visits
+   - Detects pixels for every platform in `src/lib/tracking-platforms.js` via
+     `detectAllPlatforms()` (`src/lib/pixel-detector.js`), scanning script, image
+     and iframe elements, plus a MutationObserver for dynamically injected pixels
+   - Dedups per page by `platform|pixelType|src`; user-excluded domains are
+     filtered by `src/content/domain-utils.js`
+   - Reads no cookies and captures no user identifiers
    - Sends events to service worker via `chrome.runtime.sendMessage`
    - Must maintain <100ms detection latency per page
 
 2. **Service Worker** (`src/background/service-worker.js`)
    - Manifest V3 event-driven background script
-   - Receives pixel detection events and persists to IndexedDB
-   - Hashes Facebook IDs with SHA-256 before storage
-   - Manages geolocation queue (ip-api.com, 45 req/min limit)
-   - Implements exponential backoff for failed geo lookups
+   - Receives pixel detection events and persists them through `src/lib/db-sw.js`
+   - Sanitizes and validates domain and URL fields before writing
+   - Drives the toolbar badge (today's count, `⏸` when paused) and the
+     `toggle-pause` keyboard command
+   - Stores no user identifiers, so there is nothing to hash
+   - Does **not** run geolocation — that is the dashboard's opt-in feature below
    - **Critical:** State must be persisted to IndexedDB (service workers terminate)
 
 3. **Dashboard UI** (`src/dashboard/`)
-   - React 18 + Vite single-page application
+   - React 19 + Vite single-page application (`main.jsx` → `App.jsx`)
    - Opens in new tab when extension icon clicked
-   - Three main views:
+   - Four views, registered in `components/ViewTabs.jsx`:
      - **Radial Graph:** D3.js v7 force-directed visualization (central user node, connected domain nodes)
+     - **Bipartite Graph:** domain-to-platform relationships with filtering, sorting and PNG/SVG/CSV export
      - **Map View:** Leaflet 1.9.x geographic visualization with clustering
      - **Data Table:** Sortable/filterable raw data with CSV export
+   - Geolocation (`utils/geolocation.js`, ip-api.com, 45 req/min, 7-day cache) is
+     **opt-in and off by default**; it is the only network call the product makes
    - Must load <1s for ≤1k records, <3s for 10k records
 
 ### Data Architecture
 
 **IndexedDB Schema (via Dexie.js):**
 
+The schema is defined once in `src/db/schema.js` and attached by both the
+dashboard (`src/dashboard/utils/db.js`) and the service worker
+(`src/lib/db-sw.js`) through `applySchema(db)`:
+
 ```javascript
-// src/dashboard/utils/db.js
-db.version(1).stores({
-  footprints: '++id, timestamp, domain, url, pixelType, ipGeo',
+// src/db/schema.js — current version
+db.version(2).stores({
+  footprints: '++id, timestamp, domain, url, pixelType, platform',
   settings: 'key',
   geoCache: 'domain, country, region',
 });
 ```
 
+v1 indexed `ipGeo` instead of `platform`; the v1→v2 upgrade backfills
+`platform = 'facebook'` and deletes the obsolete `ipGeo` property.
+
 **Key Indexes:**
 
 - `timestamp`: For time-range filters (7 days, 30 days, all time)
 - `domain`: For aggregation and deduplication
+- `platform`: For per-platform breakdowns and filters
 
 **Storage Limits:**
 
@@ -71,7 +89,7 @@ db.version(1).stores({
 
 - Service workers are short-lived; never rely on in-memory state
 - Must use IndexedDB or `chrome.storage.local` (10MB limit unsuitable for records)
-- WebAssembly blocked (can't use argon2; use Web Crypto API for encryption)
+- WebAssembly blocked (no argon2; Web Crypto API is the only primitive available)
 - All code must be bundled (no remote code execution)
 
 **Performance Targets:**
@@ -86,7 +104,7 @@ db.version(1).stores({
 
 ```json
 {
-  "permissions": ["storage", "webNavigation"],
+  "permissions": ["storage"],
   "host_permissions": ["http://*/*", "https://*/*"]
 }
 ```
@@ -131,18 +149,25 @@ src/
 │   └── content-script.js          # Injected into pages
 ├── dashboard/
 │   ├── index.html                 # Dashboard entry
-│   ├── main.js                    # React app initialization
-│   ├── components/
-│   │   ├── RadialGraph.js         # D3 force graph
-│   │   ├── MapView.js             # Leaflet map
-│   │   ├── DataTable.js           # Raw data table
-│   │   └── FilterBar.js           # Time filters
+│   ├── main.jsx                   # React app initialization
+│   ├── App.jsx                    # Root component, view switching
+│   ├── components/                # RadialGraph, BipartiteGraph, MapView,
+│   │                              # DataTable, ViewTabs, Sidebar,
+│   │                              # SettingsSheet, HelpSheet, ...(.jsx)
+│   ├── hooks/
+│   │   └── useDashboardInsights.js
 │   └── utils/
-│       ├── db.js                  # Dexie wrapper
-│       ├── crypto.js              # SHA-256, AES-GCM
-│       └── export.js              # CSV export
+│       ├── db.js                  # Dexie wrapper (dashboard side)
+│       ├── geolocation.js         # Opt-in ip-api lookups, cache, rate limit
+│       ├── bipartite*.js          # Bipartite data, layout, export
+│       ├── security.js            # HTML/URL escaping and validation
+│       └── csv.js                 # CSV export
+├── db/
+│   └── schema.js                  # Shared Dexie schema (single source of truth)
 ├── lib/
-│   └── pixel-detector.js          # Core detection logic
+│   ├── pixel-detector.js          # Core detection logic
+│   ├── tracking-platforms.js      # 50-platform catalog (pure data)
+│   └── db-sw.js                   # Service-worker-side persistence
 └── assets/                        # Icons, images
 ```
 
@@ -205,18 +230,18 @@ npm run lighthouse
 
 ### Adding a New Pixel Detection Pattern
 
-1. Update `src/lib/pixel-detector.js`:
+1. Add or extend an entry in the catalog `src/lib/tracking-platforms.js` — the
+   detector reads it, so no detection code changes for a new domain:
 
 ```javascript
-export function detectAllPlatforms() {
-  const fbDomains = [
-    'connect.facebook.net',
-    'fbcdn.net',
-    'facebook.com/tr',
-    // Add new pattern here
-  ];
-  // Detection logic...
-}
+export const TRACKING_PLATFORMS = {
+  facebook: {
+    name: 'Facebook/Meta',
+    domains: ['connect.facebook.net', 'facebook.com/tr', 'fbcdn.net'],
+    color: '#1877f2',
+  },
+  // Add a new platform, or a new domain to an existing one, here
+};
 ```
 
 2. Add test case in `tests/unit/pixel-detector.test.js`
@@ -242,8 +267,9 @@ db.version(2)
 
 ### Adding a New Dashboard View
 
-1. Create component in `src/dashboard/components/NewView.js`
-2. Register tab in `src/dashboard/main.js`
+1. Create component in `src/dashboard/components/NewView.jsx`
+2. Register the tab in the `VIEWS` array in `src/dashboard/components/ViewTabs.jsx`
+   and render it from `src/dashboard/App.jsx`
 3. Query data via Dexie hooks:
 
 ```javascript
@@ -252,18 +278,16 @@ const { data } = useLiveQuery(() => db.footprints.toArray());
 
 4. Follow WCAG 2.1 AA guidelines (keyboard nav, ARIA labels, color contrast)
 
-### Implementing Geolocation Cache
+### Geolocation Cache (dashboard, opt-in)
 
-**Service worker pattern:**
+Geolocation lives entirely in `src/dashboard/utils/geolocation.js` and runs only
+when the user enables it in Settings → Privacy (`getGeoOptIn()` /
+`setGeoOptIn()`, off by default). The service worker never calls it.
 
 ```javascript
-async function handlePixelDetection(data) {
-  const cachedGeo = await db.geoCache.get(data.domain);
-  if (!cachedGeo) {
-    const geo = await fetchGeolocation(data.domain);
-    await db.geoCache.add({ domain: data.domain, ...geo });
-  }
-  // Store footprint...
+// src/dashboard/utils/geolocation.js
+export async function getGeolocationForDomain(domain) {
+  // memory cache → db.geoCache (7-day TTL) → ip-api.com, then cache the result
 }
 ```
 
@@ -275,33 +299,30 @@ async function handlePixelDetection(data) {
 
 ## Security Best Practices
 
-### Facebook ID Hashing
+### No User Identifiers
 
-```javascript
-// src/dashboard/utils/crypto.js
-async function hashFacebookID(userId) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(userId);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-```
+The extension collects no account IDs and reads no cookies, so there is no
+identifier to hash and no `crypto.js` module. Records hold the page URL, the
+third-party domain, the pixel type, the platform and a timestamp. Keep it that
+way: adding identifier capture would need a privacy review and a policy update.
 
-### Optional AES-GCM Encryption
+### Input Sanitization
 
-- User-provided passphrase (never stored)
-- PBKDF2 key derivation (100k iterations)
-- Encrypt before writing to IndexedDB
-- Unlock prompt on dashboard open
+`src/dashboard/utils/security.js` (`escapeHtml`, `sanitizeUrl`, `isSafeUrl`) and
+the validators in `src/lib/db-sw.js` are the guards on everything that arrives
+from a page. Route untrusted strings through them.
+
+### At-Rest Encryption (not implemented)
+
+Optional passphrase-based AES-GCM encryption of IndexedDB is a design goal that
+is **not** built. Do not document it as shipped.
 
 ### Content Security Policy
 
 ```json
 {
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://unpkg.com data: blob:; connect-src 'self' http://ip-api.com https://ip-api.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   }
 }
 ```
@@ -452,12 +473,15 @@ web-ext lint
 
 ## Current Project Status
 
-**Phase:** Pre — agent environment (install/run notes, agent config)
-**Baseline:** RED until milestone 0.1. The Pre phase must not be used as a
-license to skip ME (modernization enablement); the baseline advances only when
-ME lands.
-**Next Milestone:** ME (0.1)
+**Phase:** P4 — polish, the final phase of the modernization plan
+(`MODERNIZATION_PLAN.md`, tracked by epic #6).
+**Version:** `1.2.0` in `package.json` and `manifest.json`; `README.md` states
+the same number under Status. Bump all three together.
 
-The extension implementation is shipped (content script, service worker,
-dashboard). The install/run commands are recorded in `INSTALL.md` (source of
-truth) and in the Setup section above.
+The extension is shipped and in production use: content script, service worker,
+and the four-view React dashboard all exist under `src/`. Treat `src/` as the
+authority and fix any doc that still describes the project as unimplemented or
+yet to be built.
+
+The install/run commands are recorded in `INSTALL.md` (source of truth) and in
+the Setup section above.
