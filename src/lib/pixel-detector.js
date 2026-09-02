@@ -28,10 +28,41 @@ const DOMAIN_TO_PLATFORM_MAP = (() => {
  * @param {string} url - URL to check
  * @returns {string|null} - Platform ID if match found, null otherwise
  */
+/**
+ * Build a hostname-based lookup map for O(1) per-hostname detection
+ */
+const HOSTNAME_MAP = (() => {
+  const map = new Map();
+  for (const [platformId, config] of Object.entries(TRACKING_PLATFORMS)) {
+    for (const domain of config.domains) {
+      // Extract base hostname (strip paths and www) for O(1) lookup
+      const baseDomain = domain
+        .replace(/^www\./, '')
+        .split('/')[0]
+        .toLowerCase();
+      if (baseDomain && !map.has(baseDomain)) {
+        map.set(baseDomain, platformId);
+      }
+    }
+  }
+  return map;
+})();
+
 function detectPlatformFromUrl(url) {
   if (!url) return null;
 
-  // Fast path: check pre-computed map
+  // Fast O(1) path: hostname lookup
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.replace(/^www\./, '').toLowerCase();
+    const baseHost = hostname.split('/')[0];
+    const hostResult = HOSTNAME_MAP.get(baseHost);
+    if (hostResult) return hostResult;
+  } catch {
+    // Not a full URL — fall through to string scan
+  }
+
+  // Fallback: check pre-computed domain map for path-based patterns
   for (const domain in DOMAIN_TO_PLATFORM_MAP) {
     if (url.includes(domain)) {
       return DOMAIN_TO_PLATFORM_MAP[domain];

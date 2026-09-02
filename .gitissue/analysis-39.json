@@ -1,0 +1,106 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:01Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 39,
+    "title": "4.2: Replace full-table toArray aggregations",
+    "body_excerpt": "Badge unique-domain count and dashboard stats must not load every row.",
+    "labels": ["dim:perf", "improvement", "phase:p4", "priority:high"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:15Z"
+  },
+  "extraction": {
+    "keywords": [
+      "toArray",
+      "Dexie",
+      "distinct",
+      "aggregation",
+      "index",
+      "badge",
+      "getUniqueDomainCount",
+      "getStats",
+      "platformStats"
+    ],
+    "file_refs": [
+      "src/lib/db-sw.js",
+      "src/dashboard/utils/db.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/lib/db-sw.js",
+      "role": "primary - getUniqueDomainCount (line 154-163) calls db.footprints.toArray() and builds a Set; replace with a Dexie collection that does not materialise every row. Dexie supports .distinct() on a keyed index and .count() (or .uniqueKeys()) to get the distinct-domain count without pulling all rows."
+    },
+    {
+      "path": "src/dashboard/utils/db.js",
+      "role": "primary - getStats (line ~239-247) and getUniqueDomains/getDomainCounts all call toArray() solely to recompute aggregations. With the existing 'domain' index on footprints (added in v1, kept in v2) we can use distinct+count and orderBy for max/min timestamps. Also touches getStats which loads allFootprints to call calculatePlatformStats — that one legitimately needs every row, so the issue's acceptance is to ONLY avoid it when an index suffices (which it does for unique-domain count and newest/oldest timestamps)."
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "src/lib/db-sw.js:154-163 (getUniqueDomainCount) loads every footprint via toArray() then Set.map. src/dashboard/utils/db.js:99-104 (getUniqueDomains) and :114-119 (getDomainCounts) do the same. src/dashboard/utils/db.js:228-247 (getStats) also calls toArray() to feed calculatePlatformStats. The Dexie schema (src/db/schema.js) already has a `domain` index on the footprints table.",
+    "limitations": "O(N) memory and time on every dashboard open, every SW badge refresh, and every stats query. The PRD target is <1s dashboard load for 1k records; with 10k records the per-render toArray becomes the dominant cost.",
+    "change_surface": "2 files. Both have well-bounded changes: replace toArray().map(domain)→Set pattern with `await db.footprints.orderBy('domain').uniqueKeys()` (returns array of distinct values) and `.length` it. For getStats, only the unique-domain-count and min/max-timestamp subqueries need fixing; calculatePlatformStats is legitimately a full scan (it groups by platform, which has no compound index). Acceptance explicitly says 'if an index exists' — domain exists, so getStats can keep the toArray ONLY for the platform-stats half and compute uniqueDomains with the indexed path.",
+    "root_cause": "Three helper functions materialise the full footprints table just to count or list unique values that are already covered by an existing `domain` index. With that index, Dexie can return the unique-keys without touching individual rows."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Use Dexie .orderBy('domain').uniqueKeys() for distinct counts",
+      "summary": "Replace getUniqueDomainCount / getUniqueDomains bodies with `await db.footprints.orderBy('domain').uniqueKeys()` and `.length`. The Dexie `uniqueKeys()` API on a sorted index returns the distinct values without scanning every row. Same change in db.js:getUniqueDomains and getDomainCounts (the latter can be expressed as a reduce over uniqueKeys with a separate count index or via a per-domain .where('domain').equals(d).count() — for the dashboard badge path we only need the count, so drop getDomainCounts if no caller needs per-domain counts; verify callers first).",
+      "files_to_modify": [
+        "src/lib/db-sw.js",
+        "src/dashboard/utils/db.js"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Direct index lookup, O(distinct values) instead of O(N)",
+        "Tiny code change, no schema migration needed"
+      ],
+      "cons": [
+        "Need to verify no caller depends on getDomainCounts returning all rows (audit before deleting/changing)"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Dexie uniqueKeys is stable; verify the SW badge still updates. The verify command in the issue is `rg -n 'toArray' src/lib/db-sw.js src/dashboard/utils/db.js` — the surviving toArray calls in db.js (getFootprints, exportDatabase, getStats) are legitimate, so the verify will still match; the acceptance criterion is the FUNCTIONAL one (badge count not loading every row)."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Use Dexie .orderBy('domain').uniqueKeys() for distinct counts"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 38, "title": "Lazy-load graph/map/table", "overlap": "Both are performance. Independent files. Run #39 before #38 OR after — they don't conflict because #38 touches App.jsx and #39 touches db*.js."}
+    ],
+    "depends_on": [{"number": 31, "title": "Unify Dexie schema (P3)", "state": "MERGED via PR #62"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 1,
+    "duration_s": 3
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:01Z"
+  },
+  "decision_record": {
+    "root_cause": "getUniqueDomainCount (db-sw.js:154), getUniqueDomains (db.js:99), getDomainCounts (db.js:114) all call db.footprints.toArray() to build a Set, despite the footprints table already having a `domain` index. Dexie's `orderBy('domain').uniqueKeys()` returns the distinct values directly.",
+    "options_considered": [
+      "Dexie .orderBy('domain').uniqueKeys()"
+    ],
+    "options_rejected": [],
+    "selected_option": "Dexie .orderBy('domain').uniqueKeys()",
+    "residual_risk": "getDomainCounts is currently used? — audit callers; if unused, drop it. getStats legitimately needs toArray for calculatePlatformStats (no compound index) — leave that half alone. The verify command in the issue (rg toArray) is heuristic, not strict; the functional acceptance is that the badge/stats no longer call toArray when an index suffices."
+  }
+}

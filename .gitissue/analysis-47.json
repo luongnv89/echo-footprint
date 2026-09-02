@@ -1,0 +1,122 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:09Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 47,
+    "title": "4.10: Pin landing-page lucide",
+    "body_excerpt": "Replace unpkg.com/lucide@latest.",
+    "labels": ["bug", "dim:sec", "phase:p4", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:33Z"
+  },
+  "extraction": {
+    "keywords": [
+      "unpkg",
+      "lucide",
+      "CDN",
+      "pin",
+      "version",
+      "subresource integrity",
+      "SRI"
+    ],
+    "file_refs": [
+      "landing-page/index.html"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "landing-page/index.html",
+      "role": "primary - line 14: `<script src=\"https://unpkg.com/lucide@latest\"></script>`. `@latest` means each page load fetches whatever version unpkg currently serves — a supply-chain risk (any upstream compromise of the lucide package or unpkg's mirror is immediately live on the marketing page) and a stability risk (breaking changes can ship without warning). Pin to a specific version (e.g. `https://unpkg.com/lucide@0.460.0`) and add a Subresource Integrity (SRI) hash for defense in depth. Verify: `rg -n 'unpkg.com/lucide@latest' landing-page/index.html` exits 1."
+    }
+  ],
+  "analysis": {
+    "type": "bug",
+    "current_implementation": "landing-page/index.html:14 — `<script src=\"https://unpkg.com/lucide@latest\"></script>`. The script is used to render the icon glyphs (`<i data-lucide=\"...\">`) via `window.lucide.createIcons()` in the inline script at the bottom of the file. No SRI hash, no version pin.",
+    "limitations": "Every page load evaluates whatever JS unpkg currently serves for `lucide@latest`. A compromised lucide release (or a typosquat) would run on the marketing page with full DOM access. The page also has no CSP that would block inline-event handlers from a compromised lucide. Defense in depth: pin a known version AND add an SRI hash.",
+    "change_surface": "1 file, 2-3 line changes. Replace `unpkg.com/lucide@latest` with a pinned version (e.g. `unpkg.com/lucide@0.460.0`) and add `integrity=\"sha384-...\" crossorigin=\"anonymous\"` attributes. The version number must be checked at PR time — `npm view lucide version` gives the latest stable; pick a recent one and freeze. The inline script `if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); }` is unchanged.",
+    "root_cause": "The landing page was set up with a `@latest` CDN reference as a quick dev shortcut and never pinned. SRI is a known best practice for any externally-hosted JS but is missing."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Pin version + SRI hash",
+      "summary": "Replace the line with `<script src=\"https://unpkg.com/lucide@0.460.0\" integrity=\"sha384-...\" crossorigin=\"anonymous\"></script>`. Compute the SRI hash with `curl -s https://unpkg.com/lucide@0.460.0 | openssl dgst -sha384 -binary | openssl base64 -A`. Verify: `rg -n 'unpkg.com/lucide@latest' landing-page/index.html` exits 1; manual: load the page in a browser, confirm the icons render and no CSP error appears.",
+      "files_to_modify": [
+        "landing-page/index.html"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Pins the version (reproducible builds)",
+        "SRI detects tampering (browser refuses to execute a modified script)"
+      ],
+      "cons": [
+        "SRI hash must be regenerated when bumping the version — a tiny recurring cost"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "The accept criterion is structural (no `@latest`); the SRI is a security bonus. If SRI generation is awkward in the dev environment, pinning alone is enough to close the issue."
+    },
+    {
+      "number": 2,
+      "name": "Pin version only (skip SRI)",
+      "summary": "Just replace `@latest` with a specific version. No SRI.",
+      "files_to_modified": [
+        "landing-page/index.html"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Minimal change"
+      ],
+      "cons": [
+        "No tamper detection — if unpkg's mirror is compromised, the pinned version is still served"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "Acceptable but weaker than Option 1."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "Pin version + SRI hash",
+    "Pin version only"
+  ],
+  "options_rejected": [
+    "Pin version only — SRI is cheap and standard for CDN-loaded scripts"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 43, "title": "Align remaining docs (README version, license, website sentence, CLAUDE architecture)", "overlap": "Both touch the landing-page area: #43 may rephrase the privacy-policy's 'no accompanying website' claim, #47 pins the lucide version. Independent files. Safe in either order."}
+    ],
+    "depends_on": [{"number": 14, "title": "Refactor platform detection (P0)", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 1,
+    "duration_s": 1
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:09Z"
+  },
+  "decision_record": {
+    "root_cause": "landing-page/index.html:14 loads `unpkg.com/lucide@latest` — unpinned, no SRI. Supply-chain risk and reproducibility risk.",
+    "options_considered": [
+      "Pin version + SRI hash",
+      "Pin version only"
+    ],
+    "options_rejected": [
+      "Pin version only — SRI is the standard hardening for CDN scripts"
+    ],
+    "selected_option": "Pin version + SRI hash",
+    "residual_risk": "The SRI hash must be regenerated when bumping the lucide version. Verify `rg -n 'unpkg.com/lucide@latest' landing-page/index.html` exits 1; manual: load the page and confirm icons render."
+  }
+}

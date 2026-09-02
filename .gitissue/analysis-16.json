@@ -1,0 +1,204 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:09:02Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 16,
+    "title": "1.2: Upgrade vitest and @vitest/ui to a patched release",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p1", "priority:critical"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:23:16Z",
+    "updatedAt": "2026-09-01T13:26:23Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [
+      "GHSA-5xrq-8626-4rwp (vitest: arbitrary file read/exec via Vitest UI server)"
+    ],
+    "functions": [],
+    "classes": [],
+    "file_refs": [
+      "package.json",
+      "package-lock.json",
+      "vitest.config.js",
+      "vite.config.js"
+    ],
+    "modules": [
+      "vitest",
+      "@vitest/ui",
+      "@vitest/coverage-v8",
+      "vite-node",
+      "vite"
+    ],
+    "keywords": [
+      "vitest",
+      "upgrade",
+      "GHSA-5xrq-8626-4rwp",
+      "3.2.5",
+      "4.1.11",
+      "Vite 5"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares vitest ^1.0.4, @vitest/ui ^1.0.4, @vitest/coverage-v8 ^1.6.1, vite ^5.0.8",
+      "match_reasons": ["direct dependency declarations"]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "critical",
+      "role": "pins the vulnerable vitest stack incl. vite-node",
+      "match_reasons": ["npm audit source"]
+    },
+    {
+      "path": "vitest.config.js",
+      "relevance": "high",
+      "role": "test config; major jump 1.x -> 3.x/4.x may need API adjustments",
+      "match_reasons": ["vitest major upgrade surface"]
+    },
+    {
+      "path": "tests/setup.js",
+      "relevance": "medium",
+      "role": "global test setup; globals/environment options can shift between majors",
+      "match_reasons": ["vitest config coupling"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "Installed vitest is ^1.0.4 with @vitest/ui ^1.0.4; live audit reports vitest and @vitest/ui critical (GHSA-5xrq-8626-4rwp) plus vite-node moderate, and the only clean fix is a semver-major jump — audit recommends 4.1.11; the smallest clearing release is 3.2.5. @vitest/coverage-v8 must move in lockstep with vitest. Vite is pinned at ^5.0.8, so the 3.2.x line is the low-coupling choice if the suite stays green; otherwise 4.x with the remaining Vite coupling documented as a spike (full Vite 5->8 is #26).",
+    "details": "This issue declares `Depends on #15` — the non-force audit fix rewrites package-lock.json first, so the vitest major bump lands on a clean transitive base and the two changes never interleave in one lockfile diff. After the upgrade, acceptance requires: `npm audit` no longer reports GHSA-5xrq-8626-4rwp on vitest/@vitest/ui, the migration guide (or spike note) is linked in the PR, and `npm run test:run` passes at or above the recorded rate. Note the jsdom 27 / @vitest/coverage-v8 pairing also needs to match the chosen vitest major."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Minimal bump to vitest 3.2.x",
+      "summary": "Take vitest/@vitest/ui/@vitest/coverage-v8 at the smallest patched line (>=3.2.5) and keep Vite 5 if the suite stays green.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "vitest, @vitest/ui, @vitest/coverage-v8 to matching 3.2.x ranges"
+        },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated; vite-node/vitest stack refreshed"
+        },
+        {
+          "path": "vitest.config.js",
+          "changes": "adjust any renamed/removed options from 1.x"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Smallest clearing bump",
+        "Keeps Vite 5 coupling intact until #26"
+      ],
+      "cons": [
+        "1.x -> 3.x still skips two majors of test-API drift; 3.2.x line ages out"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Major jump with config and coverage-API drift; mitigated by full suite run"
+    },
+    {
+      "number": 2,
+      "name": "Go straight to 4.1.11",
+      "summary": "Take the audit-recommended 4.1.11 line now, documenting remaining Vite 5 coupling as a spike resolved by #26.",
+      "files_to_modify": [
+        { "path": "package.json", "changes": "vitest stack to 4.1.11" },
+        { "path": "package-lock.json", "changes": "regenerated" },
+        { "path": "vitest.config.js", "changes": "4.x API adjustments" }
+      ],
+      "files_to_create": [],
+      "pros": ["Matches audit recommendation; no second vitest jump later"],
+      "cons": [
+        "Larger jump against Vite 5; higher chance of config/coverage rework in this PR"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Two-major jump plus known Vite coupling until #26 lands"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Medium",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "e158270",
+        "message": "refactor(ci): stabilize P0 build and CI config (#10, #11, #12, #13, #14) (#49)",
+        "author": "luongnv89",
+        "date": "2026-09-01T18:41:16Z",
+        "files": ["package.json", "package-lock.json"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 5 }]
+  },
+  "cross_references": {
+    "blocks": [22],
+    "blocked_by": [15],
+    "related_issues": [
+      {
+        "number": 15,
+        "title": "1.1: Apply non-force npm audit fix (W1)",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json", "npm audit"],
+        "confidence": "high"
+      },
+      {
+        "number": 26,
+        "title": "2.2: Upgrade Vite 5 -> 8",
+        "relationship": "shared_keywords",
+        "shared_keywords": ["vite", "vitest"],
+        "confidence": "medium"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 6,
+    "deps_traced": 4,
+    "keywords_extracted": 7,
+    "file_refs_extracted": 4,
+    "scan_duration_seconds": 25,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:09:02Z"
+  },
+  "decision_record": {
+    "root_cause": "vitest/@vitest/ui are pinned at ^1.0.4, which carries critical advisory GHSA-5xrq-8626-4rwp; no non-breaking release clears it, so the fix is a semver-major jump of the vitest stack (vitest, @vitest/ui, @vitest/coverage-v8, vite-node) to >=3.2.5, sequenced after #15's lockfile refresh.",
+    "options_considered": [
+      { "number": 1, "name": "Minimal bump to vitest 3.2.x" },
+      { "number": 2, "name": "Go straight to 4.1.11" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Larger jump against the still-pinned Vite 5 raises rework risk in this PR; 4.x remains the fallback if 3.2.x is incompatible."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Minimal bump to vitest 3.2.x",
+      "summary": "Move the vitest stack to the smallest patched line (>=3.2.5) keeping Vite 5, fall back to 4.x only if incompatible."
+    },
+    "residual_risk": "1.x -> 3.x API drift may still require config changes; if 3.2.x proves incompatible with Vite 5, take 4.x and record the remaining Vite coupling as a spike until #26."
+  }
+}

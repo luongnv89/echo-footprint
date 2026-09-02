@@ -1,0 +1,125 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T04:36:08Z",
+  "source": "auto-pilot P3 part-2",
+  "issue": {
+    "number": 36,
+    "title": "3.8: Point CI test job at coverage output",
+    "body_excerpt": "Either run test:coverage or stop uploading coverage/.",
+    "labels": ["dim:ci", "improvement", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:09Z"
+  },
+  "extraction": {
+    "keywords": [
+      "CI",
+      "test job",
+      "coverage",
+      "upload",
+      "test:coverage",
+      "test:run",
+      "artifact path"
+    ],
+    "file_refs": [
+      ".github/workflows/ci.yml",
+      "package.json"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "role": "primary - fix the test job: change npm run test:run -> test:coverage (preferred) OR remove the 'Upload test coverage' step that uploads coverage/ which is never produced"
+    },
+    {
+      "path": "package.json",
+      "role": "no edit needed; test:coverage is already defined (vitest --run --coverage)"
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "ci.yml test job runs `npm run test:run` (= `vitest --run`), which never invokes the coverage provider. The next step is 'Upload test coverage' which uses actions/upload-artifact@v4 with path: coverage/ — but that directory is never created. The artifact upload silently produces an empty archive on every CI run, wasting runner time and creating a misleading 'test-results' artifact in Actions that contains no coverage data.",
+    "limitations": "Misleading CI signal: the artifact name 'test-results' is uploaded but is empty. The acceptance criterion is to either run test:coverage (so the upload is meaningful) or remove the upload step.",
+    "change_surface": "1 file. One-line change in the run command, or remove one step.",
+    "root_cause": "The test job is configured to upload coverage/ but the test command does not produce it. This is a wiring bug introduced when the test job was authored without matching the package.json scripts."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Switch to test:coverage and keep the upload",
+      "summary": "Change `npm run test:run` to `npm run test:coverage` in the test job, rename the artifact to 'coverage', and keep the upload step.",
+      "files_to_modify": [
+        ".github/workflows/ci.yml (one line)"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Gives CI real coverage data; aligns with the existing test:coverage script",
+        "Acceptance criterion satisfied with a one-line diff"
+      ],
+      "cons": [
+        "Adds coverage report generation time per CI run (seconds)"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "test:coverage is already defined and exercised locally; no new dependency required (@vitest/coverage-v8 is already a devDependency)."
+    },
+    {
+      "number": 2,
+      "name": "Drop the upload step",
+      "summary": "Remove the 'Upload test coverage' step entirely. Keep test:run (faster, no coverage data on CI).",
+      "files_to_modify": [
+        ".github/workflows/ci.yml (delete one step)"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Smallest diff; no extra CI time"
+      ],
+      "cons": [
+        "Loses any future intent to expose coverage in CI"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "Pure deletion."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "Switch to test:coverage and keep the upload",
+    "Drop the upload step"
+  ],
+  "options_rejected": [
+    "Drop the upload step (loses the coverage signal the project clearly wanted; prefer Option 1)"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [],
+    "depends_on": [{"number": 14, "title": "Parent modernization epic", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 0,
+    "duration_s": 3
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T04:36:08Z"
+  },
+  "decision_record": {
+    "root_cause": ".github/workflows/ci.yml runs `npm run test:run` (no coverage provider) but the following step uploads path: coverage/, which is never created. Result: an empty 'test-results' artifact on every CI run.",
+    "options_considered": [
+      "Switch to test:coverage and keep the upload",
+      "Drop the upload step"
+    ],
+    "options_rejected": [
+      "Drop the upload step"
+    ],
+    "selected_option": "Switch to test:coverage and keep the upload",
+    "residual_risk": "test:coverage adds seconds to each CI run; verify the budget is acceptable. If not, fall back to Option 2."
+  }
+}

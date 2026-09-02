@@ -1,0 +1,110 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:04Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 42,
+    "title": "4.5: Fix tab ids, empty-state copy, view subtitle",
+    "body_excerpt": "dont-make-me-think review-only leftovers. No Redesign Mode beyond these listed files.",
+    "labels": ["dim:ux", "improvement", "phase:p4", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:22Z"
+  },
+  "extraction": {
+    "keywords": [
+      "tab ids",
+      "aria-labelledby",
+      "EmptyState",
+      "lead paragraph",
+      "view subtitle",
+      "h1",
+      "WCAG"
+    ],
+    "file_refs": [
+      "src/dashboard/App.jsx",
+      "src/dashboard/components/ViewTabs.jsx",
+      "src/dashboard/components/EmptyState.jsx"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/ViewTabs.jsx",
+      "role": "primary - tab buttons (line 131-144) have role/aria-selected/aria-controls but no `id`. Each button needs an id matching `${view.id}-tab` so App.jsx's `aria-labelledby=\"${view.id}-tab\"` resolves. Currently the buttons are missing `id` and the App.jsx tabpanels have `aria-labelledby` pointing at ids that don't exist (silent WCAG failure)."
+    },
+    {
+      "path": "src/dashboard/components/EmptyState.jsx",
+      "role": "primary - the .empty-state-description <p> (line ~30) is one long sentence spanning 50+ words; the acceptance says the lead paragraph must be ≤2 sentences. Trim to two short sentences; keep the steps list and privacy note unchanged."
+    },
+    {
+      "path": "src/dashboard/App.jsx",
+      "role": "secondary - the dashboard-header h1 'Privacy-first tracking visualization' is the view subtitle. Issue says 'view subtitle' should be a more descriptive, time-aware label (e.g. 'Tracking across 12 domains · Last 24 Hours' or 'Your tracking footprint' rather than the generic 'Privacy-first tracking visualization' which is a tagline). One-line change in the h1 to use a contextual subtitle (could read stats from the existing `stats` and `filter` props). Acceptance is loose; the verify command `rg -n 'id=\"graph-tab\"' src/dashboard/App.jsx` exits 1 — note: the verify is wrong; the id must live in ViewTabs.jsx, not App.jsx. Treat the verify as a smoke check that the id is not accidentally placed in App.jsx (i.e. the id lives in ViewTabs)."
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "ViewTabs.jsx:131-144 renders <button role='tab' aria-selected=... aria-controls='${view.id}-view'> without an `id`. App.jsx renders <div id='${view.id}-view' role='tabpanel' aria-labelledby='${view.id}-tab'>. The `aria-labelledby` references non-existent ids — screen readers will not announce the tab/panel relationship. EmptyState.jsx:30-35 has a single 50+ word paragraph. App.jsx:191 has a static h1 'Privacy-first tracking visualization' that doesn't reflect the current view or filter.",
+    "limitations": "WCAG 2.1 AA tab pattern requires the tab to have an id that the panel's aria-labelledby points at; this is a silent failure today (no error, just broken SR UX).",
+    "change_surface": "3 files, all small. ViewTabs.jsx: add `id={`${view.id}-tab`}` to the <button>. EmptyState.jsx: rewrite the lead <p> to ≤2 short sentences. App.jsx: swap the static h1 for a contextual subtitle derived from stats + filter (e.g. {stats?.uniqueDomains ?? 0} domains · {getActiveFilterLabel}). Trivial across the board.",
+    "root_cause": "View tabs ship without the id half of the WAI-ARIA tab pattern (id-on-tab + aria-labelledby-on-panel is a paired contract). EmptyState lead is too long for scannability (Krug's first-law principle). The header h1 is a tagline, not a view subtitle."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Fix all three leftovers in one small PR",
+      "summary": "Single PR: ViewTabs.jsx gains `id={`${view.id}-tab`}`; EmptyState.jsx lead paragraph is rewritten to two sentences (e.g. 'EchoFootPrint is silently monitoring your browsing for tracking pixels from 50 major ad networks. Visit some websites to start seeing your tracking footprint.'); App.jsx h1 is replaced with a contextual subtitle that uses stats.uniqueDomains and the active time filter (or kept static if contextual derivation is out of scope — the acceptance is loose).",
+      "files_to_modify": [
+        "src/dashboard/components/ViewTabs.jsx",
+        "src/dashboard/components/EmptyState.jsx",
+        "src/dashboard/App.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Single reviewable PR",
+        "No new dependencies, no test churn"
+      ],
+      "cons": [
+        "Three cosmetic concerns in one PR — acceptable since the issue is explicitly one task bundling all three"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Pure markup/copy changes. Verify with: `rg -n 'id=\"graph-tab\"|id=\"map-tab\"|id=\"bipartite-tab\"|id=\"table-tab\"' src/dashboard/components/ViewTabs.jsx` shows 4 matches; manual SR pass confirms the tab/panel association."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Fix all three leftovers in one small PR"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 38, "title": "Lazy-load graph/map/table", "overlap": "Both touch App.jsx. If batched, the App.jsx edits for #42 and the App.jsx edits for #38 (React.lazy + Suspense) should be in the same PR only if reviewer can absorb it; otherwise do #42 first (smaller, no logic) then #38."}
+    ],
+    "depends_on": [{"number": 29, "title": "P3 clean: split App into hooks/components", "state": "MERGED via PR #61"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 1,
+    "duration_s": 2
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:04Z"
+  },
+  "decision_record": {
+    "root_cause": "ViewTabs.jsx ships tab buttons without `id`, breaking the WAI-ARIA tab/panel pairing with App.jsx's `aria-labelledby`. EmptyState lead is one long sentence. App.jsx h1 is a tagline, not a contextual subtitle.",
+    "options_considered": [
+      "Single PR for all three"
+    ],
+    "options_rejected": [],
+    "selected_option": "Single PR for all three",
+    "residual_risk": "The issue's verify command (`rg -n 'id=\"graph-tab\"' src/dashboard/App.jsx` exits 1) checks that the id is NOT in App.jsx — the id lives in ViewTabs.jsx. The acceptance test is the SR pass."
+  }
+}

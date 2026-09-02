@@ -1,0 +1,146 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:05Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 43,
+    "title": "4.6: Align remaining docs (README version, license, website sentence, CLAUDE architecture)",
+    "body_excerpt": "Run doc-manager for README, privacy-policy, CLAUDE architecture bullets. License: pick MIT vs proprietary and make package.json, README, and CLAUDE agree.",
+    "labels": ["dim:docs", "improvement", "phase:p4", "priority:high"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:24Z"
+  },
+  "extraction": {
+    "keywords": [
+      "README",
+      "version",
+      "license",
+      "package.json",
+      "CLAUDE.md",
+      "Current Project Status",
+      "architecture",
+      "privacy-policy"
+    ],
+    "file_refs": [
+      "README.md",
+      "package.json",
+      "CLAUDE.md",
+      "privacy-policy.md"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "README.md",
+      "role": "primary - 'Status' section line 360-364 says 'Current Version: 1.1.0' but package.json/manifest.json are 1.2.0. License section line 350-352 says 'Proprietary and confidential' but CLAUDE.md line 6 says 'Open source: MIT licensed'. Pick one (MIT per CLAUDE.md) and make all three agree. README also lacks the 'no implementation yet' style architecture bullets (none present) — fine, no change there."
+    },
+    {
+      "path": "package.json",
+      "role": "primary - 'license: UNLICENSED' (line 41) is inconsistent with both CLAUDE.md (MIT) and README.md (Proprietary). Pick one license and set it. Acceptance: 'License string is identical in README and package.json'."
+    },
+    {
+      "path": "CLAUDE.md",
+      "role": "primary - line 6 says 'Open source: MIT licensed' but README says 'Proprietary' and package.json says UNLICENSED. Also, the 'Current Project Status' (line 453-463) says 'Phase: Pre — agent environment' and 'Baseline: RED' but the extension IS shipped (content script, SW, dashboard) — the issue says the line must not say 'no implementation yet'. Current text already says 'The extension implementation is shipped' so that specific phrase is fine, but the stale 'Pre — agent environment' / 'RED baseline' claim IS out of date. Rewrite the Current Project Status to reflect that the extension is shipped and P4 is the active phase."
+    },
+    {
+      "path": "privacy-policy.md",
+      "role": "secondary - line 4 says 'The extension has no backend and no accompanying website' but a landing page exists at landing-page/index.html. Either drop the 'no accompanying website' phrase or rephrase (e.g. 'The extension has no backend; the marketing landing page is static HTML at echo-footprint.luongnv.com')."
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "Four files, four different versions of the truth. package.json: version=1.2.0, license=UNLICENSED. manifest.json: version=1.2.0. README.md: 'Current Version: 1.1.0', 'License: Proprietary and confidential'. CLAUDE.md: 'Open source: MIT licensed' AND 'Phase: Pre — agent environment' (stale). privacy-policy.md: 'no accompanying website' (stale — landing page exists).",
+    "limitations": "Version drift is the canonical P4 doc-alignment finding. License disagreement across three files is a legal-distribution hazard. Stale project-status text misleads every new contributor and every AI agent that opens the repo.",
+    "change_surface": "4 files, all text-only. (1) Pick the canonical license: project is dual-licensed, not yet settled — recommendation is 'MIT' (matches CLAUDE.md and the OSS nature of the repo, and the privacy-policy already implies it's open). (2) Bump README to 'Current Version: 1.2.0' and rewrite the License section to 'MIT — see LICENSE file'. (3) Add a LICENSE file (MIT, standard text) if not present — `ls LICENSE` is needed to confirm. (4) Update CLAUDE.md 'Current Project Status' to 'Phase: P4 (Polish) — extension shipped; final perf/UX/doc alignment' and drop the 'RED baseline' / 'Pre' phrasing. (5) Update privacy-policy.md to drop the 'no accompanying website' claim or qualify it.",
+    "root_cause": "Three independent doc files (README, CLAUDE, package.json) drifted from each other as the project moved from a planning document into a shipped extension. The version, license, and status fields were each updated in only one of the three files."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Pick MIT, align all four files",
+      "summary": "Add LICENSE (MIT) at repo root. Set package.json license to MIT. README 'Status' version 1.2.0; 'License' section to MIT. CLAUDE.md 'Current Project Status' to P4 shipped. privacy-policy.md 'no backend and no accompanying website' to 'no backend; the marketing landing page is static HTML'.",
+      "files_to_modify": [
+        "README.md",
+        "package.json",
+        "CLAUDE.md",
+        "privacy-policy.md"
+      ],
+      "files_to_create": [
+        "LICENSE (MIT standard text)"
+      ],
+      "pros": [
+        "Resolves the legal ambiguity",
+        "Aligns three out-of-date files with the truth",
+        "MIT matches the existing CLAUDE.md claim and the OSS posture of the repo"
+      ],
+      "cons": [
+        "License choice is a one-way decision; requires the maintainer to confirm MIT"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Text-only changes. The license decision is the only thing requiring a human in the loop. Verify: `rg -n 'MIT' LICENSE README.md package.json CLAUDE.md` shows 4 matches; `rg -n 'UNLICENSED|Proprietary' README.md package.json CLAUDE.md` exits 1."
+    },
+    {
+      "number": 2,
+      "name": "Pick Proprietary, align all four files",
+      "summary": "Same as Option 1 but flip to Proprietary. Drop the MIT from CLAUDE.md, set README and package.json to Proprietary. No LICENSE file.",
+      "files_to_modify": [
+        "README.md",
+        "package.json",
+        "CLAUDE.md",
+        "privacy-policy.md"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Matches what was previously shipped in README"
+      ],
+      "cons": [
+        "Contradicts CLAUDE.md's 'MIT licensed' claim",
+        "The repo is publicly developed and the project description (package.json) calls out 'privacy-first' — Proprietary is the wrong choice for an OSS project"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Same as Option 1; wrong direction."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "MIT, align all four files",
+    "Proprietary, align all four files"
+  ],
+  "options_rejected": [
+    "Proprietary — contradicts the project's public, OSS posture and the existing CLAUDE.md claim"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [],
+    "depends_on": [{"number": 8, "title": "P0 boot", "state": "MERGED via PR #48"}, {"number": 19, "title": "P1 docs", "state": "MERGED via PR #52"}, {"number": 32, "title": "P3.4 (split App/catalog)", "state": "MERGED via PR #62"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 5,
+    "deps_traced": 3,
+    "duration_s": 5
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:05Z"
+  },
+  "decision_record": {
+    "root_cause": "package.json (UNLICENSED), README (Proprietary), and CLAUDE (MIT) disagree on license; README version is 1.1.0 while package.json/manifest are 1.2.0; CLAUDE Current Project Status still says 'Pre — agent environment / RED baseline' even though the extension is shipped; privacy-policy claims 'no accompanying website' even though a landing page exists.",
+    "options_considered": [
+      "MIT, align all four files",
+      "Proprietary, align all four files"
+    ],
+    "options_rejected": [
+      "Proprietary"
+    ],
+    "selected_option": "MIT, align all four files (add LICENSE)",
+    "residual_risk": "The license choice needs maintainer confirmation before the PR is merged. If the maintainer prefers a different license (e.g. Apache-2.0), only the three license strings need to change; the structural cleanup is unchanged."
+  }
+}

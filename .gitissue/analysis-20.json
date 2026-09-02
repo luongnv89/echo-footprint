@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:07:53Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 20,
+    "title": "1.6: Honor pause and exclusions in the MutationObserver",
+    "type": "bug",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["bug", "dim:bug", "dim:test", "phase:p1", "priority:high"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:23:38Z",
+    "updatedAt": "2026-09-01T13:26:32Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [
+      "shouldRecord",
+      "runPixelDetection",
+      "observeDynamicPixels",
+      "sendPixelDetection",
+      "isDomainExcluded"
+    ],
+    "classes": ["MutationObserver"],
+    "file_refs": [
+      "manifest.json",
+      "src/content/content-script.js",
+      "tests/unit/content-script.test.js"
+    ],
+    "modules": ["content", "storage"],
+    "keywords": [
+      "pause",
+      "exclusions",
+      "storage",
+      "permission",
+      "observer",
+      "gating"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/content/content-script.js",
+      "relevance": "critical",
+      "role": "gating logic; observer callback bypasses pause/exclusion checks",
+      "match_reasons": [
+        "function match: runPixelDetection",
+        "function match: observeDynamicPixels",
+        "direct file reference"
+      ]
+    },
+    {
+      "path": "manifest.json",
+      "relevance": "critical",
+      "role": "permissions array is [] — missing \"storage\" so chrome.storage.local is unavailable to content script",
+      "match_reasons": ["direct file reference", "verified: permissions line 6"]
+    },
+    {
+      "path": "tests/unit/content-script.test.js",
+      "relevance": "high",
+      "role": "add paused + excluded unit cases",
+      "match_reasons": [
+        "direct file reference",
+        "acceptance criteria: unit test covers paused + excluded"
+      ]
+    },
+    {
+      "path": "src/content/domain-utils.js",
+      "relevance": "medium",
+      "role": "isDomainExcluded reused by extracted shouldRecord()",
+      "match_reasons": ["import connection to content-script.js"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "root_cause",
+    "summary": "Pause and exclusion gating is implemented only inline inside runPixelDetection(); the MutationObserver path in init() invokes sendPixelDetection() directly with no checks, so dynamically injected pixels are recorded even when paused or excluded. Additionally manifest.json declares permissions: [] — without \"storage\", chrome.storage.local is unavailable in the content script, getFromStorage() resolves {} via its fallback, and even the inline gating silently reads nothing, making persisted pause/exclusion settings inert everywhere.",
+    "details": "Failure chain: user pauses extension or excludes a domain (persisted via dashboard) -> chrome.storage.local cannot be read because the \"storage\" permission is absent (content-script.js getFromStorage falls back to resolving {}) -> runPixelDetection's isPaused/excludedDomains checks see empty values and proceed -> detectFacebookPixel runs and sends. Separately, observeDynamicPixels' callback in init() never consults pause/exclusion state at all, so even with storage fixed, dynamic pixels bypass gating. Fix: extract a single shouldRecord() helper that checks isPaused and isDomainExcluded(hostname, excludedDomains) via storage, call it from both runPixelDetection and the observer callback, and add \"storage\" to manifest.json permissions. Closes F-BUG-002, F-TEST-004, F-BUG-006."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Extract shouldRecord() + add storage permission",
+      "summary": "Add async shouldRecord() in content-script.js checking isPaused and excludedDomains via chrome.storage; call it from runPixelDetection and the observer callback; add \"storage\" to manifest.json permissions; extend unit tests.",
+      "files_to_modify": [
+        {
+          "path": "src/content/content-script.js",
+          "changes": "extract shouldRecord(); call from runPixelDetection and observer callback"
+        },
+        { "path": "manifest.json", "changes": "permissions: [\"storage\"]" },
+        {
+          "path": "tests/unit/content-script.test.js",
+          "changes": "cases: paused observer, excluded observer, unpaused records"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Single source of gating truth for both paths",
+        "Smallest diff; matches issue's stated approach"
+      ],
+      "cons": [
+        "Adds a permission (store-review visible, but storage is minimal and already justified)"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Two files plus tests; behavior change is strictly more restrictive (fewer records), no data-loss path."
+    },
+    {
+      "number": 2,
+      "name": "Gate inside observeDynamicPixels callback only",
+      "summary": "Keep inline checks in runPixelDetection and add a duplicate check in the observer callback without extraction.",
+      "files_to_modify": [
+        {
+          "path": "src/content/content-script.js",
+          "changes": "duplicate pause/exclusion checks in observer callback"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["No refactor"],
+      "cons": [
+        "Duplicated gating logic drifts over time",
+        "Still needs manifest.json storage permission to work at all"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Copy-paste gating is the F-TEST-004 smell this issue exists to remove."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "e8547e5",
+        "message": "Add security hardening and runtime controls",
+        "author": "luongnv89",
+        "date": "2026-08-20T00:00:00Z",
+        "files": ["src/lib/pixel-detector.js", "src/content/content-script.js"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 8 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [14],
+    "related_issues": [
+      {
+        "number": 21,
+        "title": "1.7: Record every platform on a page, not the first match",
+        "relationship": "shared_files",
+        "shared_keywords": [
+          "observeDynamicPixels",
+          "sendPixelDetection",
+          "content-script"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "deps_traced": 2,
+    "keywords_extracted": 7,
+    "file_refs_extracted": 3,
+    "scan_duration_seconds": 8,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:07:53Z"
+  },
+  "decision_record": {
+    "root_cause": "Observer path skips pause/exclusion gating entirely and manifest.json lacks the storage permission, so chrome.storage.local reads fall back to empty and no persisted pause/exclusion state can ever apply.",
+    "options_considered": [
+      {
+        "number": 1,
+        "name": "Extract shouldRecord() + add storage permission"
+      },
+      { "number": 2, "name": "Gate inside observeDynamicPixels callback only" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Duplicates gating logic instead of extracting the shared shouldRecord() the issue asks for."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Extract shouldRecord() + add storage permission",
+      "summary": "Single async shouldRecord() consulted by both runPixelDetection and the observer callback; \"storage\" added to manifest.json permissions."
+    },
+    "residual_risk": "Permission addition surfaces in store review; storage is a standard minimal permission already implied by dashboard usage."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\n`zip` writes `echofootprint.zip` at the repo root; CI uploads `dist/echofootprint.zip`.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\n`zip` writes `echofootprint.zip` at the repo root; CI uploads `dist/echofootprint.zip`.\n\n**Related issues:**\nCloses F-CI-001\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: high\n> Effort: S\n> Labels: dim:ci, improvement, phase:p0, priority:high\n> Plan task: 0.3 \u2014 Sprint 0 \u00b7 Phase P0 Stabilize \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 0.3: Align zip output with the CI upload path\n>\n> **Description**: `zip` writes `echofootprint.zip` at the repo root; CI uploads `dist/echofootprint.zip`.\n>\n> **Closes**: `F-CI-001`\n>\n> **Acceptance Criteria**:\n> - [ ] `npm run zip` produces a file at the path named in `.github/workflows/ci.yml` `path:`\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 0.1\n>\n> **Effort**: S\n>\n> **Verify**: `npm run zip && test -f dist/echofootprint.zip` (or the single path both sides agree on)\n>\n> Dependencies: 0.1\n> Closes: F-CI-001\n\n## Acceptance Criteria\n\n- [ ] `npm run zip` produces a file at the path named in `.github/workflows/ci.yml` `path:` (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** high (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:ci, improvement, phase:p0, priority:high (high confidence)\n\nPart of #6\n\nDepends on #10\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdoDA",
+      "name": "dim:ci",
+      "description": "Closes a CI finding",
+      "color": "0052CC"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsGQ",
+      "name": "phase:p0",
+      "description": "Modernization phase P0 \u2014 Stabilize",
+      "color": "B60205"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduGg",
+      "name": "priority:high",
+      "description": "Highest-severity closed finding is High",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 12,
+  "title": "0.3: Align zip output with the CI upload path"
+}

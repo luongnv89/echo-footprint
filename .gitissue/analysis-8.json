@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T13:38:43Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 8,
+    "title": "Pre.2: Update CLAUDE.md via /agent-config",
+    "type": "improvement",
+    "reporter": {
+      "login": "luongnv89",
+      "name": "Luong NGUYEN"
+    },
+    "labels": ["dim:env", "improvement", "phase:pre", "priority:high"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:22:33Z",
+    "updatedAt": "2026-09-01T13:26:04Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": ["CLAUDE.md"],
+    "modules": [],
+    "keywords": [
+      "CLAUDE.md",
+      "agent-config",
+      "stale",
+      "repo",
+      "state",
+      "structure",
+      "commands",
+      "architecture",
+      "test:run"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "CLAUDE.md",
+      "relevance": "critical",
+      "role": "the stale agent-guidance file to regenerate",
+      "match_reasons": [
+        "direct file reference",
+        "verified stale claims via grep"
+      ]
+    },
+    {
+      "path": "package.json",
+      "relevance": "medium",
+      "role": "command source of truth CLAUDE.md's script section must match (test:run = vitest --run)",
+      "match_reasons": ["command verification for AC2"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "CLAUDE.md (14 KB, last touched 2025-11-23 by commit 6048e4c) is frozen at pre-implementation state: Section 'Current Project Status' still says 'Phase: Pre-development (planning complete)', 'Next Milestone: Bootstrap extension workspace', and 'no implementation yet' (lines ~408-412). The repo has since shipped v1.2.0 (map view, bipartite graph visualization, landing page) with a real src/ tree, so the file's structure, 'Getting Started' examples, and 'pre-development' framing are all stale. The real test command of record is npm run test:run (package.json: vitest --run), which the issues' audit baseline flags as the command to document.",
+    "details": "The stale claims are concrete and grep-verifiable: line 408 'Phase: Pre-development (planning complete)', line 409 'Next Milestone: Bootstrap extension workspace and implement content script pixel sniffer', line 412 'no implementation yet'; also 'Tasks: start with Phase 0 tasks' and an architecture section that predates main.jsx/BipartiteGraph components. Regenerating via the /agent-config skill fixes the file wholesale (real structure, real commands including npm run test:run, real architecture) and satisfies AC1-AC3. Accurate commands must come from #7's install/run notes (dependency) so CLAUDE.md documents the same verified command set."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Regenerate via /agent-config",
+      "summary": "Run the agent-config skill to rewrite CLAUDE.md from the current repo state: real structure, real commands (including npm run test:run), real architecture; remove the 'no implementation' / 'planning complete' claims.",
+      "files_to_modify": [
+        {
+          "path": "CLAUDE.md",
+          "changes": "Full rewrite to reflect current structure, commands, architecture; drop stale pre-implementation claims"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Whole-file fix (no residual drift)",
+        "Follows the issue's mandated skill",
+        "Naturally aligned with AGENTS.md created for #9 in the same pass"
+      ],
+      "cons": ["Larger diff than a surgical edit"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Docs only; risk is factual drift, mitigated by #7's verified commands"
+    },
+    {
+      "number": 2,
+      "name": "Surgical edit of stale lines",
+      "summary": "Hand-edit only the outdated lines (408-412 and stale examples) without the agent-config skill.",
+      "files_to_modify": [
+        {
+          "path": "CLAUDE.md",
+          "changes": "Edit stale status lines and examples"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["Smallest diff, fastest"],
+      "cons": [
+        "Leaves residual drift elsewhere in the 14 KB file",
+        "Doesn't follow the issue's /agent-config instruction",
+        "Easier to miss inconsistencies"
+      ],
+      "complexity": "XS",
+      "risk": "Medium",
+      "risk_details": "Risk of incomplete refresh and skill-instruction mismatch"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "6048e4c",
+        "message": "Bump to 1.1.1 with privacy update",
+        "author": "luongnv89",
+        "date": "2025-11-23T00:00:00Z",
+        "files": ["CLAUDE.md", "package.json", "manifest.json"],
+        "type": "keyword_match"
+      },
+      {
+        "sha": "b0303e9",
+        "message": "feat: Improve README and expand test coverage",
+        "author": "luongnv89",
+        "date": "2025-11-16T22:29:50Z",
+        "files": ["README.md", "package.json"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 2 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [7],
+    "related_issues": [
+      {
+        "number": 7,
+        "title": "Pre.1: Write install/run notes for a clean checkout",
+        "relationship": "explicit_reference",
+        "shared_keywords": ["commands", "install", "run", "test:run"],
+        "confidence": "high"
+      },
+      {
+        "number": 9,
+        "title": "Pre.3: Create AGENTS.md via /agent-config",
+        "relationship": "shared_keywords",
+        "shared_keywords": ["agent-config", "commands"],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 0,
+    "keywords_extracted": 9,
+    "file_refs_extracted": 1,
+    "scan_duration_seconds": 7,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "05d2ba03157bf37a9680a7fc1a595459c6deb7bc",
+    "commit_sha_short": "05d2ba0",
+    "captured_at": "2026-09-01T13:38:43Z"
+  },
+  "decision_record": {
+    "root_cause": "CLAUDE.md is frozen at pre-implementation state: it still claims 'Phase: Pre-development (planning complete)', 'Next Milestone: Bootstrap extension workspace', and 'no implementation yet', while the repo has shipped v1.2.0 with a real structure and command set.",
+    "options_considered": [
+      { "number": 1, "name": "Regenerate via /agent-config" },
+      { "number": 2, "name": "Surgical edit of stale lines" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Leaves residual drift in the 14 KB file and doesn't follow the issue's /agent-config instruction."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Regenerate via /agent-config",
+      "summary": "Run the agent-config skill to rewrite CLAUDE.md from the current repo state, including the real test command npm run test:run."
+    },
+    "residual_risk": "Factual drift if commands don't match the repo; mitigated by landing #7's verified notes first."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nbug (high confidence)\n\n## Description\n\nChange detectors to collect all matching platforms per scan without blowing the 100ms budget. Deduplicate observer vs delayed scan so a pixel in the first 3s is not stored twice.\n\n**Current behavior:**\nChange detectors to collect all matching platforms per scan without blowing the 100ms budget. Deduplicate observer vs delayed scan so a pixel in the first 3s is not stored twice.\n\n**Expected behavior:**\nThe acceptance criteria in this issue hold.\n\n**Related issues:**\nCloses F-BUG-001, F-BUG-007\n\n> **Reporter Context**\n>\n> Type: bug\n> Priority: high\n> Effort: M\n> Labels: bug, dim:bug, phase:p1, priority:high\n> Plan task: 1.7 \u2014 Sprint 1 \u00b7 Phase P1 Secure & Patch \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 1.7: Record every platform on a page, not the first match\n>\n> **Description**: Change detectors to collect all matching platforms per scan without blowing the 100ms budget. Deduplicate observer vs delayed scan so a pixel in the first 3s is not stored twice.\n>\n> **Closes**: `F-BUG-001`, `F-BUG-007`\n>\n> **Acceptance Criteria**:\n> - [ ] A fixture with Facebook + Google scripts produces two footprints (or two events)\n> - [ ] A pixel seen by both the observer and the delayed scan is stored once\n> - [ ] Detection still logs a warning only if `performance.now` delta > 100ms\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 0.5\n>\n> **Effort**: M\n>\n> **Verify**: `npm run test:run tests/unit/pixel-detector.test.js`\n>\n> Dependencies: 0.5\n> Closes: F-BUG-001, F-BUG-007\n\n## Acceptance Criteria\n\n- [ ] A fixture with Facebook + Google scripts produces two footprints (or two events) (high confidence)\n- [ ] A pixel seen by both the observer and the delayed scan is stored once (high confidence)\n- [ ] Detection still logs a warning only if `performance.now` delta > 100ms (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** high (high confidence)\n**Effort:** M (high confidence)\n**Suggested model:** GPT-5.5 High \u00b7 Opus 4.8 Medium _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** bug, dim:bug, phase:p1, priority:high (high confidence)\n\nPart of #6\n\nDepends on #14\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACPlbgSA",
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdnxw",
+      "name": "dim:bug",
+      "description": "Closes a BUG finding",
+      "color": "B60205"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsZg",
+      "name": "phase:p1",
+      "description": "Modernization phase P1 \u2014 Secure & Patch",
+      "color": "D93F0B"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduGg",
+      "name": "priority:high",
+      "description": "Highest-severity closed finding is High",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 21,
+  "title": "1.7: Record every platform on a page, not the first match"
+}

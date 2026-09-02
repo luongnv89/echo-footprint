@@ -1,0 +1,170 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T04:36:08Z",
+  "source": "auto-pilot P3 part-2",
+  "issue": {
+    "number": 33,
+    "title": "3.5: Split App.jsx and the pixel catalog",
+    "body_excerpt": "Extract insights/tab shell from App.jsx; move TRACKING_PLATFORMS out of pixel-detector.js.",
+    "labels": ["dim:clean", "improvement", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:02Z"
+  },
+  "extraction": {
+    "keywords": [
+      "App.jsx",
+      "TRACKING_PLATFORMS",
+      "pixel-detector.js",
+      "split",
+      "insights",
+      "tab shell",
+      "catalog",
+      "data module"
+    ],
+    "file_refs": [
+      "src/dashboard/App.jsx",
+      "src/lib/pixel-detector.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/App.jsx",
+      "lines": 643,
+      "role": "primary - extract insights and tab shell"
+    },
+    {
+      "path": "src/lib/pixel-detector.js",
+      "lines": 788,
+      "role": "primary - move TRACKING_PLATFORMS out to a data module"
+    },
+    {
+      "path": "src/dashboard/components/BipartiteGraph.jsx",
+      "lines": 1309,
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "src/dashboard/components/RadialGraph.jsx",
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "src/dashboard/components/DataTable.jsx",
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "src/dashboard/components/PlatformStats.jsx",
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "src/dashboard/components/HelpSheet.jsx",
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "tests/unit/pixel-detector.test.js",
+      "role": "imports TRACKING_PLATFORMS from pixel-detector (must update import)"
+    },
+    {
+      "path": "src/dashboard/utils/db.js",
+      "role": "may also import catalog if pixel-platform lookups happen at query time"
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "src/dashboard/App.jsx is 643 lines containing insights computation, filter logic, four view tabs (graph/bipartite/map/table), header, and footer. TRACKING_PLATFORMS is an exported const at the top of src/lib/pixel-detector.js (788 lines) and is imported by 7 dashboard files (App.jsx, BipartiteGraph.jsx, RadialGraph.jsx, DataTable.jsx, PlatformStats.jsx, HelpSheet.jsx) and 1 test file.",
+    "limitations": "App.jsx is far above the 400-line target (643 lines). The platform catalog co-located with detection logic forces dashboard files to import a library file for a pure data structure, conflating concerns.",
+    "change_surface": "9 files. Create new module (e.g., src/lib/tracking-platforms.js or src/dashboard/data/platforms.js) holding TRACKING_PLATFORMS; update 7 dashboard imports + 1 test import; extract a TabNav / InsightsBanner subcomponent from App.jsx; collapse the conditional render into a view switch.",
+    "root_cause": "Single-responsibility violation: App.jsx mixes orchestration, data reduction, JSX composition, and presentation; pixel-detector.js mixes detection logic with static catalog data, so 8 consumer files are coupled to a library module for lookups only."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Minimal catalog move + tab shell extract",
+      "summary": "Move TRACKING_PLATFORMS to src/lib/tracking-platforms.js (or src/dashboard/data/platforms.js) and extract a TabNav component. Leave insights inline in App.jsx.",
+      "files_to_modify": [
+        "src/lib/pixel-detector.js (remove TRACKING_PLATFORMS export, re-export from new module for back-compat)",
+        "src/dashboard/App.jsx (extract TabNav, switch import path)",
+        "src/dashboard/components/BipartiteGraph.jsx (switch import)",
+        "src/dashboard/components/RadialGraph.jsx (switch import)",
+        "src/dashboard/components/DataTable.jsx (switch import)",
+        "src/dashboard/components/PlatformStats.jsx (switch import)",
+        "src/dashboard/components/HelpSheet.jsx (switch import)",
+        "tests/unit/pixel-detector.test.js (switch import or new location)"
+      ],
+      "files_to_create": [
+        "src/lib/tracking-platforms.js (catalog data module)"
+      ],
+      "pros": [
+        "Smallest diff that closes F-CLEAN-002 and F-CLEAN-003",
+        "Catalog data module is reusable and testable in isolation"
+      ],
+      "cons": [
+        "App.jsx still over 400 lines until insights are also extracted"
+      ],
+      "complexity": "M",
+      "risk": "low",
+      "risk_details": "Pure refactor: data moves, no behavior change. Re-export from pixel-detector.js can preserve back-compat for any consumer not yet updated."
+    },
+    {
+      "number": 2,
+      "name": "Full split: catalog + insights + tab shell",
+      "summary": "Move catalog; extract InsightsBanner (with displayedInsights computation) into its own component, leaving App.jsx as pure orchestration.",
+      "files_to_modify": [
+        "src/lib/pixel-detector.js (drop TRACKING_PLATFORMS)",
+        "src/dashboard/App.jsx (extract insights, tab shell, view switch map)",
+        "src/dashboard/components/BipartiteGraph.jsx, RadialGraph.jsx, DataTable.jsx, PlatformStats.jsx, HelpSheet.jsx (update import)",
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "files_to_create": [
+        "src/lib/tracking-platforms.js",
+        "src/dashboard/components/InsightsBanner.jsx",
+        "src/dashboard/components/TabNav.jsx"
+      ],
+      "pros": [
+        "Brings App.jsx comfortably under the 400-line target",
+        "Each extracted component is independently testable"
+      ],
+      "cons": [
+        "Larger diff; risks breaking 1.0 acceptance criteria for the F-CLEAN-002 verification"
+      ],
+      "complexity": "M",
+      "risk": "medium",
+      "risk_details": "Insights computation depends on stats and footprints state; extracting it requires careful hook placement and stable prop contracts."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0,
+    "note": "No commits reference #33 directly yet. The repository has not been touched in this area post-#21."
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 34, "title": "Rename detectFacebookPixel*", "overlap": "Both touch src/lib/pixel-detector.js — recommend batching."},
+      {"number": 35, "title": "Fix SmartyAds Criteo domain", "overlap": "Also modifies TRACKING_PLATFORMS in pixel-detector.js — same one-line area."}
+    ],
+    "depends_on": [{"number": 29, "title": "3.1: Generate dashboard characterization tests", "state": "open (other agent's set)", "note": "Plan-task 3.5 declares 3.1 (=#29) as its dependency. #29 lives in the other agent's batch — #33 must wait for #29 to land."}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 11,
+    "deps_traced": 9,
+    "duration_s": 12
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T04:36:08Z"
+  },
+  "decision_record": {
+    "root_cause": "TRACKING_PLATFORMS data is co-located with detection logic in src/lib/pixel-detector.js, forcing 7 dashboard files and 1 test to import a library module for a pure data structure. App.jsx (643 lines) mixes orchestration, data reduction, JSX composition, and presentation; far above the 400-line target.",
+    "options_considered": [
+      "Minimal catalog move + tab shell extract",
+      "Full split: catalog + insights + tab shell"
+    ],
+    "options_rejected": [
+      "Full split: risks breaking F-CLEAN-002 line-count acceptance criterion when insights extraction is the wrong size"
+    ],
+    "selected_option": "Minimal catalog move + tab shell extract",
+    "residual_risk": "App.jsx may still exceed 400 lines if TabNav is small; verify post-extract with `wc -l` and either ship or follow up."
+  }
+}

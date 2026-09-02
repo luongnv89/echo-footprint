@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:09:02Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 18,
+    "title": "1.4: Pin TruffleHog off @main",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:ci", "improvement", "phase:p1", "priority:high"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:23:26Z",
+    "updatedAt": "2026-09-01T13:26:28Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [".github/workflows/ci.yml"],
+    "modules": ["trufflesecurity/trufflehog"],
+    "keywords": [
+      "pin",
+      "SHA",
+      "trufflehog@main",
+      "supply chain",
+      "push step",
+      "PR step"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "relevance": "critical",
+      "role": "both `uses: trufflesecurity/trufflehog@main` occurrences (lines 158 and 168: push and PR steps)",
+      "match_reasons": ["grep trufflehog@ — exact 2 hits"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "The CI secret-scanning job invokes `trufflesecurity/trufflehog@main` twice — once on push, once on PR — so every workflow run executes mutable third-party code at an unpinned ref. The fix is a one-line-per-site change to a release SHA (with a version comment), satisfying F-CI-002. History shows a prior TruffleHog config fix (103977a) but the @main pin predates and survives it; no commits reference this issue.",
+    "details": "This is the smallest change in the P1 wave: no application code, no dependencies, no test impact beyond the suite gate that all five issues share. The only care point is choosing a real current release SHA of trufflesecurity/trufflehog and annotating the pinned version in a comment for future bumps. Fully independent of #15/#16/#17 (different files) and of #19 (different dimension); can land any time and in parallel."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Pin to release SHA",
+      "summary": "Replace both `trufflesecurity/trufflehog@main` refs with a full release commit SHA plus a version comment.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "lines 158 and 168: @main -> @<release-sha> with `# vX.Y.Z` comment"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Strongest supply-chain pin; deterministic CI",
+        "Matches the issue's stated fix and F-CI-002 exactly"
+      ],
+      "cons": ["Manual SHA bump when upgrading TruffleHog"],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Two-line change in one YAML file; no runtime surface"
+    },
+    {
+      "number": 2,
+      "name": "Pin to major tag (@v2)",
+      "summary": "Point both steps at a moving major tag instead of @main.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "lines 158 and 168: @main -> @v2"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["Trivial; auto-follows patch releases"],
+      "cons": [
+        "Tag is mutable — weaker than the SHA pin the issue asks for; fails the acceptance spirit"
+      ],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Still a mutable ref, just less volatile than main"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "103977a",
+        "message": "fix(ci): Fix TruffleHog secret scanning configuration",
+        "author": "luongnv89",
+        "date": "2025-11-17T00:00:00Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      },
+      {
+        "sha": "e158270",
+        "message": "refactor(ci): stabilize P0 build and CI config (#10, #11, #12, #13, #14) (#49)",
+        "author": "luongnv89",
+        "date": "2026-09-01T18:41:16Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 5 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [],
+    "related_issues": [
+      {
+        "number": 22,
+        "title": "1.8: Make npm audit a real CI gate after W1/W4 security bumps",
+        "relationship": "shared_files",
+        "shared_keywords": [".github/workflows/ci.yml"],
+        "confidence": "medium"
+      },
+      {
+        "number": 24,
+        "title": "1.10: Replace upload-release-asset@v1",
+        "relationship": "shared_files",
+        "shared_keywords": [".github/workflows/ci.yml", "action pinning"],
+        "confidence": "medium"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 0,
+    "keywords_extracted": 6,
+    "file_refs_extracted": 1,
+    "scan_duration_seconds": 5,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:09:02Z"
+  },
+  "decision_record": {
+    "root_cause": "The secret-scanning job in .github/workflows/ci.yml runs `trufflesecurity/trufflehog@main` in both push and PR steps (lines 158, 168), executing mutable third-party workflow code on every run; the fix is pinning both refs to a release SHA.",
+    "options_considered": [
+      { "number": 1, "name": "Pin to release SHA" },
+      { "number": 2, "name": "Pin to major tag (@v2)" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "A moving major tag is still a mutable ref and fails the supply-chain intent of F-CI-002."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Pin to release SHA",
+      "summary": "Replace both @main refs with a full release SHA annotated with the version."
+    },
+    "residual_risk": "None identified — future TruffleHog upgrades require a manual SHA bump."
+  }
+}

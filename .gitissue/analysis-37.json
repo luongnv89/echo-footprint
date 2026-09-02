@@ -1,0 +1,123 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T04:36:08Z",
+  "source": "auto-pilot P3 part-2",
+  "issue": {
+    "number": 37,
+    "title": "3.9: Un-skip or replace the iframe pixel test",
+    "body_excerpt": "it.skip at pixel-detector.test.js:115. The skip is gone, or the test is deleted with a comment pointing at a replacement.",
+    "labels": ["dim:test", "improvement", "phase:p3", "priority:low"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:11Z"
+  },
+  "extraction": {
+    "keywords": [
+      "it.skip",
+      "iframe",
+      "pixel",
+      "jsdom",
+      "iframe src",
+      "replacement"
+    ],
+    "file_refs": [
+      "tests/unit/pixel-detector.test.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "tests/unit/pixel-detector.test.js",
+      "role": "primary - line 115: it.skip with TODO explaining jsdom limitation; either un-skip, replace with jsdom-compatible test, or delete and add a comment pointing at a replacement"
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "tests/unit/pixel-detector.test.js line 115 contains `it.skip('should detect Facebook iframe', () => { ... })`. The TODO comment says: 'This test is skipped due to jsdom limitations with iframe src. The actual code works in real browsers - test manually in extension.'",
+    "limitations": "A permanently-skipped test never guards against regressions in iframe-pixel detection logic. The test is misleading: it suggests coverage exists while the suite executes a no-op.",
+    "change_surface": "1 file. Either (a) replace the body with a jsdom-friendly assertion (e.g., mock document.querySelectorAll to return a synthetic iframe, or assert against a hand-constructed detection object), or (b) delete the test and add a one-line comment that points at a manual-test replacement (e.g., in tests/manual/ or docs/).",
+    "root_cause": "Legacy test was written for full browser behavior; jsdom does not load cross-origin iframe src and the author punted. The skip has lived in the suite without follow-up."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Replace with a jsdom-friendly iframe test",
+      "summary": "Rewrite the body to construct a stub iframe with a known src and assert detectFacebookPixelElements() picks it up. Use a synthetic src URL whose host is in TRACKING_PLATFORMS (e.g. 'https://www.facebook.com/tr?id=1' — but that is a beacon test, not iframe). The cleanest approach: assert the same code path used for img/iframe elements returns a detection with pixelType='iframe' when document.querySelectorAll('iframe[src]') yields a node whose src contains a known platform host.",
+      "files_to_modify": [
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Replaces the skip with real coverage",
+        "Cheap, deterministic under jsdom"
+      ],
+      "cons": [
+        "Test still relies on jsdom's querySelectorAll('iframe[src]') returning appended nodes (it does)"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Tiny scoped change; verification: `rg 'it.skip' tests/unit/pixel-detector.test.js` exits 1 after."
+    },
+    {
+      "number": 2,
+      "name": "Delete and point at a manual replacement",
+      "summary": "Remove the it.skip and add a one-line comment in the describe block referencing tests/manual/iframe-pixel.md (a new manual-test recipe) — the acceptance criterion explicitly allows this fallback.",
+      "files_to_modify": [
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "files_to_create": [
+        "tests/manual/iframe-pixel.md (short manual test recipe)"
+      ],
+      "pros": [
+        "Lowest risk; no risk of breaking the test run on a behavior change"
+      ],
+      "cons": [
+        "Lose programmatic coverage of iframe path"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "Documentation-only replacement."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "Replace with a jsdom-friendly iframe test",
+    "Delete and point at a manual replacement"
+  ],
+  "options_rejected": [
+    "Delete and point at a manual replacement (prefer Option 1 to actually gain coverage)"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 34, "title": "Rename detectFacebookPixel*", "overlap": "If #34 lands first and renames detectFacebookPixelElements, this test must be updated to use the new name. Natural sequencing: #34 first, then #37 (or batched)."}
+    ],
+    "depends_on": [{"number": 21, "title": "Record every platform on a page", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 1,
+    "deps_traced": 1,
+    "duration_s": 2
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T04:36:08Z"
+  },
+  "decision_record": {
+    "root_cause": "tests/unit/pixel-detector.test.js:115 has it.skip on the iframe-pixel test due to a jsdom limitation, with a TODO comment promising future work that never landed. The skip leaves a coverage hole that masks regressions in the iframe code path.",
+    "options_considered": [
+      "Replace with a jsdom-friendly iframe test",
+      "Delete and point at a manual replacement"
+    ],
+    "options_rejected": [
+      "Delete and point at a manual replacement"
+    ],
+    "selected_option": "Replace with a jsdom-friendly iframe test",
+    "residual_risk": "If detectFacebookPixelElements is renamed by #34 first, the test must use the new name. Sequence after #34 or bundle them."
+  }
+}

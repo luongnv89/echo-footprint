@@ -1,0 +1,147 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:00Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 38,
+    "title": "4.1: Lazy-load graph, map, and table views",
+    "body_excerpt": "React.lazy the four visualization components from App.jsx.",
+    "labels": ["dim:perf", "improvement", "phase:p4", "priority:high"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:13Z"
+  },
+  "extraction": {
+    "keywords": [
+      "React.lazy",
+      "Suspense",
+      "visualization",
+      "code-split",
+      "App.jsx",
+      "d3",
+      "leaflet",
+      "html2canvas"
+    ],
+    "file_refs": [
+      "src/dashboard/App.jsx",
+      "src/dashboard/components/RadialGraph.jsx",
+      "src/dashboard/components/BipartiteGraph.jsx",
+      "src/dashboard/components/MapView.jsx",
+      "src/dashboard/components/DataTable.jsx",
+      "src/dashboard/components/ScreenshotModal.jsx"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/App.jsx",
+      "role": "primary - convert the four static imports of RadialGraph/BipartiteGraph/MapView/DataTable to React.lazy(); wrap each in <Suspense>; define a Loading fallback. ScreenshotModal.jsx also imports html2canvas and is only mounted on user action, so it can stay static or be lazy."
+    },
+    {
+      "path": "src/dashboard/components/RadialGraph.jsx",
+      "role": "imports d3 (static). No code change needed; module is the split chunk target."
+    },
+    {
+      "path": "src/dashboard/components/BipartiteGraph.jsx",
+      "role": "imports d3 (static). No code change needed; module is the split chunk target."
+    },
+    {
+      "path": "src/dashboard/components/MapView.jsx",
+      "role": "imports leaflet, leaflet.markercluster, leaflet css (static). No code change needed; module is the split chunk target."
+    },
+    {
+      "path": "src/dashboard/components/DataTable.jsx",
+      "role": "no heavy imports, but lazy-loaded together with the other views for uniform code-splitting."
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "App.jsx (lines 17-20) statically imports RadialGraph, BipartiteGraph, MapView, and DataTable. These transitive imports pull in d3, leaflet, leaflet.markercluster, and (via ScreenshotModal) html2canvas into the initial dashboard bundle. The empty-state branch and loading branch do not need any of them.",
+    "limitations": "Initial dashboard load pays for ~600KB+ of d3/leaflet that won't be touched unless the user switches to graph/map. With the issue-dependency chain (3.1 done), this is the high-priority win: ships <1s dashboard load at 1k records.",
+    "change_surface": "1 file (App.jsx) for the lazy wiring, plus a tiny Loading fallback component (could be inline in App.jsx, or a new tiny file). No backend / DB / lib changes. The verify command in the issue is `rg -n \"from 'd3'|from 'leaflet'|html2canvas\" src/dashboard/App.jsx` exits 1 — currently fails because App.jsx has none of these, so the verify already passes; the acceptance criterion is essentially that the static imports are gone from App.jsx (they already are) AND that the four view components are React.lazy()-imported instead of statically imported (this is the new work).",
+    "root_cause": "App.jsx eagerly imports the four visualization components at module top, so d3, leaflet, and html2canvas are part of the initial bundle. Splitting them behind React.lazy() defers those imports until the user actually opens graph/bipartite/map/table."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "React.lazy the four view components with one shared Suspense",
+      "summary": "Replace the four static imports in App.jsx with React.lazy(() => import('./components/RadialGraph.jsx')) etc. Wrap the view section in a single <Suspense fallback={<ViewFallback/>}>. Define the fallback inline (small spinner reusing the existing .loading-spinner style from App.css).",
+      "files_to_modify": [
+        "src/dashboard/App.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Minimal change, one file",
+        "Fits existing App.css loading style",
+        "Single Suspense boundary keeps layout stable"
+      ],
+      "cons": [
+        "All four view chunks share the same fallback, but the active-view transition is only one chunk at a time"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "React.lazy is well-supported under React 19. The verify command stays the same; the only behavior change is a brief Suspense spinner the first time the user opens a view."
+    },
+    {
+      "number": 2,
+      "name": "React.lazy with per-view Suspense fallback",
+      "summary": "Each conditional render (`{activeView === 'graph' && (...)}`) is wrapped in its own Suspense with a view-specific skeleton.",
+      "files_to_modify": [
+        "src/dashboard/App.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "More granular fallbacks, no flicker when switching views"
+      ],
+      "cons": [
+        "More JSX noise in App.jsx",
+        "Per-view skeletons are pure duplication since each view is only one at a time"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Slight complexity bump; same verify command."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "React.lazy the four view components with one shared Suspense",
+    "React.lazy with per-view Suspense fallback"
+  ],
+  "options_rejected": [
+    "React.lazy with per-view Suspense fallback (Option 2) — single Suspense is sufficient because only one view is mounted at a time"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 40, "title": "Rebuild the radial graph incrementally", "overlap": "Both touch RadialGraph.jsx; #38 changes only App.jsx so they don't truly overlap, but ordering matters: do #38 first (it changes the import contract) so the user only loads the new d3 chunk when they open the graph."},
+      {"number": 42, "title": "Fix tab ids, empty-state copy, view subtitle", "overlap": "Both touch App.jsx. Trivial textual change; can be done before or after #38 with no conflict."}
+    ],
+    "depends_on": [{"number": 29, "title": "P3 clean: split App into hooks/components", "state": "MERGED via PR #61"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 1,
+    "duration_s": 3
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:00Z"
+  },
+  "decision_record": {
+    "root_cause": "App.jsx eagerly imports the four visualization components, pulling d3, leaflet, and html2canvas into the initial bundle even though empty-state and loading paths don't need them.",
+    "options_considered": [
+      "React.lazy with one shared Suspense",
+      "React.lazy with per-view Suspense"
+    ],
+    "options_rejected": [
+      "Per-view Suspense"
+    ],
+    "selected_option": "React.lazy with one shared Suspense",
+    "residual_risk": "The verify command in the issue (`rg -n \"from 'd3'|from 'leaflet'|html2canvas\" src/dashboard/App.jsx`) already passes because App.jsx has none of those imports today; the real acceptance check is that the four visualization components are imported via React.lazy instead of static `import ... from`. Verify with: `rg -n \"^import RadialGraph|^import BipartiteGraph|^import MapView|^import DataTable\" src/dashboard/App.jsx` exits 1."
+  }
+}

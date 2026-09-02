@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\ndexie 4.2.1\u21924.4.5, dexie-react-hooks 4.2.0\u21924.4.0. Not a major.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\ndexie 4.2.1\u21924.4.5, dexie-react-hooks 4.2.0\u21924.4.0. Not a major.\n\n**Related issues:**\nCloses F-DEP-009, F-DEP-010\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: low\n> Effort: S\n> Labels: dim:dep, improvement, phase:p1, priority:low\n> Plan task: 1.9 \u2014 Sprint 1 \u00b7 Phase P1 Secure & Patch \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 1.9: Dexie patch/minor wave (W2)\n>\n> **Description**: dexie 4.2.1\u21924.4.5, dexie-react-hooks 4.2.0\u21924.4.0. Not a major.\n>\n> **Closes**: `F-DEP-009`, `F-DEP-010`\n>\n> **Acceptance Criteria**:\n> - [ ] `npm outdated` no longer lists those two as wanted>installed on the minor line\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 0.5\n>\n> **Effort**: S\n>\n> **Verify**: `npm ls dexie dexie-react-hooks`\n>\n> Dependencies: 0.5\n> Closes: F-DEP-009, F-DEP-010\n\n## Acceptance Criteria\n\n- [ ] `npm outdated` no longer lists those two as wanted>installed on the minor line (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** low (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:dep, improvement, phase:p1, priority:low (high confidence)\n\nPart of #6\n\nDepends on #14\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdo6w",
+      "name": "dim:dep",
+      "description": "Closes a DEP finding",
+      "color": "0E8A16"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsZg",
+      "name": "phase:p1",
+      "description": "Modernization phase P1 \u2014 Secure & Patch",
+      "color": "D93F0B"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduUA",
+      "name": "priority:low",
+      "description": "Highest-severity closed finding is Low",
+      "color": "C2E0C6"
+    }
+  ],
+  "number": 23,
+  "title": "1.9: Dexie patch/minor wave (W2)"
+}

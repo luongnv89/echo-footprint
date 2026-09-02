@@ -1,0 +1,103 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T04:36:08Z",
+  "source": "auto-pilot P3 part-2",
+  "issue": {
+    "number": 35,
+    "title": "3.7: Fix SmartyAds Criteo domain",
+    "body_excerpt": "Remove 'as.us.criteo.com' from smartyads; add a mapping test. detectPlatformFromUrl should map that host to criteo or null, not smartyads.",
+    "labels": ["bug", "dim:bug", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:07Z"
+  },
+  "extraction": {
+    "keywords": [
+      "smartyads",
+      "criteo",
+      "as.us.criteo.com",
+      "domain",
+      "mapping",
+      "detectPlatformFromUrl"
+    ],
+    "file_refs": [
+      "src/lib/pixel-detector.js",
+      "tests/unit/pixel-detector.test.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/lib/pixel-detector.js",
+      "role": "primary - remove 'as.us.criteo.com' from smartyads.domains (line 502)"
+    },
+    {
+      "path": "tests/unit/pixel-detector.test.js",
+      "role": "add a mapping test that asserts detectPlatformFromUrl('https://as.us.criteo.com/...') returns 'criteo' or null"
+    }
+  ],
+  "analysis": {
+    "type": "bug",
+    "current_implementation": "TRACKING_PLATFORMS.smartyads.domains in src/lib/pixel-detector.js (around line 502) contains: ['n1.smartyads.com', 'as.us.criteo.com', 'pixel.smartyads.com', 'dsp.smartyads.com']. The second entry is a Criteo CDN endpoint incorrectly attributed to SmartyAds. The pre-computed DOMAIN_TO_PLATFORM_MAP (line 569-578) iterates the catalog and records the FIRST-encountered mapping per domain — since criteo is also defined in the catalog, the duplicate host is a 'smartyads wins' bug for that host because the criteo entry uses exact-match domains (e.g., 'static.criteo.net', 'dis.criteo.com') that won't match 'as.us.criteo.com' as a substring. The map is exact-key, not a longest-match — so as.us.criteo.com never matches a criteo entry but does match smartyads.",
+    "limitations": "Misclassification: a request to as.us.criteo.com is reported as 'smartyads' in the dashboard, which is wrong; the host is a Criteo domain. The acceptance criterion explicitly states it should map to 'criteo or null'.",
+    "change_surface": "1 line removed in pixel-detector.js, plus a small test addition.",
+    "root_cause": "Catalog error: TRACKING_PLATFORMS.smartyads.domains contains 'as.us.criteo.com', a Criteo CDN host. The literal-key map has no way to resolve this — only catalog hygiene fixes it.",
+    "failure_chain": "Criteo CDN request at as.us.criteo.com -> DOMAIN_TO_PLATFORM_MAP returns 'smartyads' (first match wins) -> dashboard shows wrong platform -> F-BUG-003"
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Remove the bogus host from smartyads",
+      "summary": "Delete the string 'as.us.criteo.com' from smartyads.domains. Add a test that asserts detectPlatformFromUrl('https://as.us.criteo.com/x') does not return 'smartyads'.",
+      "files_to_modify": [
+        "src/lib/pixel-detector.js (remove one array element)"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Acceptance criterion F-BUG-003 satisfied with a one-line diff",
+        "Catalog stays lean; no new mapping needed (the host no longer classifies as any platform, matching the spec's 'or null')"
+      ],
+      "cons": [
+        "If SmartyAds really did route through that Criteo host, this drops a real detection. (But the issue states it is a bug, so it does not.)"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "Removing a single catalog string. Verify: `rg -n 'as.us.criteo.com' src/lib/pixel-detector.js` exits 1 after the change."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Remove the bogus host from smartyads"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0,
+    "note": "Catalog errors rarely get commit-level history; the wrong host has been there since the catalog was authored."
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 34, "title": "Rename detectFacebookPixel*", "overlap": "Same file. Combine both into one PR touching TRACKING_PLATFORMS, or ship #35 first as a one-line fix and bundle #34 separately."},
+      {"number": 33, "title": "Split App.jsx and the pixel catalog", "overlap": "If #33 moves TRACKING_PLATFORMS first, #35 should land in the new module instead — but #35 is so small it can also be shipped first to remove the bug pre-emptively."}
+    ],
+    "depends_on": [{"number": 14, "title": "Parent modernization epic", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 1,
+    "duration_s": 4
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T04:36:08Z"
+  },
+  "decision_record": {
+    "root_cause": "TRACKING_PLATFORMS.smartyads.domains in src/lib/pixel-detector.js (line ~502) contains 'as.us.criteo.com', a Criteo CDN host. The literal-key DOMAIN_TO_PLATFORM_MAP returns 'smartyads' for any URL containing that string, misattributing Criteo traffic.",
+    "options_considered": ["Remove the bogus host from smartyads"],
+    "options_rejected": [],
+    "selected_option": "Remove the bogus host from smartyads",
+    "residual_risk": "If a downstream consumer of the catalog (e.g. App.jsx insights) iterates smartyads and expected that host to match, removal may shift counts. Confirm the dashboard does not hard-code it elsewhere."
+  }
+}

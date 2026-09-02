@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\n`vitest.config.js` requests `v8` but the package is missing. Add `@vitest/coverage-v8` matching the installed vitest major (1.x until 1.2).\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\n`vitest.config.js` requests `v8` but the package is missing. Add `@vitest/coverage-v8` matching the installed vitest major (1.x until 1.2).\n\n**Related issues:**\nCloses F-TEST-001\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: high\n> Effort: S\n> Labels: dim:test, improvement, phase:p0, priority:high\n> Plan task: 0.4 \u2014 Sprint 0 \u00b7 Phase P0 Stabilize \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 0.4: Add the Vitest coverage provider\n>\n> **Description**: `vitest.config.js` requests `v8` but the package is missing. Add `@vitest/coverage-v8` matching the installed vitest major (1.x until 1.2).\n>\n> **Closes**: `F-TEST-001`\n>\n> **Acceptance Criteria**:\n> - [ ] `@vitest/coverage-v8` is in `package.json` / lockfile\n> - [ ] `npm run test:coverage` prints a line/branch number\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 0.1\n>\n> **Effort**: S\n>\n> **Verify**: `npm run test:coverage`\n>\n> Dependencies: 0.1\n> Closes: F-TEST-001\n\n## Acceptance Criteria\n\n- [ ] `@vitest/coverage-v8` is in `package.json` / lockfile (high confidence)\n- [ ] `npm run test:coverage` prints a line/branch number (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** high (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:test, improvement, phase:p0, priority:high (high confidence)\n\nPart of #6\n\nDepends on #10\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdqgQ",
+      "name": "dim:test",
+      "description": "Closes a TEST finding",
+      "color": "1D76DB"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsGQ",
+      "name": "phase:p0",
+      "description": "Modernization phase P0 \u2014 Stabilize",
+      "color": "B60205"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduGg",
+      "name": "priority:high",
+      "description": "Highest-severity closed finding is High",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 13,
+  "title": "0.4: Add the Vitest coverage provider"
+}

@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 27,
+    "title": "2.3: ESLint 8 \u2192 9 flat config",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p2", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:48Z",
+    "updatedAt": "2026-09-01T13:26:48Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [".eslintrc.cjs", "package.json", "package-lock.json"],
+    "modules": [
+      "eslint",
+      "eslint-config-prettier",
+      "eslint-plugin-react",
+      "eslint-plugin-react-hooks"
+    ],
+    "keywords": [
+      "eslint",
+      "8.55.0",
+      "9",
+      "flat config",
+      "eslint.config.js",
+      "eslint.config.mjs",
+      "@eslint/migrate-config",
+      "FlatCompat"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".eslintrc.cjs",
+      "relevance": "critical",
+      "role": "Current legacy config: module.exports with extends: [eslint:recommended, plugin:react/recommended, plugin:react-hooks/recommended, prettier], parserOptions ecmaVersion latest, plugins [react, react-hooks], rules {no-console warn, no-unused-vars error, react/react-in-jsx-scope off, react/prop-types off}, ignorePatterns [dist, node_modules, *.config.js] (verified). Must be replaced by a flat config.",
+      "match_reasons": [
+        "direct file reference",
+        "verified: .eslintrc.cjs contents inspected"
+      ]
+    },
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares eslint ^8.55.0, eslint-config-prettier ^9.1.0, eslint-plugin-react ^7.33.2, eslint-plugin-react-hooks ^4.6.0 (verified lines 51-54). Bumping eslint to ^9.x is the trigger; eslint-plugin-react v8 and eslint-plugin-react-hooks v5 are the matching flat-config-compatible releases.",
+      "match_reasons": [
+        "direct file reference",
+        "verified: devDependencies lines"
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "high",
+      "role": "Lockfile refresh required after npm install bumps eslint and its plugins.",
+      "match_reasons": ["direct file reference", "lockfile refresh required"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "ESLint 8.55.0 uses the legacy .eslintrc.cjs file format; ESLint 9 drops legacy config in favor of flat config (eslint.config.js or .mjs). The current config is small (no overrides, no per-file rules, no custom parsers), so the migration is mostly mechanical with `@eslint/migrate-config` or a hand-written flat config that uses FlatCompat for the prettier/react presets. Closes F-DEP-008.",
+    "details": "Current implementation: .eslintrc.cjs is module.exports with four extends, parserOptions.ecmaVersion 'latest' + sourceType 'module' + jsx, plugins [react, react-hooks], settings.react.version 'detect', four rules, and ignorePatterns [dist, node_modules, *.config.js]. The 'lint' npm script is `eslint src/` which is already a directory glob, so no script change is needed. The migration path: replace .eslintrc.cjs with eslint.config.js (or .mjs) that uses FlatCompat to import the four extends and applies the same four rules. eslint-plugin-react v7.33.2 predates flat config support; v8 is the first flat-config-compatible release. eslint-plugin-react-hooks v4.6.0 also predates flat config; v5 is the matching release. The Plan task name 'npx @eslint/migrate-config .eslintrc.cjs' is the official helper; output is a starting eslint.config.js that still needs manual review for the FlatCompat wrapper. Verification per the issue body: `npm run lint` exits 0 and the tests still pass. Risk: dropping legacy config breaks the lint step before the flat config is added, so the PR must land both files in a single commit (or stage the new file before deleting the old one). The .eslintrc.cjs ignore pattern `*.config.js` is interesting \u2014 it means Vite's vite.config.js is currently excluded, and that must be preserved in flat config via `ignores`."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Flat config via FlatCompat (recommended for minimal churn)",
+      "summary": "Generate eslint.config.mjs (or .js) that imports FlatCompat and re-emits the same four extends, plugins, rules, and ignores. Bump eslint ^9, eslint-plugin-react ^8, eslint-plugin-react-hooks ^5, eslint-config-prettier ^10. Delete .eslintrc.cjs in the same commit.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "eslint ^8.55.0 -> ^9; eslint-plugin-react ^7.33.2 -> ^8; eslint-plugin-react-hooks ^4.6.0 -> ^5; eslint-config-prettier ^9.1.0 -> ^10"
+        }
+      ],
+      "files_to_create": [
+        {
+          "path": "eslint.config.js",
+          "changes": "FlatCompat-based flat config mirroring .eslintrc.cjs"
+        }
+      ],
+      "files_to_delete": [".eslintrc.cjs"],
+      "pros": [
+        "Closest 1:1 translation of the current config",
+        "Reuses Prettier/React/React-hooks presets",
+        "Smallest rule churn"
+      ],
+      "cons": [
+        "FlatCompat is a transitional helper; future ESLint majors may deprecate it",
+        "Plugin v8/v5 have minor breaking changes worth checking"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Plugins and presets all have flat-config-aware releases; risk is mostly rule-shape churn (e.g. react-hooks v5 renamed a rule) and the FlatCompat version pin."
+    },
+    {
+      "number": 2,
+      "name": "Hand-written flat config (no FlatCompat)",
+      "summary": "Write eslint.config.js from scratch with native flat-config entries (no FlatCompat). More native but requires re-emitting each rule/preset by hand.",
+      "files_to_modify": [
+        { "path": "package.json", "changes": "same as Option 1" }
+      ],
+      "files_to_create": [
+        {
+          "path": "eslint.config.js",
+          "changes": "native flat config (no FlatCompat)"
+        }
+      ],
+      "files_to_delete": [".eslintrc.cjs"],
+      "pros": [
+        "No transitional helper",
+        "Forward-compatible with future ESLint majors"
+      ],
+      "cons": [
+        "More manual translation, more places to make mistakes",
+        "Re-implementing plugin preset wiring"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Same as Option 1, plus higher chance of mis-mapping a preset."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; this is a fresh migration"
+  },
+  "cross_references": {
+    "related_issues": [14],
+    "related_prs": [],
+    "note": "Depends on #14 (merged). Independent of #25/#26/#28 in terms of file overlap; only package.json and .eslintrc.cjs are touched, so this PR does not batch with any other issue in this set."
+  },
+  "git_state": { "commit_sha": "HEAD", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "ESLint 8 uses legacy .eslintrc.* config; ESLint 9 mandates flat config, and the project still on 8 is a DEP finding.",
+    "options_considered": [
+      "Flat config via FlatCompat (recommended for minimal churn)",
+      "Hand-written flat config (no FlatCompat)"
+    ],
+    "options_rejected": ["Stay on ESLint 8 (rejected: closes F-DEP-008)"],
+    "selected_option": "Flat config via FlatCompat (recommended for minimal churn)",
+    "residual_risk": "FlatCompat is transitional; if a future ESLint major drops it, a second migration is required."
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "keywords": 8,
+    "file_refs": 3,
+    "duration_s": 0
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\nRun `npm ci` (not `npm install`) on a clean checkout. Record `npm run test:run` passed/total/skipped. That number becomes the plan\u2019s pass rate. Serves M0.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\nRun `npm ci` (not `npm install`) on a clean checkout. Record `npm run test:run` passed/total/skipped. That number becomes the plan\u2019s pass rate. Serves M0.\n\n**Related issues:**\nNone yet\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: high\n> Effort: S\n> Labels: dim:ci, improvement, phase:p0, priority:high\n> Plan task: 0.1 \u2014 Sprint 0 \u00b7 Phase P0 Stabilize \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 0.1: Install from the lockfile and record the pass rate\n>\n> **Description**: Run `npm ci` (not `npm install`) on a clean checkout. Record `npm run test:run` passed/total/skipped. That number becomes the plan\u2019s pass rate. Serves M0.\n>\n> **Closes**: \u2014 (milestone-enabling: M0; suite exists but could not start)\n>\n> **Acceptance Criteria**:\n> - [ ] `npm ci` exits 0 and `node_modules/vitest` exists\n> - [ ] `npm run test:run` produces a `passed/total` that is written into this plan\u2019s header (or a follow-up note)\n>\n> **Dependencies**: Pre.2, Pre.3\n>\n> **Effort**: S\n>\n> **Verify**: `npm ci && npm run test:run`\n>\n> Dependencies: Pre.2, Pre.3\n> Closes: \u2014\n\n## Acceptance Criteria\n\n- [ ] `npm ci` exits 0 and `node_modules/vitest` exists (high confidence)\n- [ ] `npm run test:run` produces a `passed/total` that is written into this plan\u2019s header (or a follow-up note) (high confidence)\n\n## Metadata\n\n**Priority:** high (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:ci, improvement, phase:p0, priority:high (high confidence)\n\nPart of #6\n\nDepends on #8, #9\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdoDA",
+      "name": "dim:ci",
+      "description": "Closes a CI finding",
+      "color": "0052CC"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsGQ",
+      "name": "phase:p0",
+      "description": "Modernization phase P0 \u2014 Stabilize",
+      "color": "B60205"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduGg",
+      "name": "priority:high",
+      "description": "Highest-severity closed finding is High",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 10,
+  "title": "0.1: Install from the lockfile and record the pass rate"
+}
