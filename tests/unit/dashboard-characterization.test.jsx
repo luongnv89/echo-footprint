@@ -16,14 +16,7 @@
  * shell) without locking the implementation to specific copy or styles.
  */
 
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  vi,
-} from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import 'fake-indexeddb/auto';
@@ -278,7 +271,13 @@ describe('escapeCSV (shared CSV helper)', () => {
   });
 
   it('toCSV joins rows with a header and a trailing newline', () => {
-    const text = toCSV(['a', 'b'], [[1, 2], [3, 4]]);
+    const text = toCSV(
+      ['a', 'b'],
+      [
+        [1, 2],
+        [3, 4],
+      ]
+    );
     expect(text).toBe('"a","b"\n"1","2"\n"3","4"\n');
   });
 });
@@ -287,18 +286,52 @@ describe('escapeCSV (shared CSV helper)', () => {
 
 describe('BipartiteGraph data layer (extracted modules)', () => {
   const sampleFootprints = [
-    { domain: 'a.com', platform: 'facebook', pixelType: 'script', timestamp: 1000 },
-    { domain: 'a.com', platform: 'google', pixelType: 'script', timestamp: 1500 },
-    { domain: 'b.com', platform: 'facebook', pixelType: 'img', timestamp: 2000 },
-    { domain: 'c.com', platform: 'tiktok', pixelType: 'script', timestamp: 2500 },
-    { domain: 'c.com', platform: 'facebook', pixelType: 'script', timestamp: 3000 },
-    { domain: 'c.com', platform: 'google', pixelType: 'iframe', timestamp: 3500 },
+    {
+      domain: 'a.com',
+      platform: 'facebook',
+      pixelType: 'script',
+      timestamp: 1000,
+    },
+    {
+      domain: 'a.com',
+      platform: 'google',
+      pixelType: 'script',
+      timestamp: 1500,
+    },
+    {
+      domain: 'b.com',
+      platform: 'facebook',
+      pixelType: 'img',
+      timestamp: 2000,
+    },
+    {
+      domain: 'c.com',
+      platform: 'tiktok',
+      pixelType: 'script',
+      timestamp: 2500,
+    },
+    {
+      domain: 'c.com',
+      platform: 'facebook',
+      pixelType: 'script',
+      timestamp: 3000,
+    },
+    {
+      domain: 'c.com',
+      platform: 'google',
+      pixelType: 'iframe',
+      timestamp: 3500,
+    },
   ];
 
   it('buildBipartiteGraph produces one node per unique domain/platform', () => {
     const { domains, platforms, edges } = buildBipartiteGraph(sampleFootprints);
     expect(domains.map(d => d.id).sort()).toEqual(['a.com', 'b.com', 'c.com']);
-    expect(platforms.map(p => p.id).sort()).toEqual(['facebook', 'google', 'tiktok']);
+    expect(platforms.map(p => p.id).sort()).toEqual([
+      'facebook',
+      'google',
+      'tiktok',
+    ]);
     expect(edges).toHaveLength(6);
   });
 
@@ -325,7 +358,11 @@ describe('BipartiteGraph data layer (extracted modules)', () => {
       isolatedView: { type: 'domain', id: 'c.com' },
     });
     expect(filtered.domains.map(d => d.id)).toEqual(['c.com']);
-    expect(filtered.platforms.map(p => p.id).sort()).toEqual(['facebook', 'google', 'tiktok']);
+    expect(filtered.platforms.map(p => p.id).sort()).toEqual([
+      'facebook',
+      'google',
+      'tiktok',
+    ]);
     expect(filtered.edges).toHaveLength(3);
   });
 
@@ -342,9 +379,9 @@ describe('BipartiteGraph data layer (extracted modules)', () => {
     // The www-strip + last-2-parts reduction turns this into
     // "really-long-company-name.com" (27 chars) which is > 20, so
     // it gets the ellipsis treatment.
-    expect(
-      truncateLabel('shop.really-long-company-name.com', 20)
-    ).toMatch(/\.\.\.$/);
+    expect(truncateLabel('shop.really-long-company-name.com', 20)).toMatch(
+      /\.\.\.$/
+    );
     expect(truncateLabel('short.com', 20)).toBe('short.com');
   });
 
@@ -377,8 +414,12 @@ describe('BipartiteGraph data layer (extracted modules)', () => {
       onNodeClick: () => {},
     });
     expect(svg.querySelectorAll('path.edge')).toHaveLength(graph.edges.length);
-    expect(svg.querySelectorAll('g.domain-node')).toHaveLength(graph.domains.length);
-    expect(svg.querySelectorAll('g.platform-node')).toHaveLength(graph.platforms.length);
+    expect(svg.querySelectorAll('g.domain-node')).toHaveLength(
+      graph.domains.length
+    );
+    expect(svg.querySelectorAll('g.platform-node')).toHaveLength(
+      graph.platforms.length
+    );
   });
 });
 

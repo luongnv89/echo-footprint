@@ -30,9 +30,7 @@ describe('Shared Dexie schema', () => {
   });
 
   it('attaches the same three tables to a fresh Dexie instance', async () => {
-    const isolated = new Dexie(
-      `test-isolated-${Date.now()}-${Math.random()}`
-    );
+    const isolated = new Dexie(`test-isolated-${Date.now()}-${Math.random()}`);
     applySchema(isolated);
     await isolated.open();
 
