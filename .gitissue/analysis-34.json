@@ -1,0 +1,117 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T04:36:08Z",
+  "source": "auto-pilot P3 part-2",
+  "issue": {
+    "number": 34,
+    "title": "3.6: Rename detectFacebookPixel*",
+    "body_excerpt": "Names that lie. Update imports and tests. No exported detectFacebookPixel that detects 50 networks.",
+    "labels": ["dim:clean", "improvement", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:05Z"
+  },
+  "extraction": {
+    "keywords": [
+      "detectFacebookPixel",
+      "detectFacebookPixelScripts",
+      "detectFacebookPixelElements",
+      "rename",
+      "names that lie",
+      "50 networks",
+      "imports",
+      "tests"
+    ],
+    "file_refs": [
+      "src/lib/pixel-detector.js",
+      "src/content/content-script.js",
+      "tests/unit/pixel-detector.test.js",
+      "tests/unit/content-script.test.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/lib/pixel-detector.js",
+      "role": "primary - rename 3 exported functions (detectFacebookPixel, detectFacebookPixelScripts, detectFacebookPixelElements)"
+    },
+    {
+      "path": "src/content/content-script.js",
+      "role": "imports { detectFacebookPixel, observeDynamicPixels } - must update"
+    },
+    {
+      "path": "tests/unit/pixel-detector.test.js",
+      "role": "imports and calls the 3 functions; describe blocks name them"
+    },
+    {
+      "path": "tests/unit/content-script.test.js",
+      "role": "dynamic import of detectFacebookPixel"
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "src/lib/pixel-detector.js exports three functions with 'Facebook' in the name: detectFacebookPixelScripts (line 604), detectFacebookPixelElements (line 647), and detectFacebookPixel (line 708). All three are actually multi-platform (50+ networks per TRACKING_PLATFORMS). The names are misleading. detectFacebookPixel also internally calls both Scripts and Elements versions.",
+    "limitations": "Names violate the 'no lying in code' clean-code rule. New contributors reading the public surface expect Facebook-only behavior; the comprehensive-platform behavior is hidden in the body.",
+    "change_surface": "4 files. Rename exports in pixel-detector.js; update 2 import sites (content-script.js, content-script.test.js); rename describe blocks and call sites in pixel-detector.test.js (40+ references). Suggested names: detectTrackingPixels, detectTrackingPixelScripts, detectTrackingPixelElements (or shorter: detectTrackers, detectTrackerScripts, detectTrackerElements).",
+    "root_cause": "Original implementation was Facebook-only; the project later expanded to 50+ networks without renaming. The names are now historic artifacts."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Direct rename to detectTracking*",
+      "summary": "Rename detectFacebookPixel -> detectTrackingPixels, detectFacebookPixelScripts -> detectTrackingPixelScripts, detectFacebookPixelElements -> detectTrackingPixelElements. Update all callers and test describe blocks.",
+      "files_to_modify": [
+        "src/lib/pixel-detector.js (rename 3 exports, update internal call)",
+        "src/content/content-script.js (update import)",
+        "tests/unit/pixel-detector.test.js (rename 40+ refs and describe blocks)",
+        "tests/unit/content-script.test.js (update dynamic import)"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Smallest diff that fully resolves F-CLEAN-005",
+        "Acceptance criteria are direct and easy to verify with rg"
+      ],
+      "cons": [
+        "No back-compat; any external consumer of the lib breaks (but this lib is internal to the extension)"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Pure rename. All callers are inside this repo. Pixel-detector.test.js has many references but each is mechanical."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Direct rename to detectTracking*"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0,
+    "note": "The misleading name is original to the codebase; no prior rename attempts."
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 33, "title": "Split App.jsx and the pixel catalog", "overlap": "Both touch src/lib/pixel-detector.js. If #33 moves TRACKING_PLATFORMS to a new module first, #34's diff is smaller and cleaner — natural sequencing, not strict dependency."},
+      {"number": 35, "title": "Fix SmartyAds Criteo domain", "overlap": "Same file, one-line area. Can be combined into the same PR or shipped as a trivial follow-up."}
+    ],
+    "depends_on": [{"number": 21, "title": "Record every platform on a page", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "deps_traced": 4,
+    "duration_s": 6
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T04:36:08Z"
+  },
+  "decision_record": {
+    "root_cause": "Three exported functions in src/lib/pixel-detector.js (detectFacebookPixel, detectFacebookPixelScripts, detectFacebookPixelElements) carry 'Facebook' in their name but detect 50+ ad networks — names are a historic artifact from when the project was Facebook-only.",
+    "options_considered": ["Direct rename to detectTracking*"],
+    "options_rejected": [],
+    "selected_option": "Direct rename to detectTracking*",
+    "residual_risk": "Documentation in CLAUDE.md references 'detectFacebookPixel' (line 211) — must be updated in the same PR."
+  }
+}

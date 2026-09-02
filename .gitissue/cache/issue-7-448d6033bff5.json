@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\nDocument that the tree has no `node_modules`, the package manager of record is npm + `package-lock.json` (not pnpm), Node should be 24 LTS (CI still says 20 until 2.1), and the commands are `npm ci`, `npm run build`, `npm run test:run`, `npm run lint`. Serves milestone ME. Do not run `npm ci` here.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\nDocument that the tree has no `node_modules`, the package manager of record is npm + `package-lock.json` (not pnpm), Node should be 24 LTS (CI still says 20 until 2.1), and the commands are `npm ci`, `npm run build`, `npm run test:run`, `npm run lint`. Serves milestone ME. Do not run `npm ci` here.\n\n**Related issues:**\nNone yet\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: high\n> Effort: S\n> Labels: dim:env, improvement, phase:pre, priority:high\n> Plan task: Pre.1 \u2014 Sprint Pre \u00b7 Phase Pre Agent environment \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task Pre.1: Write install/run notes for a clean checkout\n>\n> **Description**: Document that the tree has no `node_modules`, the package manager of record is npm + `package-lock.json` (not pnpm), Node should be 24 LTS (CI still says 20 until 2.1), and the commands are `npm ci`, `npm run build`, `npm run test:run`, `npm run lint`. Serves milestone ME. Do not run `npm ci` here.\n>\n> **Closes**: \u2014 (milestone-enabling: ME)\n>\n> **Acceptance Criteria**:\n> - [ ] Notes name `npm ci`, `npm run build`, `npm run test:run`, and `npm run lint`\n> - [ ] Notes state baseline is RED until 0.1 and that Pre must not be used as a license to skip ME\n>\n> **Dependencies**: None\n>\n> **Effort**: S\n>\n> **Verify**: `test -f CLAUDE.md` is not enough; a reviewer reads Pre.1 notes in the PR or issue that lands this task (commands also copied into `CLAUDE.md` by Pre.2)\n>\n> Dependencies: None\n> Closes: \u2014\n\n## Acceptance Criteria\n\n- [ ] Notes name `npm ci`, `npm run build`, `npm run test:run`, and `npm run lint` (high confidence)\n- [ ] Notes state baseline is RED until 0.1 and that Pre must not be used as a license to skip ME (high confidence)\n\n## Metadata\n\n**Priority:** high (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:env, improvement, phase:pre, priority:high (high confidence)\n\nPart of #6\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdphg",
+      "name": "dim:env",
+      "description": "Closes an ENV / agent-env finding",
+      "color": "5319E7"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdtmw",
+      "name": "phase:pre",
+      "description": "Modernization phase Pre \u2014 Agent environment",
+      "color": "6E7781"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOduGg",
+      "name": "priority:high",
+      "description": "Highest-severity closed finding is High",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 7,
+  "title": "Pre.1: Write install/run notes for a clean checkout"
+}

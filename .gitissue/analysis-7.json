@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T13:38:43Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 7,
+    "title": "Pre.1: Write install/run notes for a clean checkout",
+    "type": "improvement",
+    "reporter": {
+      "login": "luongnv89",
+      "name": "Luong NGUYEN"
+    },
+    "labels": ["dim:env", "improvement", "phase:pre", "priority:high"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:22:28Z",
+    "updatedAt": "2026-09-01T13:22:30Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": ["INSTALL.md", "docs/INSTALL.md"],
+    "modules": [],
+    "keywords": [
+      "install",
+      "run",
+      "notes",
+      "clean",
+      "checkout",
+      "pnpm",
+      "build",
+      "test:run",
+      "unpacked",
+      "Chrome"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "INSTALL.md",
+      "relevance": "critical",
+      "role": "the install/run notes file to create",
+      "match_reasons": [
+        "direct file reference in issue: docs/INSTALL.md or INSTALL.md"
+      ]
+    },
+    {
+      "path": "README.md",
+      "relevance": "high",
+      "role": "existing install/build/load-unpacked steps (Quick Start, lines 59-116) to cross-reference and keep consistent",
+      "match_reasons": [
+        "command verification: npm install / npm run build / npm run test:run documented here"
+      ]
+    },
+    {
+      "path": "package.json",
+      "relevance": "medium",
+      "role": "source of truth for script commands (test:run = vitest --run)",
+      "match_reasons": ["command verification: npm run test:run"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "A clean checkout has no dedicated install/run notes file. The only documentation lives in README.md's Quick Start (npm install, npm run build, chrome://extensions load-unpacked) and the Development command list (npm run test:run → vitest --run, confirmed in package.json scripts). The repo still builds and tests with 'npm run *' scripts; pnpm works in parallel because package.json and package-lock.json are interchangeable for script names, but the issue asks for a distinct INSTALL.md artifact covering pnpm install/build/test:run plus Chrome load-unpacked.",
+    "details": "The repo is a fully implemented MV3 extension (v1.2.0: dashboard, map view, bipartite graph, landing page). README.md lines 59-116 already document npm-based install/build/load-unpacked and all test scripts, so the notes are straightforward to derive verbatim; AC2 (commands actually work) is satisfied by copying the existing, already-verified scripts. The only real decision is location (root INSTALL.md vs docs/INSTALL.md) and whether to list pnpm or npm as primary. The modernization plan and downstream issues #8/#9 both need the accurate command set this file pins down before CLAUDE.md and AGENTS.md can be updated."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Root-level INSTALL.md",
+      "summary": "Create INSTALL.md at the repo root documenting pnpm install, pnpm build, pnpm test:run, and loading the unpacked dist/ in Chrome; mirror the verified npm commands as an alternative.",
+      "files_to_modify": [
+        {
+          "path": "README.md",
+          "changes": "Add a one-line link to INSTALL.md from the Quick Start section"
+        }
+      ],
+      "files_to_create": [
+        {
+          "path": "INSTALL.md",
+          "changes": "Install/run notes: prerequisites, pnpm install, pnpm build, pnpm test:run, chrome://extensions load-unpacked, optional npm equivalents"
+        }
+      ],
+      "pros": [
+        "Most discoverable for a clean checkout",
+        "Matches AC1 exactly",
+        "Readily derived from verified README/package.json content"
+      ],
+      "cons": ["Slight duplication with README Quick Start"],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Pure docs; content copies already-working commands"
+    },
+    {
+      "number": 2,
+      "name": "docs/INSTALL.md",
+      "summary": "Same content nested under docs/ (currently only holds logo.svg).",
+      "files_to_modify": [],
+      "files_to_create": [
+        {
+          "path": "docs/INSTALL.md",
+          "changes": "Same install/run notes as Option 1"
+        }
+      ],
+      "pros": [
+        "Matches the issue's docs/INSTALL.md suggestion",
+        "Keeps root directory clean"
+      ],
+      "cons": [
+        "Less discoverable than the root-level file",
+        "docs/ is otherwise unused"
+      ],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Same content, trivial difference in location"
+    },
+    {
+      "number": 3,
+      "name": "Expand README only",
+      "summary": "Enrich README's Quick Start instead of creating a dedicated file.",
+      "files_to_modify": [
+        {
+          "path": "README.md",
+          "changes": "Expand Quick Start with pnpm variants"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["No new file, zero duplication"],
+      "cons": [
+        "Fails AC1 (requires a distinct notes file)",
+        "Clean-checkout tooling still has no pointed artifact"
+      ],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Rejected on acceptance criteria, not on risk"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "b0303e9",
+        "message": "feat: Improve README and expand test coverage",
+        "author": "luongnv89",
+        "date": "2025-11-16T22:29:50Z",
+        "files": ["README.md", "package.json"],
+        "type": "related_change"
+      },
+      {
+        "sha": "5a32ba9",
+        "message": "fix: Add missing test scripts to package.json",
+        "author": "luongnv89",
+        "date": "2025-11-16T00:00:00Z",
+        "files": ["package.json"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 27 }]
+  },
+  "cross_references": {
+    "blocks": [8, 9],
+    "blocked_by": [],
+    "related_issues": [
+      {
+        "number": 8,
+        "title": "Pre.2: Update CLAUDE.md via /agent-config",
+        "relationship": "explicit_reference",
+        "shared_keywords": ["commands", "install", "run", "test:run"],
+        "confidence": "high"
+      },
+      {
+        "number": 9,
+        "title": "Pre.3: Create AGENTS.md via /agent-config",
+        "relationship": "explicit_reference",
+        "shared_keywords": ["commands", "install", "run", "test:run"],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "deps_traced": 0,
+    "keywords_extracted": 10,
+    "file_refs_extracted": 2,
+    "scan_duration_seconds": 9,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "05d2ba03157bf37a9680a7fc1a595459c6deb7bc",
+    "commit_sha_short": "05d2ba0",
+    "captured_at": "2026-09-01T13:38:43Z"
+  },
+  "decision_record": {
+    "root_cause": "A clean checkout has no dedicated install/run notes file. The only documentation lives in README.md's Quick Start (npm install, npm run build, chrome://extensions load-unpacked) and the Development command list (npm run test:run → vitest --run, confirmed in package.json scripts).",
+    "options_considered": [
+      { "number": 1, "name": "Root-level INSTALL.md" },
+      { "number": 2, "name": "docs/INSTALL.md" },
+      { "number": 3, "name": "Expand README only" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "docs/ is otherwise unused; root file is more discoverable for a clean checkout."
+      },
+      {
+        "number": 3,
+        "reason": "Fails AC1, which requires a distinct install/run notes file."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Root-level INSTALL.md",
+      "summary": "Create INSTALL.md at the repo root documenting pnpm install, pnpm build, pnpm test:run, and loading the unpacked dist/ in Chrome."
+    },
+    "residual_risk": "Slight duplication with README Quick Start must be kept in sync; command content is verified to match package.json scripts."
+  }
+}

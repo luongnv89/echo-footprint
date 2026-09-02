@@ -1,0 +1,123 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:07Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 45,
+    "title": "4.8: Settings version fallback",
+    "body_excerpt": "Fallback 1.1.0 → manifest / package version.",
+    "labels": ["bug", "dim:bug", "phase:p4", "priority:low"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:29Z"
+  },
+  "extraction": {
+    "keywords": [
+      "1.1.0",
+      "fallback",
+      "build-info",
+      "version",
+      "manifest",
+      "package.json"
+    ],
+    "file_refs": [
+      "src/dashboard/components/SettingsSheet.jsx"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/SettingsSheet.jsx",
+      "role": "primary - three hardcoded '1.1.0' fallbacks at line 80-82 (buildInfo error path) and line 382 (display fallback in About section). Replace with a derived value that reads from manifest.json / package.json. The natural place is the existing build-info.json fetch — if it fails, derive from `chrome.runtime.getManifest()?.version` in extension context, or fall back to `import.meta.env.PACKAGE_VERSION` (Vite injects this) in dev. Simplest fix: add `import packageJson from '../../../package.json' assert { type: 'json' }` and use `packageJson.version` (works in Vite via the assert) or read chrome.runtime.getManifest().version at runtime."
+    }
+  ],
+  "analysis": {
+    "type": "bug",
+    "current_implementation": "SettingsSheet.jsx:80-82 hardcodes version='1.1.0', versionWithCommit='1.1.0', gitCommitHash='unknown' in the buildInfo error catch. Line 382 falls back to '1.1.0' if buildInfo?.versionWithCommit is missing. The actual versions are package.json:1.2.0 and manifest.json:1.2.0. The Sidebar.jsx also hardcodes 'v1.1.0' as a fallback (line 35) — same issue, same root cause.",
+    "limitations": "The Settings → About section shows the wrong version when build-info.json is missing (e.g. dev server hasn't generated it, or the dashboard is opened before vite build produces one). Sidebar header version display has the same bug.",
+    "change_surface": "1-2 files. SettingsSheet.jsx: define a single `getPackageVersion()` helper at the top of the file (or import package.json directly) and use it in both the error path and the display fallback. Optionally fix Sidebar.jsx the same way (same bug, different display). Acceptance: `rg -n '1.1.0' src/dashboard/components/SettingsSheet.jsx` exits 1.",
+    "root_cause": "The build-info.json fetch is the production path; the hardcoded '1.1.0' was a temporary placeholder from before build-info.json existed and was never updated when the package was bumped to 1.2.0."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Import package.json at build time, single helper",
+      "summary": "At the top of SettingsSheet.jsx add `import packageJson from '../../../package.json';` (Vite supports this directly, no assert needed for JSON imports in Vite 5+). Use `packageJson.version` as the fallback in both the error catch and the display fallback. Also fix Sidebar.jsx the same way for consistency (same bug).",
+      "files_to_modify": [
+        "src/dashboard/components/SettingsSheet.jsx",
+        "src/dashboard/components/Sidebar.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Single source of truth (package.json)",
+        "Vite-bundled, zero runtime cost",
+        "Fixes the same bug in two places"
+      ],
+      "cons": [
+        "Direct JSON import of package.json includes the whole object — bundle bloat is ~1KB, negligible"
+      ],
+      "complexity": "XS",
+      "risk": "low",
+      "risk_details": "Verify: `rg -n '1.1.0' src/dashboard/components/SettingsSheet.jsx` exits 1 after; manual: open Settings in dev, confirm version is 1.2.0 not 1.1.0."
+    },
+    {
+      "number": 2,
+      "name": "chrome.runtime.getManifest() at runtime",
+      "summary": "In the extension context, prefer `chrome.runtime.getManifest().version`; in dev, fall back to package.json.",
+      "files_to_modify": [
+        "src/dashboard/components/SettingsSheet.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "No build-time coupling"
+      ],
+      "cons": [
+        "chrome.runtime.getManifest() returns undefined in dev (the dashboard is a separate Vite app, not the extension), so dev still needs a fallback — the package.json import"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "More moving parts than Option 1 for the same outcome."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "Import package.json at build time, single helper",
+    "chrome.runtime.getManifest() at runtime"
+  ],
+  "options_rejected": [
+    "chrome.runtime.getManifest() at runtime — dev context still needs package.json fallback, so it's strictly more code for the same outcome"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 43, "title": "Align remaining docs (README version, license, website sentence, CLAUDE architecture)", "overlap": "Both touch the version field. #43 is the README/package.json side; #45 is the runtime/UI side. Independent files but same root cause (forgot to bump after 1.2.0). Safe to do in either order."}
+    ],
+    "depends_on": [{"number": 14, "title": "Refactor platform detection (P0)", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 1,
+    "duration_s": 2
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:07Z"
+  },
+  "decision_record": {
+    "root_cause": "SettingsSheet.jsx (and Sidebar.jsx) hardcode '1.1.0' as a fallback for the buildInfo fetch. The actual current version is 1.2.0 (package.json/manifest.json).",
+    "options_considered": [
+      "Import package.json at build time",
+      "chrome.runtime.getManifest() at runtime"
+    ],
+    "options_rejected": [
+      "chrome.runtime.getManifest() — dev context still needs the package.json fallback"
+    ],
+    "selected_option": "Import package.json at build time, fix both SettingsSheet and Sidebar",
+    "residual_risk": "Vite's JSON import returns the full object; the ~1KB bloat is acceptable. Verify: `rg -n '1.1.0' src/dashboard/components/SettingsSheet.jsx` exits 1 after."
+  }
+}

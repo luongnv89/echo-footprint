@@ -1,0 +1,31 @@
+{
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\nReplace `node-version: '20'` in all four jobs. Target Active LTS 24 (EOL 2028-04-30). If a native module blocks 24, pin 22 Maintenance LTS with a written rationale.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\nReplace `node-version: '20'` in all four jobs. Target Active LTS 24 (EOL 2028-04-30). If a native module blocks 24, pin 22 Maintenance LTS with a written rationale.\n\n**Related issues:**\nCloses F-DEP-001\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: critical\n> Effort: S\n> Labels: dim:dep, improvement, phase:p2, priority:critical\n> Plan task: 2.1 \u2014 Sprint 2 \u00b7 Phase P2 Modernize \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 2.1: Move CI (and engines) to Node 24 LTS (W3)\n>\n> **Description**: Replace `node-version: '20'` in all four jobs. Target Active LTS 24 (EOL 2028-04-30). If a native module blocks 24, pin 22 Maintenance LTS with a written rationale.\n>\n> **Closes**: `F-DEP-001`\n>\n> **Acceptance Criteria**:\n> - [ ] No `node-version: '20'` remains in `.github/workflows/`\n> - [ ] `engines.node` allows the CI version\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 0.5, 1.3\n>\n> **Effort**: S\n>\n> **Verify**: `grep -n \"node-version\" .github/workflows/ci.yml`\n>\n> Dependencies: 0.5, 1.3\n> Closes: F-DEP-001\n\n## Acceptance Criteria\n\n- [ ] No `node-version: '20'` remains in `.github/workflows/` (high confidence)\n- [ ] `engines.node` allows the CI version (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** critical (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:dep, improvement, phase:p2, priority:critical (high confidence)\n\nPart of #6\n\nDepends on #14, #17\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdo6w",
+      "name": "dim:dep",
+      "description": "Closes a DEP finding",
+      "color": "0E8A16"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsxg",
+      "name": "phase:p2",
+      "description": "Modernization phase P2 \u2014 Modernize",
+      "color": "FBCA04"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdt4w",
+      "name": "priority:critical",
+      "description": "Highest-severity closed finding is Critical",
+      "color": "B60205"
+    }
+  ],
+  "number": 25,
+  "title": "2.1: Move CI (and engines) to Node 24 LTS (W3)"
+}

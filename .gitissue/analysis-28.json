@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 28,
+    "title": "2.4: React 18 \u2192 19",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p2", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:51Z",
+    "updatedAt": "2026-09-01T13:26:51Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [
+      "package.json",
+      "package-lock.json",
+      "src/dashboard/main.jsx",
+      "src/dashboard/App.jsx",
+      "src/dashboard/components/BipartiteGraph.jsx",
+      "src/dashboard/components/DataTable.jsx",
+      "src/dashboard/components/EmptyState.jsx",
+      "src/dashboard/components/HelpSheet.jsx",
+      "src/dashboard/components/MapView.jsx",
+      "src/dashboard/components/PlatformStats.jsx",
+      "src/dashboard/components/RadialGraph.jsx",
+      "src/dashboard/components/ScreenshotModal.jsx",
+      "src/dashboard/components/SettingsSheet.jsx",
+      "src/dashboard/components/Sidebar.jsx"
+    ],
+    "modules": [
+      "react",
+      "react-dom",
+      "@types/react",
+      "@types/react-dom",
+      "react-dom/test-utils"
+    ],
+    "keywords": [
+      "react",
+      "18.2.0",
+      "19",
+      "defaultProps",
+      "function components",
+      "ref",
+      "forwardRef",
+      "react-dom"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares react ^18.2.0, react-dom ^18.2.0 in dependencies and @types/react ^18.2.43, @types/react-dom ^18.2.17 in devDependencies (verified lines 36-38 and 45-46). Bump all four to 19.x.",
+      "match_reasons": [
+        "direct file reference",
+        "verified: dependency declarations"
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "critical",
+      "role": "Lockfile refresh after npm install.",
+      "match_reasons": ["direct file reference", "lockfile refresh required"]
+    },
+    {
+      "path": "src/dashboard/main.jsx",
+      "relevance": "high",
+      "role": "Dashboard entry; uses createRoot from react-dom/client (React 18 API which is unchanged in 19). Likely no code change required unless it uses deprecated APIs.",
+      "match_reasons": [
+        "inferred from React entry point",
+        "verified: src/dashboard/ directory contents"
+      ]
+    },
+    {
+      "path": "src/dashboard/App.jsx",
+      "relevance": "high",
+      "role": "Top-level dashboard component; may use forwardRef, defaultProps, or ref-as-prop patterns that the React 19 upgrade guide flags.",
+      "match_reasons": [
+        "inferred from dashboard tree",
+        "needs audit for defaultProps/ref patterns"
+      ]
+    },
+    {
+      "path": "src/dashboard/components/BipartiteGraph.jsx",
+      "relevance": "high",
+      "role": "One of the 10 component files; audit for defaultProps, forwardRef, legacy context.",
+      "match_reasons": ["in plan-task blast radius (12 dashboard files)"]
+    },
+    {
+      "path": "src/dashboard/components/DataTable.jsx",
+      "relevance": "high",
+      "role": "Component file; audit for defaultProps/ref-as-prop patterns.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/EmptyState.jsx",
+      "relevance": "medium",
+      "role": "Component file; simple UI component, low risk.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/HelpSheet.jsx",
+      "relevance": "medium",
+      "role": "Component file; low risk.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/MapView.jsx",
+      "relevance": "high",
+      "role": "Component file; uses Leaflet and may pass refs to DOM nodes \u2014 audit for ref-as-prop.",
+      "match_reasons": [
+        "in plan-task blast radius",
+        "leaflet integration often uses ref forwarding"
+      ]
+    },
+    {
+      "path": "src/dashboard/components/PlatformStats.jsx",
+      "relevance": "medium",
+      "role": "Component file; low risk.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/RadialGraph.jsx",
+      "relevance": "high",
+      "role": "Component file; D3 integration often uses ref forwarding for the SVG element.",
+      "match_reasons": [
+        "in plan-task blast radius",
+        "D3 ref forwarding pattern likely"
+      ]
+    },
+    {
+      "path": "src/dashboard/components/ScreenshotModal.jsx",
+      "relevance": "medium",
+      "role": "Component file; uses html2canvas, may have a forwardRef.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/SettingsSheet.jsx",
+      "relevance": "medium",
+      "role": "Component file; low risk.",
+      "match_reasons": ["in plan-task blast radius"]
+    },
+    {
+      "path": "src/dashboard/components/Sidebar.jsx",
+      "relevance": "medium",
+      "role": "Component file; low risk.",
+      "match_reasons": ["in plan-task blast radius"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "React 18.2.0 + react-dom 18.2.0 + @types/react 18.2.43 + @types/react-dom 18.2.17 are one major behind. The plan task lists a 12-file blast radius: 10 components in src/dashboard/components/ + App.jsx + main.jsx (verified count = 12). React 19's two breaking changes that matter here are the deprecation of defaultProps on function components and the unification of ref-as-prop (forwardRef becomes optional). The codebase has no defaultProps today (verified via grep \u2014 zero matches in src/), so the migration is mostly the ref-as-prop audit plus the version bump. Closes F-DEP-007.",
+    "details": "Current implementation: package.json declares react ^18.2.0 and react-dom ^18.2.0 (single runtime per the issue body). All 12 files live under src/dashboard/. createRoot from react-dom/client is the React 18 entry, unchanged in 19. The plan task warns about defaultProps, ref-as-prop, and forwardRef. Verification per the issue body: `npm ls react react-dom` shows 19.x for both; `npm run test:run` passes; no defaultProps on function components remain. The build path goes through Vite + @vitejs/plugin-react, so this issue depends on #26 (Vite 8) and indirectly on #25 (Node 24) and on #16. After this lands, plugin-react must be a version that supports React 19; that constraint was already flagged in #26's analysis. Risk: ref-as-prop is opt-in and most existing forwardRef code still works in 19 with a deprecation warning; defaultProps removal is the only hard break and the grep shows no current usage."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Single-step React 18 \u2192 19 with optional ref-as-prop audit",
+      "summary": "Bump react, react-dom, @types/react, @types/react-dom to ^19.x. Build and run the test suite. Audit and convert defaultProps/forwardRef usage only if the linter or a runtime warning surfaces them. Keep existing forwardRef call sites unless React 19's new ref-as-prop pattern is preferred.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "react ^18.2.0 -> ^19; react-dom ^18.2.0 -> ^19; @types/react ^18.2.43 -> ^19; @types/react-dom ^18.2.17 -> ^19"
+        },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated by npm install"
+        },
+        { "path": "src/dashboard/main.jsx", "changes": "no change expected" },
+        {
+          "path": "src/dashboard/App.jsx",
+          "changes": "no change expected unless audit finds defaultProps/forwardRef"
+        },
+        {
+          "path": "src/dashboard/components/*.jsx",
+          "changes": "no change expected unless audit finds defaultProps/forwardRef"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Smallest possible diff",
+        "Plan task allows a no-change surface if no deprecation hits",
+        "Verification command matches the issue body"
+      ],
+      "cons": [
+        "Some ref-as-prop upgrades may be desirable for cleanup but get deferred"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Grep shows no defaultProps in src/; ref-as-prop is opt-in. Largest risk is plugin-react compatibility, already handled in #26."
+    },
+    {
+      "number": 2,
+      "name": "React 18 \u2192 19 plus proactive ref-as-prop conversion",
+      "summary": "Same version bump as Option 1, plus convert forwardRef call sites to the new ref-as-prop pattern in MapView/RadialGraph/ScreenshotModal. Larger blast radius but reduces future deprecation noise.",
+      "files_to_modify": [
+        { "path": "package.json", "changes": "same as Option 1" },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated by npm install"
+        },
+        {
+          "path": "src/dashboard/components/MapView.jsx",
+          "changes": "remove forwardRef if present; pass ref as a regular prop"
+        },
+        {
+          "path": "src/dashboard/components/RadialGraph.jsx",
+          "changes": "same as MapView"
+        },
+        {
+          "path": "src/dashboard/components/ScreenshotModal.jsx",
+          "changes": "same as MapView"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Forward-compatible with React 19+ ergonomics",
+        "Removes deprecation noise"
+      ],
+      "cons": [
+        "Bigger PR; plan task allows deferring the ref-as-prop cleanup",
+        "Touches files the verification command does not require touching"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Same runtime risk as Option 1; ref-as-prop conversion is mechanical but introduces review surface."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; this is a fresh upgrade"
+  },
+  "cross_references": {
+    "related_issues": [26],
+    "related_prs": [],
+    "note": "Depends on #26 (Vite 8). Independent of #25 (different files) and #27 (different files). Plan-task blast radius explicitly says 12 files, matching the verified count of 12 dashboard files."
+  },
+  "git_state": { "commit_sha": "HEAD", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "React 18 is one major behind; React 19 brings ref-as-prop, removes defaultProps on function components, and closes F-DEP-007.",
+    "options_considered": [
+      "Single-step React 18 \u2192 19 with optional ref-as-prop audit",
+      "React 18 \u2192 19 plus proactive ref-as-prop conversion"
+    ],
+    "options_rejected": [
+      "Stay on React 18 (rejected: closes F-DEP-007)",
+      "Big-bang React 18 \u2192 19 + Vite + ESLint (rejected: violates the per-issue PR model)"
+    ],
+    "selected_option": "Single-step React 18 \u2192 19 with optional ref-as-prop audit",
+    "residual_risk": "If plugin-react (bumped under #26) is not yet React-19-compatible at merge time, this PR must also bump plugin-react, creating a co-bump with #26."
+  },
+  "scan_stats": {
+    "files_read": 5,
+    "keywords": 8,
+    "file_refs": 14,
+    "duration_s": 0
+  }
+}

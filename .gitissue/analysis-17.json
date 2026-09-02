@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:09:02Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 17,
+    "title": "1.3: Upgrade sharp to >=0.35.0",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p1", "priority:high"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:23:21Z",
+    "updatedAt": "2026-09-01T13:26:26Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [
+      "GHSA-f88m-g3jw-g9cj (sharp: inherited libvips CVEs 2026-33327/33328/35590/35591)"
+    ],
+    "functions": ["resize"],
+    "classes": [],
+    "file_refs": [
+      "package.json",
+      "package-lock.json",
+      "scripts/resize-image.js"
+    ],
+    "modules": ["sharp"],
+    "keywords": ["sharp", "0.35.0", "native bindings", "icons", "libvips"]
+  },
+  "affected_files": [
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares sharp ^0.34.5 (devDependency)",
+      "match_reasons": ["direct dependency declaration"]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "critical",
+      "role": "pins sharp and its platform-native binaries",
+      "match_reasons": ["audit source; native rebuild"]
+    },
+    {
+      "path": "scripts/resize-image.js",
+      "relevance": "high",
+      "role": "only sharp consumer (resize/fit/cover/toFile); verify API compat on 0.35",
+      "match_reasons": ["import sharp"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "sharp is a devDependency at ^0.34.5; live audit rates it high via inherited libvips CVEs with the clean fix at 0.35.4 (semver-major within 0.x). Its only consumer is scripts/resize-image.js, which uses the stable resize/toFile API surface. Icon generation in the build runs through scripts/create-icons.js using the separate `canvas` package, so `npm run build` icon output is structurally unaffected; the acceptance check still verifies icons (or documents the canvas fallback).",
+    "details": "The 0.34 -> 0.35 move is a 'major' only by 0.x convention; the used API (`sharp(path).resize(w, h, { fit: 'cover' }).toFile(out)`) is stable across these lines. Risk concentrates in the native binding swap: a fresh install must pull the 0.35.x prebuilt libvips binaries for the platform, so CI/dev environments need a clean `npm install` rather than a stale node_modules. Audit fix will not take this bump automatically (isSemVerMajor), which is why it is a separate issue from #15. No dependency on #15 except incidental lockfile adjacency — can land independently or ride the same dependency wave."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Bump sharp to ^0.35.4",
+      "summary": "Update the devDependency to ^0.35.4, reinstall to rebuild native bindings, run the build and suite.",
+      "files_to_modify": [
+        { "path": "package.json", "changes": "sharp ^0.34.5 -> ^0.35.4" },
+        {
+          "path": "package-lock.json",
+          "changes": "sharp + platform binary entries refreshed"
+        },
+        {
+          "path": "scripts/resize-image.js",
+          "changes": "only if 0.35 deprecates any used API (not expected)"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Directly clears GHSA-f88m-g3jw-g9cj",
+        "Keeps the existing image-resize utility"
+      ],
+      "cons": ["Native binding swap must be verified on each dev/CI platform"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Stable API surface; risk limited to native binary install integrity"
+    },
+    {
+      "number": 2,
+      "name": "Remove sharp entirely",
+      "summary": "Drop the devDependency and port or retire scripts/resize-image.js if it is no longer needed.",
+      "files_to_modify": [
+        { "path": "package.json", "changes": "remove sharp" },
+        {
+          "path": "scripts/resize-image.js",
+          "changes": "retire or port to canvas"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["Removes the whole native-binary attack/maintenance surface"],
+      "cons": [
+        "Loses a working utility for unrequested scope; resize use-case may recur"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Requires confirming the script has no active workflow callers"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "e158270",
+        "message": "refactor(ci): stabilize P0 build and CI config (#10, #11, #12, #13, #14) (#49)",
+        "author": "luongnv89",
+        "date": "2026-09-01T18:41:16Z",
+        "files": ["package.json", "package-lock.json"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 5 }]
+  },
+  "cross_references": {
+    "blocks": [22],
+    "blocked_by": [],
+    "related_issues": [
+      {
+        "number": 15,
+        "title": "1.1: Apply non-force npm audit fix (W1)",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json", "audit"],
+        "confidence": "high"
+      },
+      {
+        "number": 16,
+        "title": "1.2: Upgrade vitest and @vitest/ui to a patched release",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json"],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 5,
+    "deps_traced": 1,
+    "keywords_extracted": 5,
+    "file_refs_extracted": 3,
+    "scan_duration_seconds": 15,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:09:02Z"
+  },
+  "decision_record": {
+    "root_cause": "sharp is pinned at ^0.34.5, which inherits high-severity libvips CVEs (GHSA-f88m-g3jw-g9cj); the patched line is 0.35.x (audit fix target 0.35.4, semver-major in 0.x terms, so #15's non-force audit fix cannot take it). The only sharp consumer is the dev utility scripts/resize-image.js using a stable API, while build icons come from the canvas-based create-icons.js.",
+    "options_considered": [
+      { "number": 1, "name": "Bump sharp to ^0.35.4" },
+      { "number": 2, "name": "Remove sharp entirely" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Retiring a working utility is unrequested scope beyond the audit fix."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Bump sharp to ^0.35.4",
+      "summary": "Update sharp to ^0.35.4, reinstall for fresh native bindings, verify build icons and suite."
+    },
+    "residual_risk": "Native binary install must be verified per platform after the bump (clean npm install on CI/dev)."
+  }
+}

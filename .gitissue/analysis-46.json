@@ -1,0 +1,104 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:08Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 46,
+    "title": "4.9: Domain-exclusion regex hardening",
+    "body_excerpt": "Cap length and escape user patterns.",
+    "labels": ["bug", "dim:sec", "phase:p4", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:31Z"
+  },
+  "extraction": {
+    "keywords": [
+      "regex",
+      "domain",
+      "wildcard",
+      "escape",
+      "DoS",
+      "ReDoS",
+      "length cap",
+      "exclusion",
+      "patterns"
+    ],
+    "file_refs": [
+      "src/content/domain-utils.js",
+      "tests/unit/domain-patterns.test.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/content/domain-utils.js",
+      "role": "primary - matchesDomainPattern() (line ~12) builds a regex from user input with two transformations: `.replace(/\\./g, '\\\\.')` (escape dots) and `.replace(/\\*/g, '.*')` (wildcard). A pathological pattern like '*' alone or 'a*b*c*d*...' compiles a regex with unbounded .* chains that can cause exponential backtracking against certain inputs. Also no length cap on the pattern. Fix: (a) cap pattern length (e.g. 256 chars) and return false on overflow, (b) use `RegExp.escape` if available (Node 24+, baseline 2024) or escape ALL regex metacharacters before splicing, (c) limit the number of `*` segments (e.g. 8)."
+    },
+    {
+      "path": "tests/unit/domain-patterns.test.js",
+      "role": "secondary - add a test case that feeds a pathological pattern ('*' * 1000 or 'a*b*c*d*...') and asserts the call returns false quickly. Add a test for the length cap and the metacharacter escape."
+    }
+  ],
+  "analysis": {
+    "type": "bug",
+    "current_implementation": "src/content/domain-utils.js:17-21: `const regexPattern = normalizedPattern.replace(/\\./g, '\\\\.').replace(/\\*/g, '.*'); const regex = new RegExp(`^${regexPattern}$`);` — accepts arbitrary user input, only escapes dots, only converts `*`. A user can add a pattern like '***' (compiles to .*.*.* — exponential backtracking risk), or a pattern with 1000 characters of 'a' followed by '*' (linear but unbounded memory). There is no length cap.",
+    "limitations": "Patterns come from the user's own Settings → Excluded Domains list, so the trust model is 'user trusting themselves' — but the regex compilation runs in the service worker / content script on every page load, and a user can be tricked into pasting a hostile pattern (a malicious FAQ, a support-ticket suggestion, etc.). The hard cap should be at the input layer (the settings sheet) AND at the matcher (defense in depth).",
+    "change_surface": "1-2 files. domain-utils.js: add input validation at the top of matchesDomainPattern — (a) reject patterns longer than 256 chars, (b) reject patterns with more than 8 `*` segments, (c) escape ALL regex metacharacters (the current code only escapes `.`). The cleanest approach: replace the manual replace-chain with a `escapeRegex(s)` helper that escapes the standard 12 metacharacters, then only convert `*` AFTER escaping. The test file gets 2-3 new cases.",
+    "root_cause": "User-supplied patterns flow into `new RegExp()` with only minimal escaping (dots) and no length / count / metacharacter limits. A pathological pattern can compile a regex that backtracks pathologically on common inputs (ReDoS) or simply wastes memory."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Harden matchesDomainPattern with cap + full escape",
+      "summary": "In src/content/domain-utils.js, rewrite matchesDomainPattern: (1) `if (pattern.length > 256) return false;` (2) `if ((pattern.match(/\\*/g) || []).length > 8) return false;` (3) replace the manual `.replace(/\\./g, ...)` with a proper escape helper that handles all 12 regex metacharacters, then convert `*` to `.*` AFTER escaping. Add a guard so a pattern equal to the exact domain still matches (the early return at line 15 already handles this). Add tests for: length cap, asterisk count cap, and a pathological 'a*a*a*a*a*b' pattern against 'aaaaaaaaaaaaaaab' (linear backtracking case).",
+      "files_to_modify": [
+        "src/content/domain-utils.js"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Caps ReDoS risk and metacharacter injection in one pass",
+        "Backward compatible for normal patterns (dots, stars, subdomains)",
+        "Tiny, well-scoped change"
+      ],
+      "cons": [
+        "Existing tests must still pass — verify with `npm run test:run tests/unit/domain-patterns.test.js`"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Verify: `npm run test:run tests/unit/domain-patterns.test.js` passes, plus a new test for the pathological case. The acceptance 'Pathological `*` patterns cannot compile unbounded `.*` chains' is met by the asterisk count cap."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Harden matchesDomainPattern with cap + full escape"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [],
+    "depends_on": [{"number": 14, "title": "Refactor platform detection (P0)", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 1,
+    "duration_s": 2
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:08Z"
+  },
+  "decision_record": {
+    "root_cause": "src/content/domain-utils.js matchesDomainPattern builds a RegExp from user input with only dot-escaping and no length / metacharacter / asterisk-count limits. Pathological patterns (long `*` chains, special chars) can cause ReDoS or memory issues.",
+    "options_considered": [
+      "Harden matchesDomainPattern with cap + full escape"
+    ],
+    "options_rejected": [],
+    "selected_option": "Harden matchesDomainPattern with cap + full escape",
+    "residual_risk": "Existing tests must still pass. The acceptance 'Pathological `*` patterns cannot compile unbounded `.*` chains' is enforced by the asterisk-count cap (e.g. 8). Verify with `npm run test:run tests/unit/domain-patterns.test.js` and a new pathological-input test."
+  }
+}

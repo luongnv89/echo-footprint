@@ -513,42 +513,57 @@ export async function fetchBulkGeolocation(domains, onProgress = null) {
   const uniqueDomains = [...new Set(domains)];
   let processedCount = 0;
 
-  // Separate cached and uncached domains
-  const uncachedDomains = [];
-
-  for (const domain of uniqueDomains) {
+  // Separate cached and uncached domains — parallel cache reads
+  const cachedPromises = uniqueDomains.map(async domain => {
     const cached = await getCachedGeolocation(domain);
-    if (cached && cached.lat && cached.lon) {
-      geoMap[domain] = cached;
+    return cached && cached.lat && cached.lon
+      ? { domain, cached, isCached: true }
+      : { domain, cached: null, isCached: false };
+  });
+  const cachedResults = await Promise.all(cachedPromises);
+
+  const uncachedDomains = [];
+  for (const result of cachedResults) {
+    if (result.isCached) {
+      geoMap[result.domain] = result.cached;
       processedCount++;
       if (onProgress) {
         onProgress({
           current: processedCount,
           total: uniqueDomains.length,
-          domain,
+          domain: result.domain,
           success: true,
           cached: true,
         });
       }
     } else {
-      uncachedDomains.push(domain);
+      uncachedDomains.push(result.domain);
     }
   }
 
-  // Fetch uncached domains with intelligent batching
-  // Process in batches to respect rate limits
-  for (const domain of uncachedDomains) {
-    try {
-      const geoData = await getGeolocationForDomain(domain);
+  // Fetch uncached domains with parallel batches to respect rate limits
+  const BATCH_SIZE = 3; // Small batches for rate-limit safety
+  for (let i = 0; i < uncachedDomains.length; i += BATCH_SIZE) {
+    const batch = uncachedDomains.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async domain => {
+        try {
+          const geoData = await getGeolocationForDomain(domain);
+          return { domain, geoData, success: true };
+        } catch (error) {
+          return { domain, geoData: null, success: false, error };
+        }
+      })
+    );
+
+    for (const result of batchResults) {
+      const { domain, geoData, success, error } = result;
       console.log(`Bulk fetch result for ${domain}:`, geoData);
 
       if (geoData && geoData.lat && geoData.lon) {
-        console.log(
-          `✓ Adding ${domain} to geoMap with coords:`,
-          geoData.lat,
-          geoData.lon
-        );
         geoMap[domain] = geoData;
+      } else if (!success) {
+        console.error(`Failed to fetch geolocation for ${domain}:`, error);
       } else {
         console.warn(`✗ Skipping ${domain} - no valid coordinates:`, geoData);
       }
@@ -559,28 +574,15 @@ export async function fetchBulkGeolocation(domains, onProgress = null) {
           current: processedCount,
           total: uniqueDomains.length,
           domain,
-          success: !!geoData,
+          success: success && !!(geoData && geoData.lat && geoData.lon),
           cached: false,
         });
       }
+    }
 
-      // Add a small delay between requests to avoid overwhelming the system
-      // Only if we have more domains to process
-      if (processedCount < uniqueDomains.length) {
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
-    } catch (error) {
-      console.error(`Failed to fetch geolocation for ${domain}:`, error);
-      processedCount++;
-      if (onProgress) {
-        onProgress({
-          current: processedCount,
-          total: uniqueDomains.length,
-          domain,
-          success: false,
-          error: error.message,
-        });
-      }
+    // Small delay between batches to avoid overwhelming rate limits
+    if (i + BATCH_SIZE < uncachedDomains.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 

@@ -1,0 +1,126 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:02Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 40,
+    "title": "4.3: Rebuild the radial graph incrementally",
+    "body_excerpt": "Stop selectAll('*').remove() on every footprints tick; debounce or diff.",
+    "labels": ["dim:perf", "improvement", "phase:p4", "priority:medium"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:17Z"
+  },
+  "extraction": {
+    "keywords": [
+      "d3",
+      "selectAll",
+      "remove",
+      "incremental",
+      "diff",
+      "debounce",
+      "tick",
+      "RadialGraph",
+      "useEffect"
+    ],
+    "file_refs": [
+      "src/dashboard/components/RadialGraph.jsx"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/RadialGraph.jsx",
+      "role": "primary - line 61 `d3.select(svgRef.current).selectAll('*').remove()` runs on every footprints useEffect tick (any time footprints or focusedPlatform change). Replace with an incremental update: keep a stable g container, join nodes/links via d3 data-join, and let the simulation's tick handler just update positions on existing selections. The unmount cleanup can still call selectAll('*').remove() on the svg to tear down DOM, but the in-tick re-render must use a join."
+    }
+  ],
+  "analysis": {
+    "type": "improvement",
+    "current_implementation": "RadialGraph.jsx:61 — `d3.select(svgRef.current).selectAll('*').remove();` followed by full re-build (defs, marker, g container, links, nodes, drag handlers, tooltips). The simulation is also rebuilt every time. The useEffect runs whenever `footprints` or `focusedPlatform` changes — for live dashboards this is a churn storm.",
+    "limitations": "Every live update of IndexedDB triggers a full DOM teardown + rebuild, breaking the d3 force simulation and re-paying link/node creation cost. With 500+ nodes the rebuild dominates the 60fps budget.",
+    "change_surface": "1 file. Refactor the useEffect body to: (a) keep stable container <g class='links'>, <g class='nodes'>, <g class='defs'> outside the data-driven sections, (b) do d3.select(...).selectAll('line').data(links, d => `${d.source.id}|${d.target.id}`).join(...) (and similar for nodes), (c) drive the simulation .nodes()/.force('link').links() with the new arrays, (d) let the tick callback only update x/y on the joined selection. Optionally add a `requestAnimationFrame` debounce on rapid ticks. Acceptance: `rg -n \"selectAll\\('\\*'\\)\" src/dashboard/components/RadialGraph.jsx` shows only the unmount cleanup, not inside the footprints useEffect.",
+    "root_cause": "RadialGraph re-creates the entire D3 graph (DOM, simulation, drag handlers) on every change of `footprints` or `focusedPlatform`, which fires on every Dexie live update. D3 supports incremental join-based updates that don't touch unchanged elements."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "D3 data-join with stable key",
+      "summary": "Refactor the useEffect to: outer setup (defs, zoom, force simulation created once via ref or memo), then on data change: d3.select('.links').selectAll('line').data(links, d => `${d.source.id}|${d.target.id}`).join(...). The simulation .nodes()/force('link').links() is updated and restarted. Tick handler updates positions on joined selections only. Unmount cleanup retains selectAll('*').remove() inside the useEffect return.",
+      "files_to_modify": [
+        "src/dashboard/components/RadialGraph.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Dramatic perf win on live updates",
+        "Standard d3 enter/update/exit pattern"
+      ],
+      "cons": [
+        "Must pick a stable key (source.id+target.id for links, id for nodes)",
+        "Drag handlers, zoom behavior, and tooltips must be wired once, not per data update"
+      ],
+      "complexity": "M",
+      "risk": "medium",
+      "risk_details": "Risk is in the refactor: a wrong join key causes nodes to flicker, drag handlers to leak, or the simulation to lose center-node pinning (centerNode.fx/fy). Mitigated by reusing #38's chunk-isolation: the graph module only loads when graph view is active, so a regression is contained."
+    },
+    {
+      "number": 2,
+      "name": "Debounce the rebuild only",
+      "summary": "Keep the existing teardown-and-rebuild but wrap the effect in a 100ms debounce so rapid Dexie ticks coalesce.",
+      "files_to_modify": [
+        "src/dashboard/components/RadialGraph.jsx"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Tiny change"
+      ],
+      "cons": [
+        "Still pays the full rebuild cost; only reduces frequency. Acceptance criterion is structural (the selectAll('*').remove() must not be in the footprints useEffect), so this option does NOT meet the issue's acceptance."
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Acceptance bar not met — fails the verify command."
+    }
+  ],
+  "options_considered_count": 2,
+  "options_considered": [
+    "D3 data-join with stable key",
+    "Debounce only"
+  ],
+  "options_rejected": [
+    "Debounce only — fails the acceptance criterion which requires the selectAll('*').remove() to be gone from the footprints useEffect (not merely debounced)"
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "medium",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 38, "title": "Lazy-load graph/map/table", "overlap": "Both touch RadialGraph. #38 changes the import contract (lazy) and App.jsx only; #40 changes RadialGraph.jsx itself. Safe to do in either order, but doing #40 BEFORE #38 keeps the dev cycle simple (you test the new graph without paying the lazy-chunk boundary cost)."},
+      {"number": 42, "title": "Fix tab ids, empty-state copy, view subtitle", "overlap": "Independent files. Batchable."}
+    ],
+    "depends_on": [{"number": 29, "title": "P3 clean: split App into hooks/components", "state": "MERGED via PR #61"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 1,
+    "duration_s": 3
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:02Z"
+  },
+  "decision_record": {
+    "root_cause": "RadialGraph.jsx:61 teardown-and-rebuild on every Dexie live update. D3 supports incremental joins; the current code throws away the join optimization.",
+    "options_considered": [
+      "D3 data-join with stable key",
+      "Debounce only"
+    ],
+    "options_rejected": [
+      "Debounce only — fails acceptance"
+    ],
+    "selected_option": "D3 data-join with stable key",
+    "residual_risk": "Drag handlers and zoom behavior must be wired once outside the data-driven loop. Verify with the issue's `rg -n \"selectAll\\('\\*'\\)\" src/dashboard/components/RadialGraph.jsx` showing the match only in the unmount cleanup."
+  }
+}

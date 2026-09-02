@@ -54,11 +54,15 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
     const optIn = await getGeoOptIn();
     setGeoOptInState(optIn);
 
-    // First, load all cached data
-    for (const domain of uniqueDomains) {
+    // First, load all cached data in parallel (Promise.all)
+    const cachedPromises = uniqueDomains.map(async domain => {
       const cached = await getGeoCache(domain);
-      if (cached && cached.lat && cached.lon) {
-        geoMap[domain] = cached;
+      return cached && cached.lat && cached.lon ? [domain, cached] : null;
+    });
+    const cachedResults = await Promise.all(cachedPromises);
+    for (const result of cachedResults) {
+      if (result) {
+        geoMap[result[0]] = result[1];
       }
     }
 

@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:07:53Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 23,
+    "title": "1.9: Dexie patch/minor wave (W2)",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p1", "priority:low"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:23:53Z",
+    "updatedAt": "2026-09-01T13:26:39Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": ["package.json", "package-lock.json"],
+    "modules": ["dexie", "dexie-react-hooks"],
+    "keywords": [
+      "dexie",
+      "4.2.1",
+      "4.4.5",
+      "dexie-react-hooks",
+      "4.2.0",
+      "4.4.0",
+      "minor",
+      "outdated"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares dexie ^4.2.1 and dexie-react-hooks ^4.2.0 (verified lines 33-34)",
+      "match_reasons": [
+        "direct file reference",
+        "verified: dependency declarations"
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "critical",
+      "role": "locks node_modules/dexie 4.2.1 and node_modules/dexie-react-hooks 4.2.0 (verified lines 3514-3521)",
+      "match_reasons": ["direct file reference", "verified: locked versions"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "Both Dexie packages are pinned one minor line behind: lockfile holds dexie 4.2.1 (target 4.4.5) and dexie-react-hooks 4.2.0 (target 4.4.0). Both are minor bumps within the 4.x line — no API breakage expected, closes F-DEP-009/F-DEP-010.",
+    "details": "Current implementation: package.json carries ^4.2.1 / ^4.2.0 ranges; the lockfile pins 4.2.1 / 4.2.0, so `npm outdated` reports wanted>installed on the minor line. The caret ranges may already admit the targets — a lockfile refresh (`npm update dexie dexie-react-hooks` or targeted install) may suffice without touching package.json. Change surface: dependency manifests only; src/dashboard/utils/db.js schema is untouched by 4.x minors. Verify with `npm ls dexie dexie-react-hooks` and the test suite. Note for the orchestrator: issues #15-#17 (other analysis set) also modify package.json/package-lock.json; run this after those merge to avoid lockfile churn, though no content conflict is expected. Closes F-DEP-009, F-DEP-010."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Lockfile-only minor refresh",
+      "summary": "Run npm update for the two packages so the existing caret ranges resolve to 4.4.x; package.json unchanged if ranges already cover targets.",
+      "files_to_modify": [
+        {
+          "path": "package-lock.json",
+          "changes": "bump dexie to 4.4.5, dexie-react-hooks to 4.4.0"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["Smallest possible diff", "No manifest churn"],
+      "cons": ["If caret ranges need widening, package.json changes anyway"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Minor-line bump; Dexie 4.x minors are backwards compatible; suite verifies."
+    },
+    {
+      "number": 2,
+      "name": "Explicit manifest bump + lockfile",
+      "summary": "Set exact/updated ranges in package.json and run npm install to regenerate the lockfile.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "dexie ^4.4.5, dexie-react-hooks ^4.4.0"
+        },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated for both packages"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Intent recorded in manifest regardless of prior range",
+        "Matches issue's stated version targets verbatim"
+      ],
+      "cons": ["Two-file diff for a lockfile-resolvable change"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Same runtime effect as option 1 with a slightly larger diff."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "eea18cb",
+        "message": "Version 1.1.0",
+        "author": "luongnv89",
+        "date": "2026-07-01T00:00:00Z",
+        "files": ["package.json", "package-lock.json"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 5 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [14],
+    "related_issues": [
+      {
+        "number": 15,
+        "title": "1.1: Apply non-force npm audit fix (W1)",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json", "npm"],
+        "confidence": "medium"
+      },
+      {
+        "number": 16,
+        "title": "1.2: Upgrade vitest and @vitest/ui to a patched release",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json"],
+        "confidence": "medium"
+      },
+      {
+        "number": 17,
+        "title": "1.3: Upgrade sharp to >=0.35.0",
+        "relationship": "shared_files",
+        "shared_keywords": ["package.json", "package-lock.json"],
+        "confidence": "medium"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 0,
+    "keywords_extracted": 8,
+    "file_refs_extracted": 2,
+    "scan_duration_seconds": 4,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:07:53Z"
+  },
+  "decision_record": {
+    "root_cause": "Lockfile pins dexie 4.2.1 / dexie-react-hooks 4.2.0 while the minor line has moved to 4.4.x, leaving F-DEP-009/F-DEP-010 outdated findings open.",
+    "options_considered": [
+      { "number": 1, "name": "Lockfile-only minor refresh" },
+      { "number": 2, "name": "Explicit manifest bump + lockfile" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Two-file diff for what the existing caret ranges likely already admit; revisit only if ranges need widening."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Lockfile-only minor refresh",
+      "summary": "npm update the two packages so the lockfile resolves to 4.4.x under the existing ranges."
+    },
+    "residual_risk": "If the caret ranges do not cover 4.4.x, fall back to an explicit package.json bump."
+  }
+}

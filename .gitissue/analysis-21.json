@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:07:53Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 21,
+    "title": "1.7: Record every platform on a page, not the first match",
+    "type": "bug",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["bug", "dim:bug", "phase:p1", "priority:high"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:23:43Z",
+    "updatedAt": "2026-09-01T13:26:35Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [
+      "detectFacebookPixel",
+      "detectFacebookPixelScripts",
+      "detectFacebookPixelElements",
+      "detectPlatformFromUrl",
+      "observeDynamicPixels",
+      "runPixelDetection",
+      "sendPixelDetection"
+    ],
+    "classes": [],
+    "file_refs": [
+      "src/lib/pixel-detector.js",
+      "src/content/content-script.js",
+      "tests/unit/pixel-detector.test.js"
+    ],
+    "modules": ["lib", "content"],
+    "keywords": [
+      "platforms",
+      "first match",
+      "deduplicate",
+      "observer",
+      "delayed scan",
+      "100ms",
+      "performance.now"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/lib/pixel-detector.js",
+      "relevance": "critical",
+      "role": "detectFacebookPixel() short-circuits on first match (scripts then elements); detectPlatformFromUrl returns single platform",
+      "match_reasons": [
+        "direct file reference",
+        "verified: first-match return at ~line 700-712"
+      ]
+    },
+    {
+      "path": "src/content/content-script.js",
+      "relevance": "critical",
+      "role": "both observer callback and 3s delayed runPixelDetection send detections — duplicate storage for pixels loaded within 3s",
+      "match_reasons": [
+        "function match: runPixelDetection",
+        "function match: sendPixelDetection",
+        "verified lines 165-186"
+      ]
+    },
+    {
+      "path": "tests/unit/pixel-detector.test.js",
+      "relevance": "high",
+      "role": "multi-platform fixture + dedup cases; observeDynamicPixels describe block exists (lines 535-582)",
+      "match_reasons": [
+        "direct file reference",
+        "existing observeDynamicPixels tests"
+      ]
+    },
+    {
+      "path": "tests/unit/content-script.test.js",
+      "relevance": "medium",
+      "role": "end-to-end single-storage assertion for observer + delayed scan overlap",
+      "match_reasons": ["import connection to content-script.js"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "root_cause",
+    "summary": "Detection is first-match-wins at two layers: detectFacebookPixel() returns the result of detectFacebookPixelScripts() if non-null, else detectFacebookPixelElements(), and the observer's detectPlatformFromUrl() yields one platform per script — so a page loading Facebook + Google trackers records only one footprint. Simultaneously, init() arms both a delayed runPixelDetection (3s) and observeDynamicPixels; a pixel injected within the first 3s is seen by both paths and stored twice.",
+    "details": "Failure chain: page loads multiple tracker scripts -> detectFacebookPixelScripts() matches the first pattern and returns immediately (early return), elements detection never runs -> one PIXEL_DETECTED event regardless of how many platforms are present. In parallel: script injected at t<3s -> MutationObserver fires sendPixelDetection -> at t=3s the delayed scan re-detects the same script and sends again -> service worker stores two footprints for one observation. Fix: change detectors to collect all matching platforms per scan (array return) while keeping the scan inside the 100ms budget (single pass over script elements, no extra DOM walks), and deduplicate observer vs delayed scan (e.g., a per-page seen-key of platform+scriptSrc shared by both paths, or suppress the delayed scan for nodes the observer already reported). Keep the >100ms console.warn behavior gated on performance.now() delta. Closes F-BUG-001, F-BUG-007."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Collect-all detectors + seen-key dedup",
+      "summary": "Return an array of matches from the detector layer (single-pass scan over script[src] elements), send one event per platform, and deduplicate observer/delayed-scan with a module-level seen set keyed by platform+scriptSrc.",
+      "files_to_modify": [
+        {
+          "path": "src/lib/pixel-detector.js",
+          "changes": "collect-all variants of script/element detection; keep single-pass for 100ms budget"
+        },
+        {
+          "path": "src/content/content-script.js",
+          "changes": "send each platform; shared seen-set consulted by observer callback and delayed scan"
+        },
+        {
+          "path": "tests/unit/pixel-detector.test.js",
+          "changes": "Facebook+Google fixture -> two events; observer+scan overlap -> one storage"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Fixes both F-BUG-001 and F-BUG-007 in one pass",
+        "Single-pass scan keeps latency well under 100ms"
+      ],
+      "cons": [
+        "Changes detectFacebookPixel return shape — touches callers and existing tests"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Return-shape change is internal to the extension (content script is the only consumer); service worker schema unchanged."
+    },
+    {
+      "number": 2,
+      "name": "Multi-event without dedup layer",
+      "summary": "Only make detectors collect all platforms; rely on service-worker upsert semantics to collapse duplicates.",
+      "files_to_modify": [
+        {
+          "path": "src/lib/pixel-detector.js",
+          "changes": "collect-all detection"
+        },
+        {
+          "path": "tests/unit/pixel-detector.test.js",
+          "changes": "multi-platform fixture"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["Smallest diff"],
+      "cons": [
+        "Leaves F-BUG-007 (double storage) unresolved unless the service worker already upserts on (domain, platform, scriptSrc)",
+        "Acceptance criterion 'stored once' not directly guaranteed"
+      ],
+      "complexity": "S",
+      "risk": "Medium",
+      "risk_details": "Duplicate suppression depends on unverified service-worker behavior; if absent, footprints double-count."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "f6f83d8",
+        "message": "feat: Add tracking for 40 additional ad network companies",
+        "author": "luongnv89",
+        "date": "2026-07-15T00:00:00Z",
+        "files": ["src/lib/pixel-detector.js"],
+        "type": "related_change"
+      },
+      {
+        "sha": "e8547e5",
+        "message": "Add security hardening and runtime controls",
+        "author": "luongnv89",
+        "date": "2026-08-20T00:00:00Z",
+        "files": ["src/lib/pixel-detector.js"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 8 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [14],
+    "related_issues": [
+      {
+        "number": 20,
+        "title": "1.6: Honor pause and exclusions in the MutationObserver",
+        "relationship": "shared_files",
+        "shared_keywords": [
+          "observeDynamicPixels",
+          "sendPixelDetection",
+          "content-script"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "deps_traced": 3,
+    "keywords_extracted": 8,
+    "file_refs_extracted": 3,
+    "scan_duration_seconds": 9,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:07:53Z"
+  },
+  "decision_record": {
+    "root_cause": "Detector layer is first-match-wins (early return on first script/element hit) and the observer + 3s delayed scan are uncoordinated, so multi-platform pages record one footprint and pixels loaded within 3s are stored twice.",
+    "options_considered": [
+      { "number": 1, "name": "Collect-all detectors + seen-key dedup" },
+      { "number": 2, "name": "Multi-event without dedup layer" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Leaves F-BUG-007 unresolved; duplicate suppression would hinge on unverified service-worker upsert behavior."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Collect-all detectors + seen-key dedup",
+      "summary": "Single-pass collect-all detection emitting one event per platform, plus a shared seen-set so observer and delayed scan store each pixel once."
+    },
+    "residual_risk": "Return-shape change of detectFacebookPixel() touches existing tests; latency must be re-verified on large script counts (single-pass keeps headroom)."
+  }
+}

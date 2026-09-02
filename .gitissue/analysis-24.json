@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:07:53Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 24,
+    "title": "1.10: Replace upload-release-asset@v1",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:ci", "improvement", "phase:p1", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:23:58Z",
+    "updatedAt": "2026-09-01T13:26:42Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [".github/workflows/ci.yml"],
+    "modules": ["ci", "release"],
+    "keywords": [
+      "upload-release-asset",
+      "release job",
+      "legacy action",
+      "upload_url",
+      "asset_path"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "relevance": "critical",
+      "role": "release job's Upload Release Asset step uses archived actions/upload-release-asset@v1 (verified)",
+      "match_reasons": [
+        "direct file reference",
+        "verified: release job uses upload-release-asset@v1 with upload_url env"
+      ]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "The release job uploads the built ZIP via actions/upload-release-asset@v1, an archived/unmaintained action consuming the raw release upload_url. The modern replacement is softprops/action-gh-release (pinned to a release SHA) or the GitHub CLI's `gh release upload`, both of which take the tag rather than the upload_url.",
+    "details": "Current implementation: ci.yml release job (needs: [build], if: release created) downloads the echofootprint-chrome artifact, then runs actions/upload-release-asset@v1 with upload_url: github.event.release.upload_url and asset_name echofootprint-<tag>.zip. Limitation: the action is archived (last meaningful update years old) and unversioned-pinned at v1; it also fails silently-ish on retried releases. Change surface: one step in one file. Replacement options keep identical asset naming; softprops/action-gh-release is the de-facto standard and can also create the release. Verification per the issue: `grep upload-release-asset .github/workflows/ci.yml` exits 1. Closes F-CI-003."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Swap to softprops/action-gh-release (SHA-pinned)",
+      "summary": "Replace the step with softprops/action-gh-release pinned to a release SHA, passing files: echofootprint.zip and keeping the asset_name via rename before upload.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "replace Upload Release Asset step; drop upload_url plumbing"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Actively maintained, widely used",
+        "SHA pin satisfies supply-chain hygiene (mirrors #18's pattern)"
+      ],
+      "cons": ["Third-party action — pin to SHA and review inputs"],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Release-only path; failure mode is a failed upload, not silent data loss."
+    },
+    {
+      "number": 2,
+      "name": "gh release upload step",
+      "summary": "Replace the action with a run step invoking `gh release upload \"$TAG\" echofootprint-\"$TAG\".zip --clobber` using the preinstalled gh CLI.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "replace action with gh CLI run step"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "First-party tooling, no third-party action to pin",
+        "--clobber makes re-releases idempotent"
+      ],
+      "cons": ["Slightly more shell to maintain", "Needs GH_TOKEN env wiring"],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "gh is preinstalled on ubuntu-latest runners; token scope is the same GITHUB_TOKEN."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "e158270",
+        "message": "refactor(ci): stabilize P0 build and CI config (#10, #11, #12, #13, #14) (#49)",
+        "author": "luongnv89",
+        "date": "2026-08-28T00:00:00Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      },
+      {
+        "sha": "c6148c8",
+        "message": "Version 1.0.0",
+        "author": "luongnv89",
+        "date": "2026-06-01T00:00:00Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 3 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [14],
+    "related_issues": [
+      {
+        "number": 22,
+        "title": "1.8: Make npm audit a real CI gate after W1/W4 security bumps",
+        "relationship": "shared_files",
+        "shared_keywords": ["ci.yml", "workflow", "job"],
+        "confidence": "high"
+      },
+      {
+        "number": 18,
+        "title": "1.4: Pin TruffleHog off @main",
+        "relationship": "shared_keywords",
+        "shared_keywords": ["action pinning", "ci.yml"],
+        "confidence": "low"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 0,
+    "keywords_extracted": 6,
+    "file_refs_extracted": 1,
+    "scan_duration_seconds": 4,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:07:53Z"
+  },
+  "decision_record": {
+    "root_cause": "The release job still uses the archived actions/upload-release-asset@v1 (raw upload_url flow) instead of a maintained upload mechanism.",
+    "options_considered": [
+      {
+        "number": 1,
+        "name": "Swap to softprops/action-gh-release (SHA-pinned)"
+      },
+      { "number": 2, "name": "gh release upload step" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "More shell and token wiring for the same result; the pinned action is the standard drop-in."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Swap to softprops/action-gh-release (SHA-pinned)",
+      "summary": "One-step replacement of the archived action with a SHA-pinned maintained action uploading the same asset name."
+    },
+    "residual_risk": "Third-party action supply chain — mitigated by SHA pinning; verify asset name parity on the next release."
+  }
+}

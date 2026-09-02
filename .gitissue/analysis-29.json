@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 29,
+    "title": "3.1: Generate dashboard characterization tests",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:test", "improvement", "phase:p3", "priority:high"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:53Z",
+    "updatedAt": "2026-09-01T13:26:53Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": ["EmptyState", "SettingsSheet", "escapeCSV", "App"],
+    "classes": [],
+    "file_refs": [
+      "src/dashboard/",
+      "src/dashboard/App.jsx",
+      "src/dashboard/components/EmptyState.jsx",
+      "src/dashboard/components/SettingsSheet.jsx",
+      "src/dashboard/components/DataTable.jsx",
+      "tests/unit/csv-export.test.js"
+    ],
+    "modules": ["vitest", "@testing-library/react"],
+    "keywords": [
+      "dashboard",
+      "characterization",
+      "tests",
+      "empty state",
+      "settings DELETE confirm",
+      "escapeCSV",
+      "tab rendering",
+      "EmptyState",
+      "SettingsSheet",
+      "test-coverage",
+      "F-TEST-002"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/EmptyState.jsx",
+      "relevance": "critical",
+      "role": "Target component for the empty-state test. Pure presentational component (60 lines), no props, no side effects. Trivial to render and assert against.",
+      "match_reasons": ["direct file reference", "verified: file exists in src/dashboard/components/"]
+    },
+    {
+      "path": "src/dashboard/components/SettingsSheet.jsx",
+      "relevance": "critical",
+      "role": "Target for the DELETE-confirm test. The sheet already has a two-step confirmation flow (showClearConfirm state + confirmText === 'DELETE' gate at SettingsSheet.jsx:122). Test must stub chrome.storage.local, fetch, and the db helpers (clearAllData, checkStorageQuota, getGeoOptIn) used in the effect.",
+      "match_reasons": ["direct file reference", "verified: contains DELETE confirmation logic"]
+    },
+    {
+      "path": "src/dashboard/components/DataTable.jsx",
+      "relevance": "high",
+      "role": "escapeCSV is already exported from DataTable.jsx:13 and already covered by tests/unit/csv-export.test.js (6 tests). The issue lists escapeCSV but the existing test file already covers it. Issue acceptance criterion 'a test file imports escapeCSV' is already satisfied.",
+      "match_reasons": ["direct file reference", "verified: escapeCSV exported and tested"]
+    },
+    {
+      "path": "src/dashboard/App.jsx",
+      "relevance": "high",
+      "role": "Target for tab-rendering test. App.jsx renders four tabs (graph/bipartite/map/table) via <button role=\"tab\"> inside <nav role=\"tablist\">. The tab switching logic, the activeView state, and the four <div role=\"tabpanel\"> siblings must be exercised. App.jsx depends on useLiveQuery (Dexie), so tests must stub the db. Sidebar, SettingsSheet, HelpSheet, and all four view components also need stubs.",
+      "match_reasons": ["direct file reference", "tab shell referenced in acceptance criteria"]
+    },
+    {
+      "path": "src/dashboard/main.jsx",
+      "relevance": "low",
+      "role": "Entry point. Mounts <App />. May or may not need a render test depending on whether the 'App or a tab shell' clause is read as App.jsx itself or a wrapper.",
+      "match_reasons": ["inferred from test plan"]
+    },
+    {
+      "path": "src/dashboard/utils/db.js",
+      "relevance": "medium",
+      "role": "App.jsx imports db, getFootprints, getStats, calculatePlatformStats. Tests must stub these to avoid hitting Dexie/IndexedDB in jsdom.",
+      "match_reasons": ["inferred from App.jsx imports"]
+    },
+    {
+      "path": "src/dashboard/utils/geolocation.js",
+      "relevance": "medium",
+      "role": "SettingsSheet imports getGeoOptIn and setGeoOptIn. Tests must stub these to avoid pulling the whole geolocation client.",
+      "match_reasons": ["inferred from SettingsSheet imports"]
+    },
+    {
+      "path": "tests/unit/csv-export.test.js",
+      "relevance": "medium",
+      "role": "Already-existing escapeCSV test file. Acceptance criterion 'a test file imports escapeCSV' is met by this file alone.",
+      "match_reasons": ["verified: existing test file"]
+    },
+    {
+      "path": "tests/setup.js",
+      "relevance": "medium",
+      "role": "Test setup file. May need to add chrome.* stubs (chrome.storage.local, chrome.action) and fetch polyfill for the SettingsSheet DELETE confirm test.",
+      "match_reasons": ["inferred from existing setup patterns"]
+    },
+    {
+      "path": "vitest.config.js",
+      "relevance": "low",
+      "role": "Test runner config. May need jsdom environment if not already set, plus @testing-library/react as a dev dependency if it is not already present.",
+      "match_reasons": ["inferred from test plan"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "test_gap",
+    "summary": "F-TEST-002: the dashboard has zero component tests. The plan task names four targets — EmptyState, SettingsSheet (DELETE confirm), escapeCSV, and App/tab shell — but the existing escapeCSV coverage in tests/unit/csv-export.test.js already satisfies one of the four. Net new coverage is therefore three test files (or one file with three describe blocks): empty-state.test.jsx, settings-sheet.test.jsx, app-tabs.test.jsx. All three need @testing-library/react and chrome.* / fetch stubs to mount SettingsSheet and App without hitting IndexedDB or the live geolocation client.",
+    "details": "EmptyState is a 60-line function component with no side effects, so its test is trivial: render, assert the headline ('No Tracking Detected Yet') and a couple of step labels. SettingsSheet is more involved: 8 useState hooks, two useEffects that fire on open (loadStorageInfo, loadBuildInfo, loadPrivacySettings), and a confirm-clear flow gated by confirmText === 'DELETE' (SettingsSheet.jsx:122). The test must stub chrome.storage.local, fetch('/build-info.json'), clearAllData (db), checkStorageQuota (db), getGeoOptIn and setGeoOptIn. The App.jsx tab test is the most ambitious: App.jsx (485 lines) uses useLiveQuery from dexie-react-hooks, so the db helpers (getFootprints, getStats, calculatePlatformStats) need to be stubbed. After stubbing, render App, click each tab, and assert the corresponding tabpanel id appears. Acceptable: a slimmed App shell with stubbed children, or a 'tab shell' that just exercises the four <button role=\"tab\"> elements and active state. Recommendation: a single new test file at tests/unit/dashboard.test.jsx with three describe blocks. Adds @testing-library/react + @testing-library/jest-dom as devDependencies. Verification per the issue body: `npm run test:run` includes a dashboard test file."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Single new file tests/unit/dashboard.test.jsx with three describe blocks",
+      "summary": "One test file imports EmptyState, SettingsSheet (via the existing test that already covers escapeCSV), and App. Add @testing-library/react + @testing-library/jest-dom. Stub chrome.storage.local, fetch, and the db/geolocation modules in a beforeEach.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "add @testing-library/react and @testing-library/jest-dom to devDependencies"
+        },
+        {
+          "path": "tests/setup.js",
+          "changes": "add chrome.* stubs and fetch polyfill if not already present"
+        },
+        {
+          "path": "vitest.config.js",
+          "changes": "set environment: 'jsdom' for tests/unit/*.test.{js,jsx} if not already"
+        }
+      ],
+      "files_to_create": [
+        {
+          "path": "tests/unit/dashboard.test.jsx",
+          "changes": "three describe blocks: EmptyState render, SettingsSheet DELETE confirm flow, App tab switching"
+        }
+      ],
+      "pros": [
+        "Smallest new file count (one)",
+        "Acceptance criterion lists three import targets, satisfied by one file",
+        "Existing csv-export.test.js already imports escapeCSV, so the criterion is doubly satisfied"
+      ],
+      "cons": [
+        "App.jsx test is heavier than the others and pulls in many stub needs"
+      ],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Stubs are local; no production code changes. Risk is purely the test scaffolding time and any subtle miss in the chrome.* stub set (chrome.storage.local, chrome.action)."
+    },
+    {
+      "number": 2,
+      "name": "Three separate test files",
+      "summary": "tests/unit/empty-state.test.jsx, tests/unit/settings-sheet.test.jsx, tests/unit/app-tabs.test.jsx. Same stubs, more files.",
+      "files_to_create": [
+        { "path": "tests/unit/empty-state.test.jsx", "changes": "render and assert EmptyState" },
+        { "path": "tests/unit/settings-sheet.test.jsx", "changes": "DELETE confirm flow" },
+        { "path": "tests/unit/app-tabs.test.jsx", "changes": "tab switching" }
+      ],
+      "pros": ["One failure does not hide the others", "Cleaner file naming"],
+      "cons": ["More files to maintain", "No functional difference vs Option 1"],
+      "complexity": "M",
+      "risk": "Low",
+      "risk_details": "Same as Option 1."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; this is a fresh test-add task"
+  },
+  "cross_references": {
+    "related_issues": [30, 33],
+    "related_prs": [],
+    "note": "Hard dependency of #30 (BipartiteGraph split — split must not regress the empty state, so the characterization tests are the safety net) and #33 (App.jsx split — same reasoning). Also unblocks partial coverage of #36 (CI test job) once the dashboard test file lands."
+  },
+  "git_state": { "commit_sha": "7758c708ec42cd084ebd64f6d5f7678b9b3bd543", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "F-TEST-002: src/dashboard/ has zero component tests, so refactors like the BipartiteGraph split (#30) and App.jsx split (#33) have no safety net. escapeCSV is already tested in tests/unit/csv-export.test.js, but the three other targets named by the plan task are uncovered.",
+    "options_considered": [
+      "Single new file tests/unit/dashboard.test.jsx with three describe blocks",
+      "Three separate test files (empty-state, settings-sheet, app-tabs)"
+    ],
+    "options_rejected": [
+      "Add only EmptyState tests and claim the criterion (rejected: does not match 'a test file imports EmptyState, SettingsSheet, and App')",
+      "Add only SettingsSheet tests (rejected: same reason)"
+    ],
+    "selected_option": "Single new file tests/unit/dashboard.test.jsx with three describe blocks",
+    "residual_risk": "App.jsx test surface is large (~485 lines) and may need refactoring of imports/children; if the test is too brittle, fall back to a 'tab shell' render that exercises only the <nav role=\"tablist\"> and four <button role=\"tab\"> without mounting the view components."
+  },
+  "scan_stats": {
+    "files_read": 7,
+    "keywords": 11,
+    "file_refs": 6,
+    "duration_s": 0
+  }
+}

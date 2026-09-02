@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 31,
+    "title": "3.3: Unify Dexie schema",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:clean", "improvement", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:57Z",
+    "updatedAt": "2026-09-01T13:26:57Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": ["db.version(1)", "db.version(2)", "upgrade", "modify"],
+    "classes": [],
+    "file_refs": [
+      "src/dashboard/utils/db.js",
+      "src/lib/db-sw.js",
+      "src/db/schema.js"
+    ],
+    "modules": ["dexie"],
+    "keywords": [
+      "Dexie schema",
+      "unify",
+      "one module",
+      "version 1",
+      "version 2",
+      "store strings",
+      "F-CLEAN-004",
+      "db-sw.js",
+      "db.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/utils/db.js",
+      "relevance": "critical",
+      "role": "Dashboard Dexie wrapper. Verified: contains `db.version(1).stores({...})` and `db.version(2).stores({...}).upgrade(tx => {...})` (lines 14-44). The same string-shape stores and identical upgrade logic exist in src/lib/db-sw.js (lines 14-32). One of the two definitions must be removed and the other imported.",
+      "match_reasons": ["direct file reference", "verified: duplicate schema definition"]
+    },
+    {
+      "path": "src/lib/db-sw.js",
+      "relevance": "critical",
+      "role": "Service-worker Dexie wrapper. Verified: contains the same `db.version(1).stores({...})` and `db.version(2).stores({...}).upgrade(tx => {...})` (lines 14-32). Comment at line 12: 'must match dashboard/utils/db.js'. This is the candidate for the schema owner if the SW is the canonical writer (it is — the SW is what the content script talks to).",
+      "match_reasons": ["direct file reference", "verified: duplicate schema definition with explicit 'must match' comment"]
+    },
+    {
+      "path": "src/db/schema.js",
+      "relevance": "high",
+      "role": "New file to create. Plan task: 'Version 1/2 store strings exist in a single file'. The natural home is a new src/db/schema.js (or src/lib/db-schema.js) that exports the two store-string objects and the upgrade callback. Both db.js and db-sw.js then import them.",
+      "match_reasons": ["inferred from plan task"]
+    },
+    {
+      "path": "src/background/service-worker.js",
+      "relevance": "low",
+      "role": "Only consumer of db-sw.js. Imports addFootprint, getSetting, setSetting, getFootprintCount, getUniqueDomainCount, initDatabase, getTodayFootprintCount. Will pick up the new schema module transitively.",
+      "match_reasons": ["verified: import site"]
+    },
+    {
+      "path": "src/dashboard/App.jsx",
+      "relevance": "low",
+      "role": "Only consumer of db.js for the schema. Imports db, getFootprints, getStats, calculatePlatformStats. Will pick up the new schema module transitively.",
+      "match_reasons": ["verified: import site"]
+    },
+    {
+      "path": "tests/unit/db.test.js",
+      "relevance": "low",
+      "role": "Existing db tests. May need an import path update if the test imports from db.js or db-sw.js directly. The test file should still pass with the unified schema.",
+      "match_reasons": ["verified: existing test file"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "F-CLEAN-004: the Dexie schema and its v1→v2 upgrade callback are defined twice — once in src/dashboard/utils/db.js (lines 14-44) and once in src/lib/db-sw.js (lines 14-32) — with the SW file carrying a 'must match dashboard/utils/db.js' comment that is exactly the kind of cross-file coupling a shared module eliminates. The fix is one new file (src/db/schema.js) exporting the two store-strings plus the upgrade callback; both db.js and db-sw.js then import from it. The Dexie database name 'EchoFootPrint' is identical in both files and travels with the schema.",
+    "details": "Current implementation: db.js and db-sw.js each call `new Dexie('EchoFootPrint')` and each define version(1) and version(2) with the same three stores (footprints, settings, geoCache) and the same v1→v2 upgrade (backfill platform='facebook' on every footprint, delete ipGeo). The dashboards-only file (db.js) adds a small handful of higher-level helpers (getFootprints with filter, getStats, calculatePlatformStats, checkStorageQuota, clearAllData, exportDatabase) that the SW does not need. The SW-only file (db-sw.js) adds sanitizeString / isValidDomain / getTodayFootprintCount that the dashboard does not need. Only the schema and the upgrade callback are duplicates. The natural split: new src/db/schema.js exports { DB_NAME, SCHEMA_V1, SCHEMA_V2, upgradeV2 } (or similar). Each Dexie wrapper keeps its own API but uses these constants: `new Dexie(DB_NAME).version(1).stores(SCHEMA_V1).version(2).stores(SCHEMA_V2).upgrade(upgradeV2)`. Verification per the issue body: `rg -n \"db.version\\(1\\)\" src/` should show exactly one definition site. Both definitions are in production code today; the unify is a pure refactor with zero behavior change."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Create src/db/schema.js; both wrappers import from it",
+      "summary": "New module exports the database name, the v1 and v2 store-string objects, and the v1→v2 upgrade callback. db.js and db-sw.js each import the constants and apply them. No API change. Acceptance: `rg -n \"db.version\\(1\\)\" src/` shows one match.",
+      "files_to_create": [
+        {
+          "path": "src/db/schema.js",
+          "changes": "export const DB_NAME, SCHEMA_V1, SCHEMA_V2, upgradeV2; module is the single owner of the schema"
+        }
+      ],
+      "files_to_modify": [
+        { "path": "src/dashboard/utils/db.js", "changes": "import from ../db/schema.js; replace inline store strings" },
+        { "path": "src/lib/db-sw.js", "changes": "import from ../db/schema.js; replace inline store strings" }
+      ],
+      "pros": [
+        "Single source of truth — future v3 lands in one place",
+        "Plan task satisfied exactly: 'Version 1/2 store strings exist in a single file'",
+        "Zero behavior change; tests should pass unchanged"
+      ],
+      "cons": ["New src/db/ directory adds a small module path"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Both wrappers already use the same name ('EchoFootPrint') and same store strings, so the import is a 1:1 swap. The only risk is mis-importing and accidentally creating two Dexie instances, which a smoke test (initDatabase in each) will catch immediately."
+    },
+    {
+      "number": 2,
+      "name": "Inline the schema into the SW file and have db.js import from it",
+      "summary": "Treat src/lib/db-sw.js as the schema owner (it is the production writer), drop the duplicate from db.js, and have db.js re-import. Avoids the new directory.",
+      "files_to_modify": [
+        { "path": "src/dashboard/utils/db.js", "changes": "drop the schema definitions, import from db-sw.js" },
+        { "path": "src/lib/db-sw.js", "changes": "export the schema constants" }
+      ],
+      "pros": ["No new directory"],
+      "cons": [
+        "Couples the dashboard to a service-worker module path (db-sw.js is in src/lib/, not src/dashboard/utils/)",
+        "Bundle import graph now has a cross-boundary import where there was none"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Same as Option 1, with the additional concern that the dashboard bundle now pulls a service-worker-named module. Not a runtime risk, but a code-organization smell."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; the duplication has existed since v1"
+  },
+  "cross_references": {
+    "related_issues": [],
+    "related_prs": [],
+    "note": "No dependency on other P3 issues in this set. The 'Depends on #14' line in the issue body is satisfied (issue #14 is closed)."
+  },
+  "git_state": { "commit_sha": "7758c708ec42cd084ebd64f6d5f7678b9b3bd543", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "F-CLEAN-004: the Dexie schema and v1→v2 upgrade are duplicated in src/dashboard/utils/db.js and src/lib/db-sw.js. The SW file even comments 'must match dashboard/utils/db.js', which is exactly the cross-file coupling a shared module eliminates.",
+    "options_considered": [
+      "Create src/db/schema.js; both wrappers import from it",
+      "Inline the schema into the SW file and have db.js import from it"
+    ],
+    "options_rejected": [
+      "Two-database split (rejected: shared database is the design)",
+      "Generate schema at build time (rejected: over-engineering for a four-store schema)"
+    ],
+    "selected_option": "Create src/db/schema.js; both wrappers import from it",
+    "residual_risk": "Both wrappers must use the same DB_NAME. If one of them is updated and the other is not, the database becomes two real databases. The single-source fix removes that risk; the verify command (`rg -n \"db.version\\(1\\)\" src/` → one match) catches any re-introduction."
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "keywords": 9,
+    "file_refs": 3,
+    "duration_s": 0
+  }
+}

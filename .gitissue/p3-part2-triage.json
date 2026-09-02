@@ -1,0 +1,98 @@
+{
+  "set": "P3 part-2 (33-37)",
+  "other_agent_set_unblocks_33": "#29 lives in the other agent's batch (29-32). #33's plan-task 3.5 depends on 3.1 (=#29). Within this set, #33 must wait for #29 to land.",
+  "optimized_order": [35, 36, 34, 37, 33],
+  "batches": [
+    {
+      "issues": [35, 36],
+      "reason": "Two fully independent XS fixes, no shared files; trivially resolvable in parallel and ship in one wave.",
+      "shared_files": []
+    },
+    {
+      "issues": [34, 37],
+      "reason": "Both touch the detectFacebookPixel* symbol set: #34 renames the three exports, #37 updates/rewrites the iframe test that imports one of them. Co-locating both in the same PR keeps the rename and the test update atomic.",
+      "shared_files": ["src/lib/pixel-detector.js", "tests/unit/pixel-detector.test.js", "tests/unit/content-script.test.js"]
+    },
+    {
+      "issues": [33],
+      "reason": "Largest of the set, touches 9 files including App.jsx (643 lines) and a catalog move. Sequenced after the other agent's #29 lands.",
+      "shared_files": []
+    }
+  ],
+  "dependencies": [
+    {"issue": 33, "depends_on": 29, "reason": "Plan-task 3.5 (Split App.jsx) lists 3.1=#29 (Generate dashboard characterization tests) as its dependency. #29 lives in the other agent's batch (29-32). #33 cannot ship until #29 lands."},
+    {"issue": 34, "depends_on": 21, "reason": "Plan-task 3.6 lists 1.7=#21 (Record every platform on a page) as its dependency. #21 is CLOSED — satisfied."},
+    {"issue": 35, "depends_on": 14, "reason": "Issue body declares Depends on #14. #14 is CLOSED — satisfied."},
+    {"issue": 36, "depends_on": 14, "reason": "Issue body declares Depends on #14. #14 is CLOSED — satisfied."},
+    {"issue": 37, "depends_on": 21, "reason": "Plan-task 3.9 lists 1.7=#21 (Record every platform on a page) as its dependency. #21 is CLOSED — satisfied."}
+  ],
+  "soft_dependencies": [
+    {"issue": 37, "soft_after": 34, "reason": "If #34 renames detectFacebookPixelElements first, the iframe test rewrite in #37 must use the new name. Either ship #34 first or batch them."},
+    {"issue": 33, "soft_after": 35, "reason": "If #33 moves TRACKING_PLATFORMS to a new module, the catalog change in #35 should land in the new module, not pixel-detector.js. Trivial to sequence; #35 first is fine."}
+  ],
+  "analysis_summary": [
+    {
+      "issue": 33,
+      "title": "Split App.jsx and the pixel catalog",
+      "affected_files": [
+        "src/dashboard/App.jsx",
+        "src/lib/pixel-detector.js",
+        "src/dashboard/components/BipartiteGraph.jsx",
+        "src/dashboard/components/RadialGraph.jsx",
+        "src/dashboard/components/DataTable.jsx",
+        "src/dashboard/components/PlatformStats.jsx",
+        "src/dashboard/components/HelpSheet.jsx",
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "complexity": "M",
+      "root_cause": "TRACKING_PLATFORMS data is co-located with detection logic in src/lib/pixel-detector.js, forcing 7 dashboard files and 1 test to import a library module for a pure data structure. App.jsx (643 lines) is far above the 400-line target."
+    },
+    {
+      "issue": 34,
+      "title": "Rename detectFacebookPixel*",
+      "affected_files": [
+        "src/lib/pixel-detector.js",
+        "src/content/content-script.js",
+        "tests/unit/pixel-detector.test.js",
+        "tests/unit/content-script.test.js"
+      ],
+      "complexity": "S",
+      "root_cause": "Three exported functions in pixel-detector.js carry 'Facebook' in their name but detect 50+ ad networks — names are a historic artifact from when the project was Facebook-only."
+    },
+    {
+      "issue": 35,
+      "title": "Fix SmartyAds Criteo domain",
+      "affected_files": [
+        "src/lib/pixel-detector.js",
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "complexity": "XS",
+      "root_cause": "TRACKING_PLATFORMS.smartyads.domains contains 'as.us.criteo.com', a Criteo CDN host. The literal-key DOMAIN_TO_PLATFORM_MAP returns 'smartyads' for any URL containing that string, misattributing Criteo traffic."
+    },
+    {
+      "issue": 36,
+      "title": "Point CI test job at coverage output",
+      "affected_files": [
+        ".github/workflows/ci.yml"
+      ],
+      "complexity": "XS",
+      "root_cause": ".github/workflows/ci.yml runs `npm run test:run` (no coverage provider) but the next step uploads path: coverage/, which is never created. Result: an empty 'test-results' artifact on every CI run."
+    },
+    {
+      "issue": 37,
+      "title": "Un-skip or replace the iframe pixel test",
+      "affected_files": [
+        "tests/unit/pixel-detector.test.js"
+      ],
+      "complexity": "S",
+      "root_cause": "tests/unit/pixel-detector.test.js:115 has it.skip on the iframe-pixel test due to a jsdom limitation, with a TODO comment promising future work that never landed. The skip leaves a coverage hole."
+    }
+  ],
+  "persisted_analyses": [
+    ".gitissue/analysis-33.json",
+    ".gitissue/analysis-34.json",
+    ".gitissue/analysis-35.json",
+    ".gitissue/analysis-36.json",
+    ".gitissue/analysis-37.json"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "number": 16,
+  "title": "1.2: Upgrade vitest and @vitest/ui to a patched release",
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\nSmallest bump that clears `GHSA-5xrq-8626-4rwp` is vitest \u22653.2.5 (4.x line \u22654.1.0); audit recommends 4.1.11. Prefer 3.2.x if the suite stays green with Vite 5; if 3.x is unpublished or incompatible, take 4.x and treat remaining Vite coupling as a spike. Migration source: Context7 `/vitest-dev/vitest` \u2014 https://github.com/vitest-dev/vitest/blob/main/docs/guide/migration.md\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\nSmallest bump that clears `GHSA-5xrq-8626-4rwp` is vitest \u22653.2.5 (4.x line \u22654.1.0); audit recommends 4.1.11. Prefer 3.2.x if the suite stays green with Vite 5; if 3.x is unpublished or incompatible, take 4.x and treat remaining Vite coupling as a spike. Migration source: Context7 `/vitest-dev/vitest` \u2014 https://github.com/vitest-dev/vitest/blob/main/docs/guide/migration.md\n\n**Related issues:**\nCloses F-DEP-002, F-DEP-003\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: critical\n> Effort: M\n> Labels: dim:dep, improvement, phase:p1, priority:critical\n> Plan task: 1.2 \u2014 Sprint 1 \u00b7 Phase P1 Secure & Patch \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 1.2: Upgrade vitest and @vitest/ui to a patched release\n>\n> **Description**: Smallest bump that clears `GHSA-5xrq-8626-4rwp` is vitest \u22653.2.5 (4.x line \u22654.1.0); audit recommends 4.1.11. Prefer 3.2.x if the suite stays green with Vite 5; if 3.x is unpublished or incompatible, take 4.x and treat remaining Vite coupling as a spike. Migration source: Context7 `/vitest-dev/vitest` \u2014 https://github.com/vitest-dev/vitest/blob/main/docs/guide/migration.md\n>\n> **Closes**: `F-DEP-002`, `F-DEP-003`\n>\n> **Acceptance Criteria**:\n> - [ ] `npm audit` no longer reports `GHSA-5xrq-8626-4rwp` on vitest / `@vitest/ui`\n> - [ ] Migration guide (or spike note) is linked in the PR\n> - [ ] `npm run test:run` passes at \u2265 the recorded rate\n>\n> **Dependencies**: 1.1\n>\n> **Effort**: M\n>\n> **Verify**: `npm ls vitest @vitest/ui && npm audit --json | python3 -c \"import json,sys; d=json.load(sys.stdin); v=d.get('vulnerabilities',{}); assert 'vitest' not in v or v['vitest']['severity'] not in ('critical','high')\"`\n>\n> Dependencies: 1.1\n> Closes: F-DEP-002, F-DEP-003\n\n## Acceptance Criteria\n\n- [ ] `npm audit` no longer reports `GHSA-5xrq-8626-4rwp` on vitest / `@vitest/ui` (high confidence)\n- [ ] Migration guide (or spike note) is linked in the PR (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the recorded rate (high confidence)\n\n## Metadata\n\n**Priority:** critical (high confidence)\n**Effort:** M (high confidence)\n**Suggested model:** GPT-5.5 High \u00b7 Opus 4.8 Medium _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:dep, improvement, phase:p1, priority:critical (high confidence)\n\nPart of #6\n\nDepends on #15\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdo6w",
+      "name": "dim:dep",
+      "description": "Closes a DEP finding",
+      "color": "0E8A16"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsZg",
+      "name": "phase:p1",
+      "description": "Modernization phase P1 \u2014 Secure & Patch",
+      "color": "D93F0B"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdt4w",
+      "name": "priority:critical",
+      "description": "Highest-severity closed finding is Critical",
+      "color": "B60205"
+    }
+  ],
+  "assignees": [],
+  "state": "OPEN",
+  "updatedAt": "2026-09-01T13:26:23Z"
+}

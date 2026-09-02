@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:09:02Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 19,
+    "title": "1.5: Stop silent cleartext ip-api lookups",
+    "type": "bug",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": [
+      "bug",
+      "dim:bug",
+      "dim:docs",
+      "dim:sec",
+      "dim:ux",
+      "phase:p1",
+      "priority:critical"
+    ],
+    "state": "open",
+    "createdAt": "2026-09-01T13:23:31Z",
+    "updatedAt": "2026-09-01T13:26:30Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [
+      "http://ip-api.com cleartext fetch (F-SEC-001)",
+      "unescaped popup interpolation (F-SEC-001/F-BUG-005)"
+    ],
+    "functions": [
+      "fetchBulkGeolocation",
+      "fetchGeolocationForDomain",
+      "bindPopup",
+      "clearAllCaches"
+    ],
+    "classes": ["MapView"],
+    "file_refs": [
+      "src/dashboard/utils/geolocation.js",
+      "src/lib/geo-queue.js",
+      "src/dashboard/components/MapView.jsx",
+      "privacy-policy.md"
+    ],
+    "modules": ["geolocation", "geo-queue", "MapView", "leaflet"],
+    "keywords": [
+      "ip-api.com",
+      "cleartext",
+      "opt-in",
+      "sanitize",
+      "popup HTML",
+      "privacy policy",
+      "footer"
+    ]
+  },
+  "analysis": {
+    "type_specific": "root_cause",
+    "summary": "MapView's mount effect enumerates all domains of the loaded footprints and calls fetchBulkGeolocation for every uncached one — unconditionally, on dashboard open. The fetch targets GEO_API_URL = 'http://ip-api.com/json/' (cleartext) in both src/dashboard/utils/geolocation.js and its service-worker twin src/lib/geo-queue.js, so opening the dashboard silently leaks the user's full visited-domain list to a third party over plain HTTP — directly contradicting the privacy-first product premise. Separately, MapView.jsx builds Leaflet popup HTML via template-literal string interpolation of location.city/region/country and domain strings before bindPopup, an HTML-injection surface fed by external geo data.",
+    "details": "Failure chain: dashboard opens -> MapView useEffect -> uniqueDomains from footprints -> fetchBulkGeolocation(uncached) -> http://ip-api.com (cleartext, no user consent, contradicting zero-telemetry copy). The extension history introduced this with the v1.2.0 Map View release (7eaa9ea); it is not a regression but a design flaw. The fix has three inseparable parts per the issue: (1) gate the default path — no fetch of http://ip-api.com unless the user opts in (or switch to HTTPS / remove live lookups); (2) sanitize popup HTML so geo/domain strings are never interpolated unescaped; (3) update the dashboard footer and privacy-policy.md in the same change so the copy cannot lie about the behavior. A unit test asserting the default path does not fetch is the acceptance seam; tests/unit/geolocation.test.js and tests/unit/geo-queue.test.js already exist as hosts. Note src/lib/geo-queue.js is the SW twin slated for removal by #32 (3.4) — do not invest in it beyond the security fix.",
+    "reproduction_note": "grep confirms `const GEO_API_URL = 'http://ip-api.com/json/'` in both geolocation.js:17 and geo-queue.js:10, and MapView.jsx auto-fetches uncached domains on mount without an opt-in gate."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Opt-in gate + sanitized popups + HTTPS + copy sync",
+      "summary": "Default to cache-only geo display; live lookup only behind an explicit opt-in setting over https://; escape all popup interpolations; update footer and privacy-policy.md to match.",
+      "files_to_modify": [
+        {
+          "path": "src/dashboard/utils/geolocation.js",
+          "changes": "GEO_API_URL to https (or ip-api https endpoint constraints documented); add opt-in gate before any fetch"
+        },
+        {
+          "path": "src/dashboard/components/MapView.jsx",
+          "changes": "skip live fetch unless opted in; escape/encode city, region, country, and domain strings in popup HTML"
+        },
+        {
+          "path": "src/lib/geo-queue.js",
+          "changes": "mirror the no-cleartext guarantee in the SW twin (minimal; slated for removal in #32)"
+        },
+        {
+          "path": "privacy-policy.md",
+          "changes": "describe the actual geo behavior"
+        },
+        {
+          "path": "src/dashboard/components/Sidebar.jsx",
+          "changes": "footer copy matches remaining behavior"
+        },
+        {
+          "path": "tests/unit/geolocation.test.js",
+          "changes": "assert default path performs no fetch; opt-in path uses https"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Closes F-SEC-001, F-UX-001, F-DOCS-004, F-BUG-005 together",
+        "Preserves map utility for users who want it"
+      ],
+      "cons": [
+        "Behavior change needs a settings touchpoint; most moving parts of the five P1 issues"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Multi-file UX + security change; copy and behavior must land atomically"
+    },
+    {
+      "number": 2,
+      "name": "Remove live lookups entirely",
+      "summary": "Delete all runtime ip-api calls; geolocation becomes cache/import-only (empty until data arrives via import or future opt-in).",
+      "files_to_modify": [
+        {
+          "path": "src/dashboard/utils/geolocation.js",
+          "changes": "drop fetch path; keep cache read"
+        },
+        {
+          "path": "src/dashboard/components/MapView.jsx",
+          "changes": "remove fetch effect; show empty-geo state"
+        },
+        { "path": "privacy-policy.md", "changes": "no external geo calls" }
+      ],
+      "files_to_create": [],
+      "pros": ["Strongest privacy posture; smallest permanent surface"],
+      "cons": [
+        "Map view loses its core value for fresh installs; larger UX regression"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Feature regression risk; acceptance allows this path but opt-in preserves more value"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Medium",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "7eaa9ea",
+        "message": "Release v1.2.0: Add interactive Map View with geolocation",
+        "author": "luongnv89",
+        "date": "2025-11-17T00:00:00Z",
+        "files": [
+          "src/dashboard/utils/geolocation.js",
+          "src/lib/geo-queue.js",
+          "src/dashboard/components/MapView.jsx"
+        ],
+        "type": "related_change"
+      },
+      {
+        "sha": "6e53a5f",
+        "message": "Update map view",
+        "author": "luongnv89",
+        "date": "2025-11-17T00:00:00Z",
+        "files": ["src/dashboard/components/MapView.jsx"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 5 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [],
+    "related_issues": [
+      {
+        "number": 32,
+        "title": "3.4: Remove unused crypto and the SW geo-queue twin",
+        "relationship": "shared_files",
+        "shared_keywords": ["geo-queue.js", "geolocation"],
+        "confidence": "medium"
+      },
+      {
+        "number": 44,
+        "title": "4.7: Silence MapView production logs",
+        "relationship": "shared_files",
+        "shared_keywords": ["MapView.jsx"],
+        "confidence": "medium"
+      },
+      {
+        "number": 41,
+        "title": "4.4: Parallelize MapView cache reads and URL scan",
+        "relationship": "shared_files",
+        "shared_keywords": ["MapView.jsx", "geolocation"],
+        "confidence": "low"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 7,
+    "deps_traced": 3,
+    "keywords_extracted": 8,
+    "file_refs_extracted": 4,
+    "scan_duration_seconds": 30,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:09:02Z"
+  },
+  "decision_record": {
+    "root_cause": "MapView auto-invokes fetchBulkGeolocation for every uncached domain on dashboard mount with no consent gate, and both geo modules hard-code `http://ip-api.com/json/` (cleartext) — silently transmitting the user's visited-domain list to a third party; additionally MapView popup HTML interpolates external geo/domain strings unescaped before bindPopup, an injection surface, while footer/privacy copy claims local-only processing.",
+    "options_considered": [
+      {
+        "number": 1,
+        "name": "Opt-in gate + sanitized popups + HTTPS + copy sync"
+      },
+      { "number": 2, "name": "Remove live lookups entirely" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Empties the map view for fresh installs — a larger UX regression than gating; acceptance prefers the opt-in path."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Opt-in gate + sanitized popups + HTTPS + copy sync",
+      "summary": "Default no-fetch with explicit opt-in for live geo over HTTPS, escape popup interpolations, and sync footer/privacy copy in the same change."
+    },
+    "residual_risk": "ip-api.com's free tier does not serve HTTPS on the json endpoint, so the opt-in path may need a paid/alternative endpoint or explicit user acknowledgment; copy must state whichever behavior ships."
+  }
+}

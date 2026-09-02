@@ -1,0 +1,113 @@
+{
+  "version": "0.6.0",
+  "timestamp": "2026-09-02T08:45:03Z",
+  "source": "auto-pilot P4 batch (issues 38-47)",
+  "issue": {
+    "number": 41,
+    "title": "4.4: Parallelize MapView cache reads and URL scan",
+    "body_excerpt": "Promise.all for getGeoCache; hostname Map for detectPlatformFromUrl.",
+    "labels": ["bug", "dim:bug", "dim:perf", "phase:p4", "priority:high"],
+    "state": "OPEN",
+    "updatedAt": "2026-09-01T13:27:20Z"
+  },
+  "extraction": {
+    "keywords": [
+      "Promise.all",
+      "getGeoCache",
+      "detectPlatformFromUrl",
+      "Map",
+      "hostname",
+      "for await",
+      "catalog",
+      "O(1) lookup"
+    ],
+    "file_refs": [
+      "src/dashboard/components/MapView.jsx",
+      "src/lib/pixel-detector.js",
+      "src/lib/tracking-platforms.js"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/MapView.jsx",
+      "role": "primary - loadGeoData() loop (line 58-63) does `for (const domain of uniqueDomains) { const cached = await getGeoCache(domain); ... }` — serial awaits. Replace with `const cachedArr = await Promise.all(uniqueDomains.map(d => getGeoCache(d)));` then build geoMap from the array. Acceptance: `rg -n 'await getGeoCache' src/dashboard/components/MapView.jsx` exits 1 (no await inside the loop)."
+    },
+    {
+      "path": "src/lib/pixel-detector.js",
+      "role": "primary - detectPlatformFromUrl (line ~35) iterates the DOMAIN_TO_PLATFORM_MAP with `for (const domain in DOMAIN_TO_PLATFORM_MAP) { if (url.includes(domain)) ... }` — O(catalog * url_length) per call. The catalog is ~400+ domain strings across 50 platforms. The acceptance says 'hostname Map' — restructure the lookup to: extract `new URL(url).hostname` once, then check an O(1) Map keyed by hostname (or a Map<string, string> keyed by every host that appears in TRACKING_PLATFORMS[*].domains). Note: many catalog entries are not full hostnames (e.g. 'facebook.com/tr' contains a path). The cleanest split: keep DOMAIN_TO_PLATFORM_MAP as-is for path-aware matches AND add a HOSTNAME_TO_PLATFORM Map for exact-host matches. The hostname check is O(1); the path-aware fallback remains O(catalog) but is now a second pass, not the primary."
+    },
+    {
+      "path": "src/lib/tracking-platforms.js",
+      "role": "secondary - already a pure data module. May need to add a helper that exports both the existing TRACKING_PLATFORMS and a new HOSTNAME_TO_PLATFORM Map (or a helper `buildHostnameMap(TRACKING_PLATFORMS)`) so pixel-detector can use it without re-implementing the build. Trivial change."
+    }
+  ],
+  "analysis": {
+    "type": "bug",
+    "current_implementation": "MapView.jsx:58-63 runs `await getGeoCache(domain)` inside a `for...of` loop, serialising N independent reads (each an IndexedDB GET, ~1-5ms each on a cold DB; on a 10k-footprint dashboard with ~50 unique domains this is up to ~250ms of wasted serial time). pixel-detector.js:35-46 (detectPlatformFromUrl) iterates an object-map with `for...in` and calls `url.includes(domain)` for every catalog entry — O(M*N) per URL, M = catalog size (~400 strings), N = url length.",
+    "limitations": "Map geolocation load is unnecessarily slow; the platform-detection path has two inefficiencies (O(N) per call and string `includes` which is the worst of both worlds). The detection path is also the content-script's hot loop (called for every script tag, every img, every iframe, every mutation — so it compounds).",
+    "change_surface": "3 files. MapView.jsx is a 5-line change (Promise.all + reduce). pixel-detector.js is a 5-10 line change (extract hostname once, look up in Map, fall back to DOMAIN_TO_PLATFORM_MAP for path-aware matches). tracking-platforms.js is a small data addition (HOSTNAME_TO_PLATFORM Map, derived once at module load). Verify: `rg -n 'await getGeoCache' src/dashboard/components/MapView.jsx` exits 1; `rg -n \"for \\(const domain in DOMAIN_TO_PLATFORM_MAP\\)\" src/lib/pixel-detector.js` exits 1.",
+    "root_cause": "MapView serialises independent DB reads; detectPlatformFromUrl uses a linear scan with a substring search instead of a hostname-keyed Map. Both are F-PERF-004/006 (perf) and the host lookup also touches F-BUG-008 (correctness: a domain like 'notgoogle.com' includes 'google.com' substrings? No — it doesn't, but a url like 'evilgoogle.com' would falsely match. The hostname check eliminates this class of bug for exact host matches.)"
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Promise.all + hostname Map",
+      "summary": "MapView.loadGeoData: `const pairs = await Promise.all(uniqueDomains.map(async d => [d, await getGeoCache(d)])); const geoMap = Object.fromEntries(pairs.filter(([, c]) => c && c.lat && c.lon));` (or build it imperatively). pixel-detector: precompute HOSTNAME_TO_PLATFORM from TRACKING_PLATFORMS[*].domains filtered to entries without '/' (i.e. plain hostnames). detectPlatformFromUrl: try `new URL(url).hostname` and look up directly; on miss or on path-bearing catalog entries, fall back to the existing substring pass.",
+      "files_to_modify": [
+        "src/dashboard/components/MapView.jsx",
+        "src/lib/pixel-detector.js",
+        "src/lib/tracking-platforms.js"
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Parallel DB reads cut load time by N (small N but real)",
+        "Hostname Map is O(1) and fixes F-BUG-008 (substring false-positives on path-bearing hosts)",
+        "Backward compatible: substring fallback preserved for non-hostname entries"
+      ],
+      "cons": [
+        "URL constructor throws on malformed URLs — needs a try/catch fallback to the existing substring pass"
+      ],
+      "complexity": "S",
+      "risk": "low",
+      "risk_details": "Tiny, well-isolated changes. The behavior on legitimate detection paths is unchanged; the only delta is speed and the elimination of a small class of false matches."
+    }
+  ],
+  "options_considered_count": 1,
+  "options_considered": [
+    "Promise.all + hostname Map"
+  ],
+  "options_rejected": [],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "low",
+  "history": {
+    "related_commits": [],
+    "prior_fix_attempts": 0
+  },
+  "cross_references": {
+    "related_open_issues": [
+      {"number": 44, "title": "Silence MapView production logs", "overlap": "Both touch MapView.jsx. Trivially batchable: edit MapView.jsx once for the Promise.all AND the console.log removal, single PR."},
+      {"number": 39, "title": "Replace full-table toArray aggregations", "overlap": "Both are perf. Independent files. No conflict."}
+    ],
+    "depends_on": [{"number": 14, "title": "Refactor platform detection (P0)", "state": "CLOSED"}],
+    "blocks": []
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "deps_traced": 2,
+    "duration_s": 4
+  },
+  "git_state": {
+    "commit_sha": "7758c70",
+    "captured_at": "2026-09-02T08:45:03Z"
+  },
+  "decision_record": {
+    "root_cause": "MapView serialises independent IndexedDB GETs in a for/await loop; detectPlatformFromUrl linearly scans ~400 catalog entries with a substring match per URL.",
+    "options_considered": [
+      "Promise.all + hostname Map"
+    ],
+    "options_rejected": [],
+    "selected_option": "Promise.all + hostname Map",
+    "residual_risk": "URL constructor can throw on malformed inputs — wrap in try/catch and fall back to existing substring pass. Hostname Map only covers catalog entries that look like hostnames (no '/'); path-bearing entries keep the substring fallback. Verify `rg -n 'await getGeoCache' src/dashboard/components/MapView.jsx` exits 1 after."
+  }
+}

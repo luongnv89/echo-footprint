@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 30,
+    "title": "3.2: Split BipartiteGraph",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:clean", "improvement", "phase:p3", "priority:high"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:55Z",
+    "updatedAt": "2026-09-01T13:26:55Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [
+      "BipartiteGraph",
+      "useMemo graphData",
+      "useMemo filteredData",
+      "useMemo sortedData",
+      "useMemo stats_data",
+      "useMemo availablePlatforms",
+      "handleExportCSV",
+      "handleExportPNG",
+      "handleExportSVG",
+      "escapeCSV"
+    ],
+    "classes": [],
+    "file_refs": [
+      "src/dashboard/components/BipartiteGraph.jsx",
+      "src/dashboard/components/BipartiteGraph.css"
+    ],
+    "modules": ["react", "d3", "html2canvas", "TRACKING_PLATFORMS"],
+    "keywords": [
+      "BipartiteGraph",
+      "split",
+      "extract",
+      "filters",
+      "export",
+      "layout",
+      "F-CLEAN-001",
+      "1309 lines",
+      "400 lines",
+      "code-review clean cleanup"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/dashboard/components/BipartiteGraph.jsx",
+      "relevance": "critical",
+      "role": "The file under cleanup. Verified at 1309 lines. The plan task calls for <400 lines (or list of extracted modules in the PR). Five concerns are tangled in one function component: (1) D3 layout + draw effect, (2) filters (search, platform, minDetections, multi/widespread toggles), (3) sorting (domainSort, platformSort), (4) export (CSV/PNG/SVG), (5) statistics panel + tooltip + UI chrome. The accepted split per the plan task is 'filters, export, and layout'.",
+      "match_reasons": ["direct file reference", "verified: 1309 lines, well over 400"]
+    },
+    {
+      "path": "src/dashboard/components/BipartiteGraph.css",
+      "relevance": "medium",
+      "role": "Style sheet consumed by BipartiteGraph. No structural change expected unless the extracted modules need their own class names.",
+      "match_reasons": ["imported by the file under cleanup"]
+    },
+    {
+      "path": "src/dashboard/components/EmptyState.jsx",
+      "relevance": "low",
+      "role": "No direct import. Inferred only because the issue task says 'do this before the BipartiteGraph split' via #29, and the empty-state test added in #29 is the safety net.",
+      "match_reasons": ["inferred from #29 dependency"]
+    },
+    {
+      "path": "src/lib/pixel-detector.js",
+      "relevance": "low",
+      "role": "Provides TRACKING_PLATFORMS used by BipartiteGraph for color and display name. If color/name lookup is extracted to a new file, this import survives.",
+      "match_reasons": ["verified: import in BipartiteGraph.jsx:8"]
+    },
+    {
+      "path": "src/dashboard/App.jsx",
+      "relevance": "low",
+      "role": "Imports BipartiteGraph. The public component API ({footprints, stats}) must remain stable across the split. App.jsx itself does not change.",
+      "match_reasons": ["verified: App.jsx imports BipartiteGraph"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "refactor",
+    "summary": "F-CLEAN-001: BipartiteGraph.jsx is 1309 lines (verified via wc -l), about 3.3x the 400-line plan target. Five concerns are interleaved in one function: D3 draw, filters, sorting, export, statistics/UI. The plan task names the three extract targets: filters, export, and layout. Extraction leaves a thin shell component (state + effects + JSX) and three pure modules: useBipartiteFilters (hook), useBipartiteExport (hook or util trio), and useBipartiteLayout (hook that owns the D3 effect). The export functions are the cleanest first cut — they are 3 self-contained async/sync functions of ~30-60 lines each.",
+    "details": "Current implementation: BipartiteGraph.jsx holds 11 useState hooks (tooltip, selectedNode, isolatedView, searchTerm, selectedPlatformFilter, minDetections, showMultiPlatformOnly, showWidespreadOnly, domainSort, platformSort, plus 5 show* panel toggles), 5 useMemo hooks (graphData, filteredData, sortedData, stats_data, availablePlatforms), one useEffect (click-outside for export menu), one draw effect (the D3 force render), and 3 export functions (handleExportCSV, handleExportPNG, handleExportSVG) plus a private escapeCSV. The clean split per the plan task is: (a) extract the three export functions plus escapeCSV into src/dashboard/components/bipartite/export.js (or a folder of three files). (b) Extract the filter logic and the availablePlatforms useMemo into a useBipartiteFilters hook (returns {filteredData, availablePlatforms, filterState, filterSetters}). (c) Extract the D3 draw effect into a useBipartiteLayout hook (takes sortedData + svgRef, owns the effect). After extraction the shell is the JSX tree, the stats useMemo, and the state that lives across concerns (selectedNode, isolatedView, tooltip). Verification per the issue body: `wc -l src/dashboard/components/BipartiteGraph.jsx` should be <400. The plan also allows 'the extracted modules are listed in the PR' as an alternative acceptance path, so listing the three new files in the PR body is acceptable if the line count does not fall under 400 by extraction alone."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Extract filters, export, and layout into three siblings under bipartite/",
+      "summary": "Create src/dashboard/components/bipartite/{export.js, useBipartiteFilters.js, useBipartiteLayout.js}. Each is a self-contained module (the two hooks own state, the export file owns three functions plus escapeCSV). BipartiteGraph.jsx becomes the JSX shell plus the inter-concern state. Line count drops to ~300-350.",
+      "files_to_create": [
+        { "path": "src/dashboard/components/bipartite/export.js", "changes": "handleExportCSV, handleExportPNG, handleExportSVG, escapeCSV" },
+        { "path": "src/dashboard/components/bipartite/useBipartiteFilters.js", "changes": "hook owning filter state + filteredData useMemo + availablePlatforms useMemo" },
+        { "path": "src/dashboard/components/bipartite/useBipartiteLayout.js", "changes": "hook owning the D3 draw effect (takes svgRef, sortedData)" }
+      ],
+      "files_to_modify": [
+        { "path": "src/dashboard/components/BipartiteGraph.jsx", "changes": "import the three modules, drop the moved code, keep state and JSX" }
+      ],
+      "pros": [
+        "Matches the plan task verbatim (filters, export, layout)",
+        "Line count drops under 400",
+        "Hooks are testable in isolation"
+      ],
+      "cons": [
+        "Refactor surface is large; the D3 effect move is the riskiest part (the effect closure over tooltip/isolatedView must still work)"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "The D3 effect (BipartiteGraph.jsx:283-617) reads from many useState values (tooltip handlers, isolatedView, selectedNode). Extracting it as a hook means passing those callbacks as dependencies. The split is mechanical but high-volume; recommended to land the export extraction first in a separate commit for review surface, then filters, then layout."
+    },
+    {
+      "number": 2,
+      "name": "Extract only export.js (the lowest-risk module) and list the other two in the PR",
+      "summary": "Move handleExportCSV/PNG/SVG and the private escapeCSV into bipartite/export.js. Leave filters and layout in place. The PR body lists the two follow-up modules in the plan. BipartiteGraph.jsx drops by ~120 lines, ending near 1180, still over 400.",
+      "files_to_create": [
+        { "path": "src/dashboard/components/bipartite/export.js", "changes": "three export handlers plus escapeCSV" }
+      ],
+      "files_to_modify": [
+        { "path": "src/dashboard/components/BipartiteGraph.jsx", "changes": "import from bipartite/export.js, drop the moved functions" }
+      ],
+      "pros": ["Smallest review surface", "Plan allows 'extracted modules are listed in the PR' as an alternative"],
+      "cons": ["BipartiteGraph.jsx remains 1180 lines; does not satisfy the 400-line target"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Almost none. The export functions are pure DOM/string operations and easy to move."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Medium",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; the file has been growing through P1/P2 work"
+  },
+  "cross_references": {
+    "related_issues": [29],
+    "related_prs": [],
+    "note": "Hard dependency on #29 — the dashboard characterization tests are the safety net for the split. The plan task explicitly says 'do this before the BipartiteGraph split'."
+  },
+  "git_state": { "commit_sha": "7758c708ec42cd084ebd64f6d5f7678b9b3bd543", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "F-CLEAN-001: BipartiteGraph.jsx is 1309 lines, ~3.3x the 400-line plan target. Five concerns are tangled in one function component. Closes the CLEAN finding by extracting filters, export, and layout into three siblings.",
+    "options_considered": [
+      "Extract filters, export, and layout into three siblings under bipartite/",
+      "Extract only export.js and list filters + layout in the PR"
+    ],
+    "options_rejected": [
+      "No extraction at all (rejected: closes F-CLEAN-001)",
+      "Full rewrite of the graph (rejected: too large a diff, not a 'clean' refactor)"
+    ],
+    "selected_option": "Extract filters, export, and layout into three siblings under bipartite/",
+    "residual_risk": "The D3 draw effect closes over tooltip/isolatedView/selectedNode state. Moving it into useBipartiteLayout means the hook must accept a stable callback bag. If the closure breaks, the tooltip and isolated-view interactions will silently fail — #29's new App.jsx tab test will not catch this (it does not exercise BipartiteGraph), so the resolver must manually verify the Bipartite interactions after the split."
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "keywords": 10,
+    "file_refs": 2,
+    "duration_s": 0
+  }
+}

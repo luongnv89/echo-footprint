@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "run_id": "20260901T133431Z-4244",
+  "started_at": "2026-09-02T06:40:20Z",
+  "updated_at": "2026-09-02T08:25:47Z",
+  "invocation": "/auto-pilot --issues 38,39,40,41,42,43,44,45,46,47 (P4 phase)",
+  "mode": "balanced",
+  "limit": 10,
+  "queue": [
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "phase": "triage",
+  "lanes": [],
+  "current": null,
+  "processed": [
+    {
+      "issue": 44,
+      "outcome": "skipped",
+      "pr": null
+    },
+    {
+      "issue": 38,
+      "outcome": "merged",
+      "pr": 67
+    },
+    {
+      "issue": 39,
+      "outcome": "merged",
+      "pr": 68
+    },
+    {
+      "issue": 40,
+      "outcome": "merged",
+      "pr": 69
+    }
+  ],
+  "skip_list": [],
+  "report_path": null,
+  "borrowed_skills": []
+}

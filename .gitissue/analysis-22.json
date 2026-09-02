@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T19:07:53Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 22,
+    "title": "1.8: Make npm audit a real CI gate after W1/W4 security bumps",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:ci", "improvement", "phase:p1", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:23:48Z",
+    "updatedAt": "2026-09-01T13:26:37Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [".github/workflows/ci.yml"],
+    "modules": ["ci", "security"],
+    "keywords": [
+      "npm audit",
+      "continue-on-error",
+      "gate",
+      "allowlist",
+      "vite",
+      "security job",
+      "audit-level"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "relevance": "critical",
+      "role": "security job runs `npm audit --audit-level=moderate` with continue-on-error: true — findings never fail the build",
+      "match_reasons": [
+        "direct file reference",
+        "verified: security job lines ~150-155"
+      ]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "The security job's npm audit step is decorated with continue-on-error: true, so audit output is informational only — no new high/critical vulnerability can ever fail a PR. The gate was intentionally softened while known W1/W4 findings (issues #15-#17) were pending. Once those bumps land, the flag must be dropped (or replaced with a high+-only allowlist containing only vite until task 2.2).",
+    "details": "Current implementation: .github/workflows/ci.yml security job -> `run: npm audit --audit-level=moderate` with `continue-on-error: true` (verified). Limitation: the CI security gate is a no-op; a regression introducing a critical dependency vulnerability ships green. Change surface: single workflow file, one step. Constraint: dropping the flag before #15 (audit fix), #16 (vitest), and #17 (sharp) land will immediately redden CI on the still-open findings, so this issue is sequenced strictly after those three land. Option: fail on high+ with an explicit allowlist that contains only vite until the 2.2 vite major bump, if the strict gate is too noisy. Closes F-CI-004."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Drop continue-on-error",
+      "summary": "Remove continue-on-error: true from the npm audit step so audit failures fail the security job.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "delete continue-on-error: true from the Run npm audit step"
+        }
+      ],
+      "files_to_create": [],
+      "pros": ["One-line change; strongest gate", "No allowlist to maintain"],
+      "cons": [
+        "Any future moderate finding blocks PRs — may be noisier than desired"
+      ],
+      "complexity": "XS",
+      "risk": "Low",
+      "risk_details": "Pure CI config; gated on #15-#17 landing first or CI goes red immediately."
+    },
+    {
+      "number": 2,
+      "name": "High+ gate with vite-only allowlist",
+      "summary": "Run npm audit failing on high+ and filter allowlisted advisories (only vite, until task 2.2) via an audit script step.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "replace plain audit step with gate script honoring a small allowlist"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Blocks new high/critical while tolerating the known vite finding",
+        "Self-documenting exception"
+      ],
+      "cons": [
+        "Allowlist needs pruning at 2.2 or it rots",
+        "Slightly more moving parts than deleting one line"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Allowlist drift is the only hazard; bounded to one entry."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "XS",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "e158270",
+        "message": "refactor(ci): stabilize P0 build and CI config (#10, #11, #12, #13, #14) (#49)",
+        "author": "luongnv89",
+        "date": "2026-08-28T00:00:00Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      },
+      {
+        "sha": "103977a",
+        "message": "fix(ci): Fix TruffleHog secret scanning configuration",
+        "author": "luongnv89",
+        "date": "2026-08-10T00:00:00Z",
+        "files": [".github/workflows/ci.yml"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 3 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [15, 16, 17],
+    "related_issues": [
+      {
+        "number": 24,
+        "title": "1.10: Replace upload-release-asset@v1",
+        "relationship": "shared_files",
+        "shared_keywords": ["ci.yml", "workflow", "job"],
+        "confidence": "high"
+      },
+      {
+        "number": 15,
+        "title": "1.1: Apply non-force npm audit fix (W1)",
+        "relationship": "explicit_reference",
+        "shared_keywords": ["npm audit"],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 2,
+    "deps_traced": 0,
+    "keywords_extracted": 7,
+    "file_refs_extracted": 1,
+    "scan_duration_seconds": 4,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "e15827070ee7703f3d8fe6e0fb8586397e5fe99f",
+    "commit_sha_short": "e158270",
+    "captured_at": "2026-09-01T19:07:53Z"
+  },
+  "decision_record": {
+    "root_cause": "continue-on-error: true on the npm audit step turns the CI security gate into a no-op; the flag exists only to mask the findings #15-#17 will clear.",
+    "options_considered": [
+      { "number": 1, "name": "Drop continue-on-error" },
+      { "number": 2, "name": "High+ gate with vite-only allowlist" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Allowlist adds maintenance for a single known finding; strict gate is sufficient once #15-#17 land."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Drop continue-on-error",
+      "summary": "Delete the flag so npm audit findings fail the security job."
+    },
+    "residual_risk": "Gate must not be enabled before #15/#16/#17 merge, or CI fails on the still-open findings."
+  }
+}

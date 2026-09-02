@@ -1,0 +1,198 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 32,
+    "title": "3.4: Remove unused crypto and the SW geo-queue twin",
+    "type": "bug",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["bug", "dim:dead", "dim:sec", "phase:p3", "priority:medium"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:27:00Z",
+    "updatedAt": "2026-09-01T13:27:00Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [
+      "hashFacebookID",
+      "generateSalt",
+      "hashWithSalt",
+      "queueGeolocationLookup",
+      "getGeolocationForDomain",
+      "getQueueStats"
+    ],
+    "classes": [],
+    "file_refs": [
+      "src/lib/crypto.js",
+      "src/lib/geo-queue.js",
+      "src/dashboard/utils/geolocation.js",
+      "src/background/service-worker.js",
+      "tests/unit/crypto.test.js",
+      "tests/unit/geo-queue.test.js",
+      "tests/unit/geolocation.test.js"
+    ],
+    "modules": ["dexie", "ip-api.com", "chrome.runtime"],
+    "keywords": [
+      "hashFacebookID",
+      "unused",
+      "dead code",
+      "geo-queue",
+      "twin",
+      "duplicate",
+      "DEBUG_MODE",
+      "F-DEAD-001",
+      "F-DEAD-002",
+      "F-DEAD-003",
+      "F-SEC-002",
+      "remove",
+      "delete"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "src/lib/crypto.js",
+      "relevance": "critical",
+      "role": "Verified: contains hashFacebookID (line 12), generateSalt (line 36), hashWithSalt (line 53). Grep across the entire repo shows hashFacebookID is referenced ONLY by its own tests/unit/crypto.test.js (8 matches) and its own definition. No production import. Per the issue, either wire it into the service worker (it hashes Facebook c_user cookie values per the PRD) or delete it together with its tests.",
+      "match_reasons": ["direct file reference", "verified: zero production callers"]
+    },
+    {
+      "path": "src/lib/geo-queue.js",
+      "relevance": "critical",
+      "role": "Verified: 293 lines, exports queueGeolocationLookup, getGeolocationForDomain, getQueueStats, clearRateLimitHistory, clearPendingQueue. The dashboard has its own geolocation client (src/dashboard/utils/geolocation.js) with the same exports. service-worker.js has the import commented out (line 18). Only the tests/unit/geo-queue.test.js file imports from this module. Per #19 (closed), cleartext ip-api.com lookups were halted and the live fetcher is now opt-in. The SW has no use for this file — the dashboard handles all geolocation. Per the issue, delete this file plus its test.",
+      "match_reasons": ["direct file reference", "verified: only the geo-queue test imports it; service-worker import is commented out"]
+    },
+    {
+      "path": "src/dashboard/utils/geolocation.js",
+      "relevance": "high",
+      "role": "The survivor of the twin. 672 lines, the live geo client. This file is the canonical owner of GEO_API_URL after the cleanup. No change needed beyond removing its sibling.",
+      "match_reasons": ["the 'keep one geo client' target"]
+    },
+    {
+      "path": "src/background/service-worker.js",
+      "relevance": "medium",
+      "role": "Contains the commented-out import at line 18: '// import { queueGeolocationLookup, getQueueStats } from '../lib/geo-queue.js';'. Comment 'Geolocation removed per user request'. The commented line must be removed when geo-queue.js is deleted. Also references DEBUG_MODE (line 21) which is unrelated to crypto/geo and stays.",
+      "match_reasons": ["verified: commented import of the file being removed"]
+    },
+    {
+      "path": "tests/unit/crypto.test.js",
+      "relevance": "high",
+      "role": "Verified: 80 lines, 14 tests for hashFacebookID, generateSalt, hashWithSalt. Per the issue, this file goes away with crypto.js if hashFacebookID is not wired into production. If hashFacebookID is wired (alternative path), keep the test file. Recommended: delete (Option 1).",
+      "match_reasons": ["direct file reference", "verified: the only consumer of hashFacebookID"]
+    },
+    {
+      "path": "tests/unit/geo-queue.test.js",
+      "relevance": "high",
+      "role": "Verified: existing test for the SW geo-queue twin. Goes away with src/lib/geo-queue.js.",
+      "match_reasons": ["direct file reference", "verified: only consumer of geo-queue.js"]
+    },
+    {
+      "path": "tests/unit/geolocation.test.js",
+      "relevance": "low",
+      "role": "Test for the survivor (src/dashboard/utils/geolocation.js). Stays. May need to drop the now-missing src/lib/geo-queue import if it ever cross-imported.",
+      "match_reasons": ["survivor test"]
+    },
+    {
+      "path": "package.json",
+      "relevance": "low",
+      "role": "Coverage configuration may reference the deleted files. A quick scan of vitest.config.js is enough; no package.json change expected.",
+      "match_reasons": ["verify coverage exclude patterns after file deletions"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "F-DEAD-001/002/003, F-SEC-002: three concrete dead-code findings. (1) src/lib/crypto.js's hashFacebookID has zero production callers — only its own tests touch it. (2) src/lib/geo-queue.js is the SW twin of src/dashboard/utils/geolocation.js, and it has zero production callers (service-worker.js has it commented out; the dashboard never imports it). (3) DEBUG_MODE = true in geo-queue.js goes away with the file. (4) generateSalt and hashWithSalt are also dead in production (same reasoning). All three findings close with a single deletion PR. The alternative — wire hashFacebookID into the service worker to hash the c_user cookie — is not warranted by the PRD: the PRD says hashing is for cross-session identification, but no such use exists in code today, and adding one expands the privacy surface for a benefit not on the P3 roadmap.",
+    "details": "Verification: ripgrep across the entire repo (excluding node_modules) shows hashFacebookID referenced only in src/lib/crypto.js and tests/unit/crypto.test.js. No production import. queueGeolocationLookup is exported from both geo-queue.js and geolocation.js, but the only import of the SW version is tests/unit/geo-queue.test.js (the SW service-worker.js has the import commented out at line 18). The dashboard version (geolocation.js) is used by SettingsSheet (getGeoOptIn/setGeoOptIn) and MapView (via the geolocation helpers). The survivor is geolocation.js. Per the issue, 'delete or wire hashFacebookID' and 'delete geo-queue.js or the dashboard duplicate — keep one geo client'. The simplest path is delete + delete, which also drops two test files. Verification per the issue body: `rg -n \"hashFacebookID|geo-queue\" src tests` should return no matches (with --include '*.{js,jsx}' or similar). The bug label is appropriate because the dead code also implicates F-SEC-002: a SHA-256 hasher of Facebook IDs that is not used is a stale attack surface (a future wire-up would not be reviewed)."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Delete src/lib/crypto.js, src/lib/geo-queue.js, and their test files",
+      "summary": "rm the two production files and their two test files. Remove the commented import in service-worker.js. Result: hashFacebookID, generateSalt, hashWithSalt, and the entire SW geo twin are gone. The dashboard geolocation client (src/dashboard/utils/geolocation.js) is the sole geo client. Verification command `rg -n \"hashFacebookID|geo-queue\" src tests` returns nothing.",
+      "files_to_modify": [
+        { "path": "src/background/service-worker.js", "changes": "remove the commented import of geo-queue.js" }
+      ],
+      "files_to_delete": [
+        "src/lib/crypto.js",
+        "src/lib/geo-queue.js",
+        "tests/unit/crypto.test.js",
+        "tests/unit/geo-queue.test.js"
+      ],
+      "pros": [
+        "Smallest diff, closes all three DEAD findings and F-SEC-002",
+        "Removes a stale attack surface (the unwired hasher)",
+        "Reduces the test surface and the bundle weight"
+      ],
+      "cons": [
+        "If a future task wants the c_user hashing, the code must be re-introduced (low cost)"
+      ],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Pure deletion. Risks: (1) the commented import in service-worker.js is the only DOM-touching change. (2) Verify no other path imports the deleted modules — grep confirms not. (3) vitest.config.js may reference the deleted test files; check coverage include/exclude patterns."
+    },
+    {
+      "number": 2,
+      "name": "Wire hashFacebookID into the service worker, then delete geo-queue.js",
+      "summary": "Hash the c_user cookie value with hashFacebookID when the content script delivers a detection from facebook.com, store the hash as a non-PII identifier, and write the test fixture for the new path. Still delete src/lib/geo-queue.js because it has no caller. Larger PR; introduces a new behavior.",
+      "files_to_modify": [
+        { "path": "src/background/service-worker.js", "changes": "import hashFacebookID; on facebook.com detections, derive hash and store" },
+        { "path": "src/lib/db-sw.js", "changes": "add hashedFbId column to the schema (new version 3)" }
+      ],
+      "files_to_delete": ["src/lib/geo-queue.js", "tests/unit/geo-queue.test.js"],
+      "files_to_create": [
+        { "path": "tests/unit/service-worker-hash.test.js", "changes": "fixture for hashFacebookID wiring" }
+      ],
+      "pros": [
+        "Honors the PRD's privacy-first hashing intent",
+        "Closes F-DEAD-001, F-DEAD-002, F-DEAD-003, F-SEC-002"
+      ],
+      "cons": [
+        "Adds new functionality in a 'clean' task",
+        "Schema bump (v2→v3) means a new migration",
+        "Out of scope for P3 'clean & harden'"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "New behavior plus a schema migration in a 'cleanup' PR. The plan task is explicit: cleanup, not feature work."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; the dead code has been sitting since the v1 import of pixel-detector patterns"
+  },
+  "cross_references": {
+    "related_issues": [19],
+    "related_prs": [],
+    "note": "Issue body 'Depends on #19' is satisfied (issue #19 is closed: stop silent cleartext ip-api lookups). After this PR, only one GEO_API_URL remains (in src/dashboard/utils/geolocation.js) and the SW twin is gone. No dependency on #29, #30, or #31 — can land in parallel with any of them."
+  },
+  "git_state": { "commit_sha": "7758c708ec42cd084ebd64f6d5f7678b9b3bd543", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "F-DEAD-001/002/003 + F-SEC-002: hashFacebookID has no production caller, src/lib/geo-queue.js has no production caller, and DEBUG_MODE = true in geo-queue.js is dead. The dead SHA-256 hasher of Facebook IDs is also a stale privacy surface.",
+    "options_considered": [
+      "Delete src/lib/crypto.js, src/lib/geo-queue.js, and their test files",
+      "Wire hashFacebookID into the service worker, then delete geo-queue.js"
+    ],
+    "options_rejected": [
+      "Keep both and just remove DEBUG_MODE (rejected: does not close F-DEAD-001/002)",
+      "Move crypto.js to a shared lib for future use (rejected: still dead code today)"
+    ],
+    "selected_option": "Delete src/lib/crypto.js, src/lib/geo-queue.js, and their test files",
+    "residual_risk": "If a future task wants Facebook ID hashing, src/lib/crypto.js must be re-introduced (low cost). The deleted test file is the only consumer of the deleted code, so nothing else breaks. Verify that no bundle entry (manifest.json, vite.config.js, build-extension-scripts.js) references the deleted paths."
+  },
+  "scan_stats": {
+    "files_read": 5,
+    "keywords": 13,
+    "file_refs": 7,
+    "duration_s": 0
+  }
+}

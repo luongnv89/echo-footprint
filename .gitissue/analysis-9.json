@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T13:38:43Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 9,
+    "title": "Pre.3: Create AGENTS.md via /agent-config",
+    "type": "improvement",
+    "reporter": {
+      "login": "luongnv89",
+      "name": "Luong NGUYEN"
+    },
+    "labels": ["dim:env", "improvement", "phase:pre", "priority:high"],
+    "state": "open",
+    "createdAt": "2026-09-01T13:22:39Z",
+    "updatedAt": "2026-09-01T13:26:07Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": ["AGENTS.md"],
+    "modules": [],
+    "keywords": ["AGENTS.md", "agent-config", "operating", "rules", "commands"]
+  },
+  "affected_files": [
+    {
+      "path": "AGENTS.md",
+      "relevance": "critical",
+      "role": "agent operating-rules file to create",
+      "match_reasons": [
+        "direct file reference",
+        "file absent in working tree and in git history after removal"
+      ]
+    },
+    {
+      "path": "CLAUDE.md",
+      "relevance": "low",
+      "role": "sibling agent doc the agent-config pass keeps consistent with AGENTS.md",
+      "match_reasons": [
+        "related artifact touched by the same /agent-config skill pass"
+      ]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "No AGENTS.md exists today. A 7-line draft was added 2025-11-12 (ad05e1d 'feat: Complete Phase 0') and removed the same day (c6148c8 'Version 1.0.0'); that draft referenced TypeScript/React/Playwright conventions that no longer match this plain-JS, Vitest repo. The file should be recreated via the /agent-config skill with current operating rules and the accurate command set established by #7's install/run notes.",
+    "details": "Git history proves both the gap and the trap: AGENTS.md previously referenced IMPLEMENTATION_GUIDE stack conventions (TypeScript, Playwright) and 'run.py' style guidance that are foreign to the current repo (plain JS ESM, Vitest, npm scripts). Recreating from scratch via agent-config avoids resurrecting that stale content. Like #8, this file must reference verified commands, hence the dependency on #7. The agent-config skill pass can produce CLAUDE.md (approved in #8) and AGENTS.md together, which is the natural batching unit."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Create via /agent-config",
+      "summary": "Use the agent-config skill to generate AGENTS.md with current operating rules and the verified command set from #7's notes (npm run test:run).",
+      "files_to_create": [
+        {
+          "path": "AGENTS.md",
+          "changes": "Agent operating rules: workflow, commands (npm run test:run / lint / build), privacy and testing conventions"
+        }
+      ],
+      "files_to_modify": [],
+      "pros": [
+        "Follows the issue's mandated skill",
+        "Accurate commands via #7",
+        "Aligns naturally with the CLAUDE.md pass in #8"
+      ],
+      "cons": ["New file must stay in sync with CLAUDE.md"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Docs only; accuracy depends on #7 landing first"
+    },
+    {
+      "number": 2,
+      "name": "Restore old 7-line draft",
+      "summary": "Re-commit the AGENTS.md removed in c6148c8 with light edits.",
+      "files_to_create": [
+        { "path": "AGENTS.md", "changes": "Restore historical draft content" }
+      ],
+      "files_to_modify": [],
+      "pros": ["Fast, tiny diff"],
+      "cons": [
+        "Content references TypeScript/Playwright/run.py conventions that don't match the repo",
+        "Doesn't use /agent-config as instructed",
+        "Would bake drift back in"
+      ],
+      "complexity": "XS",
+      "risk": "Medium",
+      "risk_details": "Outdated conventions would mislead agents, repeating the Version-1.0.0 removal"
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "related_commits": [
+      {
+        "sha": "ad05e1d",
+        "message": "feat: Complete Phase 0 - Pixel Detection Core POC",
+        "author": "luongnv89",
+        "date": "2025-11-12T00:17:50Z",
+        "files": ["AGENTS.md"],
+        "type": "prior_fix_attempt"
+      },
+      {
+        "sha": "c6148c8",
+        "message": "Version 1.0.0",
+        "author": "luongnv89",
+        "date": "2025-11-12T22:29:23Z",
+        "files": ["AGENTS.md"],
+        "type": "related_change"
+      }
+    ],
+    "regression_candidate": null,
+    "already_addressed": null,
+    "domain_experts": [{ "author": "luongnv89", "commit_count": 2 }]
+  },
+  "cross_references": {
+    "blocks": [],
+    "blocked_by": [7],
+    "related_issues": [
+      {
+        "number": 7,
+        "title": "Pre.1: Write install/run notes for a clean checkout",
+        "relationship": "explicit_reference",
+        "shared_keywords": ["commands", "install", "run"],
+        "confidence": "high"
+      },
+      {
+        "number": 8,
+        "title": "Pre.2: Update CLAUDE.md via /agent-config",
+        "relationship": "shared_keywords",
+        "shared_keywords": ["agent-config", "commands"],
+        "confidence": "high"
+      }
+    ],
+    "resolved_by": [],
+    "triage_data_available": false,
+    "triage_timestamp": null
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "deps_traced": 0,
+    "keywords_extracted": 5,
+    "file_refs_extracted": 1,
+    "scan_duration_seconds": 6,
+    "scan_timed_out": false
+  },
+  "git_state": {
+    "branch": "main",
+    "commit_sha": "05d2ba03157bf37a9680a7fc1a595459c6deb7bc",
+    "commit_sha_short": "05d2ba0",
+    "captured_at": "2026-09-01T13:38:43Z"
+  },
+  "decision_record": {
+    "root_cause": "No AGENTS.md exists; the only prior version (added ad05e1d, removed c6148c8 on 2025-11-12) referenced TypeScript/Playwright/run.py conventions that no longer match this plain-JS, Vitest repo.",
+    "options_considered": [
+      { "number": 1, "name": "Create via /agent-config" },
+      { "number": 2, "name": "Restore old 7-line draft" }
+    ],
+    "options_rejected": [
+      {
+        "number": 2,
+        "reason": "Outdated conventions would mislead agents, repeating the Version-1.0.0 removal."
+      }
+    ],
+    "selected_option": {
+      "number": 1,
+      "name": "Create via /agent-config",
+      "summary": "Generate AGENTS.md with current operating rules and the verified command set from #7's notes."
+    },
+    "residual_risk": "AGENTS.md must stay in sync with CLAUDE.md; command accuracy depends on #7's notes."
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 26,
+    "title": "2.2: Upgrade Vite 5 \u2192 8",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p2", "priority:high"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:46Z",
+    "updatedAt": "2026-09-01T13:26:46Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [
+      "package.json",
+      "package-lock.json",
+      "vite.config.js",
+      "scripts/build-extension-scripts.js"
+    ],
+    "modules": ["vite", "esbuild", "rollup", "rolldown"],
+    "keywords": [
+      "vite",
+      "5.0.8",
+      "8",
+      "emptyOutDir",
+      "esbuild",
+      "content-script",
+      "service-worker",
+      "Rolldown",
+      "future: warn",
+      "migration"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": "package.json",
+      "relevance": "critical",
+      "role": "declares vite ^5.0.8 in devDependencies (verified line 56); must be raised to ^8.x",
+      "match_reasons": [
+        "direct file reference",
+        "verified: devDependencies entry"
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "relevance": "critical",
+      "role": "locks vite 5.0.8; must be regenerated against 8.x (verified lockfile presence)",
+      "match_reasons": ["direct file reference", "lockfile refresh required"]
+    },
+    {
+      "path": "vite.config.js",
+      "relevance": "high",
+      "role": "defines build.emptyOutDir: false, rollupOptions inputs for the dashboard, esbuild minifier, target es2022 (verified); emptyOutDir must remain false to avoid clobbering the esbuild-built content-script.js and service-worker.js",
+      "match_reasons": [
+        "direct file reference",
+        "verified: emptyOutDir false + rollupOptions + esbuild minify"
+      ]
+    },
+    {
+      "path": "scripts/build-extension-scripts.js",
+      "relevance": "high",
+      "role": "Invoked by npm run build before vite build; esbuild bundles content-script and service-worker into dist/. The plan requires this step to keep working after the Vite bump; if Vite 8's new Rolldown path changes asset output it must not collide with this step's outputs.",
+      "match_reasons": [
+        "inferred from build script",
+        "verified: scripts/ directory exists and is referenced in package.json scripts"
+      ]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "Vite 5.0.8 is one major-line (5 \u2192 8) behind; the project also pins React 18 and the dashboard uses plugin-react 4.2.1, so the migration must navigate the React 19 / plugin-react upgrade that #28 performs after this. The emptyOutDir: false constraint and the esbuild pre-step for content/service-worker files are the two non-obvious constraints; both should still work on Vite 8 since the build flow keeps the dashboard entry separate. Closes F-DEP-004.",
+    "details": "Current implementation: vite ^5.0.8 in devDependencies; @vitejs/plugin-react ^4.2.1; vitest ^3.2.7; build runs `node scripts/build-extension-scripts.js && vite build && node scripts/build-helper.js`. vite.config.js uses rollupOptions.input.dashboard (single dashboard entry), output.entryFileNames 'assets/[name]-[hash].js', minify 'esbuild', target 'es2022', build.emptyOutDir: false, and a '@' path alias. The extension's content-script and service-worker are produced by a separate esbuild pass into dist/ before Vite runs; the emptyOutDir: false is critical to keep those files. On Vite 7\u20138 the Rolldown compatibility layer is opt-in via `future: 'warn'`; if a two-step (5\u21927 then 7\u21928) is needed, the same config file works for both majors. The verify command `npm run build && npm audit` should no longer list vite \u22646.4.2. Risk: Vite 8 + plugin-react 4 may not be compatible with React 19, so the migration must land before #28. If plugin-react must move to v5, that is a separate bump \u2014 but it would still happen on this PR to keep the build green. Vite 8's behavior around `build.target` changed; the es2022 string is still accepted but worth verifying on the first CI run."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Single-step Vite 5 \u2192 8 with @vitejs/plugin-react upgrade",
+      "summary": "Bump vite to ^8.0.0, regenerate lockfile, raise @vitejs/plugin-react to a version compatible with both Vite 8 and React 18 (likely v4.3+ or v5 if it requires React 19), keep emptyOutDir: false and esbuild minify, run the build to confirm content-script.js / service-worker.js / dashboard all appear in dist/.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "vite ^5.0.8 -> ^8.0.0; @vitejs/plugin-react ^4.2.1 -> latest compatible"
+        },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated by npm install"
+        },
+        {
+          "path": "vite.config.js",
+          "changes": "no functional change unless Vite 8 rejects esbuild minify; if so switch to 'esbuild' string or drop the field"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Closest to the issue body's single-major spec",
+        "Fastest resolution"
+      ],
+      "cons": [
+        "@vitejs/plugin-react may need a coordinate bump with React 19 (issue #28)"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Two majors at once is a non-trivial migration; if plugin-react must move, that is co-dependency churn. The esbuild pre-step must keep emitting before Vite runs (build script order)."
+    },
+    {
+      "number": 2,
+      "name": "Two-step Vite 5 \u2192 7 \u2192 8 with future: warn",
+      "summary": "Bump to Vite 7 first with `future: 'warn'`, ship, then bump to Vite 8 in a follow-up. Allows catching Rolldown deprecations before they become errors.",
+      "files_to_modify": [
+        {
+          "path": "package.json",
+          "changes": "vite ^5.0.8 -> ^7 then -> ^8 across two PRs"
+        },
+        {
+          "path": "package-lock.json",
+          "changes": "regenerated by npm install (twice)"
+        }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Smaller blast radius per PR",
+        "Surfaces deprecations before they are errors"
+      ],
+      "cons": [
+        "Two PRs to close one issue",
+        "Defeats the single-major intent of the plan task"
+      ],
+      "complexity": "M",
+      "risk": "Medium",
+      "risk_details": "Same per-PR risk as Option 1, but spread; each step smaller."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "M",
+  "overall_risk": "Medium",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits; this is a fresh upgrade"
+  },
+  "cross_references": {
+    "related_issues": [25, 16, 28],
+    "related_prs": [],
+    "note": "Depends on #25 (Node 24) and #16 per the orchestrator. #28 (React 19) depends on this; the plugin-react version here should be chosen so that #28's React bump is unblocked."
+  },
+  "git_state": { "commit_sha": "HEAD", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "Vite 5 is two major versions behind Active LTS and has a known advisory (vite \u22646.4.2 in npm audit), so the build tool itself is a DEP finding regardless of feature parity.",
+    "options_considered": [
+      "Single-step Vite 5 \u2192 8 with @vitejs/plugin-react upgrade",
+      "Two-step Vite 5 \u2192 7 \u2192 8 with future: warn"
+    ],
+    "options_rejected": ["Stay on Vite 5 (rejected: closes F-DEP-004)"],
+    "selected_option": "Single-step Vite 5 \u2192 8 with @vitejs/plugin-react upgrade",
+    "residual_risk": "If Vite 8 + plugin-react 4 cannot compile under React 18, this PR must also bump plugin-react, which then has cross-PR implications with #28."
+  },
+  "scan_stats": {
+    "files_read": 4,
+    "keywords": 10,
+    "file_refs": 4,
+    "duration_s": 0
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "number": 11,
+  "title": "0.2: Declare engines.node",
+  "body": "<!-- gitissue:normalized v1 -->\n\n## Type\n\nimprovement (high confidence)\n\n## Description\n\nAdd `engines.node` (and optionally `packageManager`) so local Current Node 26 and CI Node 20 cannot silently diverge.\n\n**Current state:**\nSee the plan task in Reporter Context.\n\n**Proposed change:**\nAdd `engines.node` (and optionally `packageManager`) so local Current Node 26 and CI Node 20 cannot silently diverge.\n\n**Related issues:**\nCloses F-DEP-006\n\n> **Reporter Context**\n>\n> Type: improvement\n> Priority: medium\n> Effort: S\n> Labels: dim:dep, improvement, phase:p0, priority:medium\n> Plan task: 0.2 \u2014 Sprint 0 \u00b7 Phase P0 Stabilize \u00b7 MODERNIZATION_PLAN.md\n>\n> #### Task 0.2: Declare engines.node\n>\n> **Description**: Add `engines.node` (and optionally `packageManager`) so local Current Node 26 and CI Node 20 cannot silently diverge.\n>\n> **Closes**: `F-DEP-006`\n>\n> **Acceptance Criteria**:\n> - [ ] `package.json` contains `\"engines\": { \"node\": \">=22\" }` (or `>=24` once 2.1 lands \u2014 `>=22` is enough for M0)\n> - [ ] `npm run test:run` passes at \u2265 the rate recorded in 0.1\n>\n> **Dependencies**: 0.1\n>\n> **Effort**: S\n>\n> **Verify**: `node -e \"const p=require('./package.json'); if(!p.engines||!p.engines.node) process.exit(1)\"`\n>\n> Dependencies: 0.1\n> Closes: F-DEP-006\n\n## Acceptance Criteria\n\n- [ ] `package.json` contains `\"engines\": { \"node\": \">=22\" }` (or `>=24` once 2.1 lands \u2014 `>=22` is enough for M0) (high confidence)\n- [ ] `npm run test:run` passes at \u2265 the rate recorded in 0.1 (high confidence)\n\n## Metadata\n\n**Priority:** medium (high confidence)\n**Effort:** S (high confidence)\n**Suggested model:** GPT-5.5 Medium \u00b7 Opus 4.8 Low _(CursorBench 3.1, 2026-06-12 \u2014 advisory)_\n**Labels:** dim:dep, improvement, phase:p0, priority:medium (high confidence)\n\nPart of #6\n\nDepends on #10\n",
+  "labels": [
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdo6w",
+      "name": "dim:dep",
+      "description": "Closes a DEP finding",
+      "color": "0E8A16"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdrxA",
+      "name": "improvement",
+      "description": "Enhancement, hardening, or modernization",
+      "color": "A2EEEF"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdsGQ",
+      "name": "phase:p0",
+      "description": "Modernization phase P0 \u2014 Stabilize",
+      "color": "B60205"
+    },
+    {
+      "id": "LA_kwDOQUlFQ88AAAACzOdulg",
+      "name": "priority:medium",
+      "description": "Highest-severity closed finding is Medium",
+      "color": "FBCA04"
+    }
+  ],
+  "assignees": [],
+  "state": "OPEN",
+  "updatedAt": "2026-09-01T13:26:11Z"
+}

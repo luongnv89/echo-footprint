@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "timestamp": "2026-09-01T20:00:00Z",
+  "source": "/issue-analysis",
+  "issue": {
+    "number": 25,
+    "title": "2.1: Move CI (and engines) to Node 24 LTS (W3)",
+    "type": "improvement",
+    "reporter": { "login": "luongnv89", "name": "Luong NGUYEN" },
+    "labels": ["dim:dep", "improvement", "phase:p2", "priority:critical"],
+    "state": "OPEN",
+    "createdAt": "2026-09-01T13:26:44Z",
+    "updatedAt": "2026-09-01T13:26:44Z"
+  },
+  "research_status": {
+    "already_resolved": false,
+    "pr_in_progress": false,
+    "possibly_already_fixed": false,
+    "resolution_details": null
+  },
+  "extraction": {
+    "error_messages": [],
+    "functions": [],
+    "classes": [],
+    "file_refs": [".github/workflows/ci.yml", "package.json"],
+    "modules": ["ci", "engines"],
+    "keywords": [
+      "node-version",
+      "20",
+      "24",
+      "engines.node",
+      "Active LTS",
+      "Maintenance LTS",
+      "setup-node"
+    ]
+  },
+  "affected_files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "relevance": "critical",
+      "role": "Contains exactly 4 occurrences of node-version: '20' across lint, test, build, and release jobs (verified via grep -c, all in actions/setup-node@v4 steps)",
+      "match_reasons": [
+        "direct file reference",
+        "verified: 4 hits for node-version: '20'"
+      ]
+    },
+    {
+      "path": "package.json",
+      "relevance": "high",
+      "role": "engines.node currently '>=22' (verified line 61); already satisfies Node 24 LTS so the manifest may not need changes unless the team wants to tighten the floor",
+      "match_reasons": ["direct file reference", "verified: engines.node range"]
+    }
+  ],
+  "analysis": {
+    "type_specific": "current_impl",
+    "summary": "All four jobs (lint, test, build, release) pin node-version: '20' in actions/setup-node@v4; engines.node is already '>=22', so moving the runtime to Node 24 is a single-file sweep on the workflow plus a possible engines tightening. Closes F-DEP-001.",
+    "details": "Current implementation: ci.yml uses actions/setup-node@v4 with node-version: '20' and cache: 'npm' in each of the four jobs. Node 20 is past Active LTS and approaches Maintenance-only (EOL 2026-04-30). Node 24 is Active LTS through 2028-04-30. engines.node already declares '>=22', so the manifest does not block the bump; tightening to '>=24' is optional but worth doing to keep CI and local dev aligned. Verification: `grep -n 'node-version' .github/workflows/ci.yml` should show no '20' values, `npm run test:run` must pass at the recorded rate, and `node --version` in any CI log should be v24.x. Risk: native modules in devDependencies (canvas 3.x, sharp 0.35.x) typically have Node 24 prebuilt binaries by now; a build failure on `npm ci` would force fallback to Node 22 Maintenance LTS with a written rationale file as the issue body allows."
+  },
+  "options": [
+    {
+      "number": 1,
+      "name": "Bump all four jobs to Node 24 and tighten engines.node to >=24",
+      "summary": "Replace '20' with '24' in each setup-node step and change engines.node from '>=22' to '>=24' so the manifest matches CI.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "replace 4x node-version: '20' with node-version: '24'"
+        },
+        { "path": "package.json", "changes": "engines.node: '>=22' -> '>=24'" }
+      ],
+      "files_to_create": [],
+      "pros": [
+        "Single uniform runtime",
+        "Manifest matches CI floor",
+        "Smallest diff for the dependency wave"
+      ],
+      "cons": ["If canvas/sharp fail to install on Node 24, requires fallback"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Setup-node 24 is stable; the only real risk is a native module (canvas 3.2.0 or sharp 0.35.4) lacking Node 24 prebuilts, surfaced by a failed npm ci."
+    },
+    {
+      "number": 2,
+      "name": "Bump to Node 24 with deferred-rationale fallback path",
+      "summary": "Attempt Node 24; if the lockfile install fails on a native module, document the regression and pin to '22' Maintenance LTS in a docs/deferred-rationale.md note referenced from the workflow.",
+      "files_to_modify": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "changes": "node-version: '20' -> '24' (or '22' if install fails)"
+        },
+        {
+          "path": "package.json",
+          "changes": "engines.node: '>=22' -> '>=24' (or '>=22')"
+        }
+      ],
+      "files_to_create": [
+        {
+          "path": "docs/deferred-rationale.md",
+          "changes": "only if Node 24 install fails; explains why 22 is pinned"
+        }
+      ],
+      "pros": [
+        "Acceptance criteria already permit this path",
+        "Lower coordination cost if a native module blocks"
+      ],
+      "cons": ["Requires a manual gate before the fallback is finalized"],
+      "complexity": "S",
+      "risk": "Low",
+      "risk_details": "Same install risk as Option 1; mitigation is documented and pre-approved by the issue body."
+    }
+  ],
+  "recommended_option": 1,
+  "overall_complexity": "S",
+  "overall_risk": "Low",
+  "history": {
+    "commits": [],
+    "prior_fix_attempts": 0,
+    "note": "no related commits in the modernization wave prefix; this is a fresh sweep"
+  },
+  "cross_references": {
+    "related_issues": [14, 17],
+    "related_prs": [],
+    "note": "#14 and #17 are declared dependencies and are merged per the orchestrator's dependency declarations; this issue runs after them."
+  },
+  "git_state": { "commit_sha": "HEAD", "captured_at": "2026-09-01T20:00:00Z" },
+  "decision_record": {
+    "root_cause": "All four CI jobs pin the EOL-bound Node 20 while the project's own engines.node already declares >=22, leaving the project on an out-of-support runtime in CI.",
+    "options_considered": [
+      "Bump all four jobs to Node 24 and tighten engines.node to >=24",
+      "Bump to Node 24 with deferred-rationale fallback path"
+    ],
+    "options_rejected": [
+      "Defer the bump to a later sprint (rejected: F-DEP-001 is a Critical DEP finding)"
+    ],
+    "selected_option": "Bump all four jobs to Node 24 and tighten engines.node to >=24",
+    "residual_risk": "If canvas or sharp lacks Node 24 prebuilt binaries, npm ci will fail and the fix must revert to Node 22 with a rationale file."
+  },
+  "scan_stats": {
+    "files_read": 3,
+    "keywords": 7,
+    "file_refs": 2,
+    "duration_s": 0
+  }
+}
