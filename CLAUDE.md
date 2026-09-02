@@ -208,7 +208,7 @@ npm run lighthouse
 1. Update `src/lib/pixel-detector.js`:
 
 ```javascript
-export function detectFacebookPixel() {
+export function detectAllPlatforms() {
   const fbDomains = [
     'connect.facebook.net',
     'fbcdn.net',
