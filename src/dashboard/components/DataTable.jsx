@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import { getGeoCache } from '../utils/db.js';
 import '../styles/DataTable.css';
 import { sanitizeUrl, isSafeUrl } from '../utils/security.js';

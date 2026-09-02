@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { TRACKING_PLATFORMS } from '../../lib/pixel-detector.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/PlatformStats.css';
 
 function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
