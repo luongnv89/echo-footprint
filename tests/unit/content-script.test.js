@@ -494,11 +494,11 @@ describe('Content Script - multi-platform scan + dedup (issue #21)', () => {
     // content-script dedup logic via a small helper. (We can't drive the
     // 3-second setTimeout directly, so we exercise the same building
     // blocks the content script uses.)
-    const { detectFacebookPixel } = await import(
+    const { detectAllPlatforms } = await import(
       '../../src/lib/pixel-detector.js'
     );
 
-    const detections = detectFacebookPixel();
+    const detections = detectAllPlatforms();
     expect(detections).toHaveLength(2);
     const platforms = detections.map(d => d.platform).sort();
     expect(platforms).toEqual(['facebook', 'google']);
@@ -554,10 +554,10 @@ describe('Content Script - multi-platform scan + dedup (issue #21)', () => {
     observer.disconnect();
 
     // Now simulate the 3-second delayed scan surfacing the same Facebook script
-    const { detectFacebookPixel } = await import(
+    const { detectAllPlatforms } = await import(
       '../../src/lib/pixel-detector.js'
     );
-    const detections = detectFacebookPixel();
+    const detections = detectAllPlatforms();
     for (const det of detections) {
       const key = `${det.platform}|${det.pixelType}|${det.scriptSrc}`;
       if (seen.has(key)) continue;

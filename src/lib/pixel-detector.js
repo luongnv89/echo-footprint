@@ -592,40 +592,66 @@ function detectPlatformFromUrl(url) {
 }
 
 /**
+ * Pure helper: scan a list of elements (e.g. `script[src]`, `img[src]`,
+ * `iframe[src]`) and return the set of tracking platforms they reference.
+ *
+ * Extracted from the DOM-bound scanners so the matching logic can be
+ * unit-tested directly with realistic fixtures (issue #37, F-TEST-003).
+ *
+ * @param {Array<{src: string}>} elements - Elements to scan. Anything
+ *   without a truthy `src` is skipped, so callers can pass the result of
+ *   `querySelectorAll('script[src], img[src], iframe[src]')` unchanged.
+ * @param {(platform: string) => object} buildDetection - Builds the
+ *   detection shape for a matched platform. Kept injectable so callers
+ *   control the `method`/`pixelType` and any timing metadata.
+ * @returns {Array<object>} - Detections, one per unique platform, in the
+ *   order the platforms were first encountered.
+ */
+export function collectDetectionsFromElements(elements, buildDetection) {
+  if (!Array.isArray(elements) || typeof buildDetection !== 'function') {
+    return [];
+  }
+  const detections = [];
+  const seenPlatforms = new Set();
+  for (const el of elements) {
+    const src = el && el.src;
+    if (!src) continue;
+    const platform = detectPlatformFromUrl(src);
+    if (platform && !seenPlatforms.has(platform)) {
+      seenPlatforms.add(platform);
+      detections.push(buildDetection(platform, src));
+    }
+  }
+  return detections;
+}
+
+/**
  * Detect tracking pixels from script tags in the DOM
  * Returns one detection per unique platform (no DOM-node duplication).
  * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
-export function detectFacebookPixelScripts() {
+export function detectAllPlatformsScripts() {
   const startTime = performance.now();
 
   try {
     // Find all script tags
     const scripts = Array.from(document.querySelectorAll('script[src]'));
 
-    // Collect one entry per unique platform; break the inner loop after
-    // the first matching script for a given platform to keep detection fast.
-    const detections = [];
-    const seenPlatforms = new Set();
-
-    for (const script of scripts) {
-      const platform = detectPlatformFromUrl(script.src);
-      if (platform && !seenPlatforms.has(platform)) {
-        seenPlatforms.add(platform);
-        const detectionTime = performance.now() - startTime;
-        detections.push({
-          detected: true,
-          method: 'script',
-          domain: window.location.hostname || 'localhost',
-          url: window.location.href,
-          pixelType: 'script',
-          platform: platform,
-          scriptSrc: script.src,
-          detectionLatency: Math.round(detectionTime * 100) / 100,
-          timestamp: Date.now(),
-        });
-      }
-    }
+    const detections = collectDetectionsFromElements(
+      scripts,
+      (platform, src) => ({
+        detected: true,
+        method: 'script',
+        domain: window.location.hostname || 'localhost',
+        url: window.location.href,
+        pixelType: 'script',
+        platform: platform,
+        scriptSrc: src,
+        detectionLatency:
+          Math.round((performance.now() - startTime) * 100) / 100,
+        timestamp: Date.now(),
+      })
+    );
 
     return detections;
   } catch (error) {
@@ -639,54 +665,45 @@ export function detectFacebookPixelScripts() {
  * Returns one detection per unique platform (no DOM-node duplication).
  * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
-export function detectFacebookPixelElements() {
+export function detectAllPlatformsElements() {
   const startTime = performance.now();
 
   try {
     const detections = [];
-    const seenPlatforms = new Set();
 
     // Check for tracking pixels (img tags)
     const imgs = Array.from(document.querySelectorAll('img[src]'));
-    for (const img of imgs) {
-      const platform = detectPlatformFromUrl(img.src);
-      if (platform && !seenPlatforms.has(platform)) {
-        seenPlatforms.add(platform);
-        const detectionTime = performance.now() - startTime;
-        detections.push({
-          detected: true,
-          method: 'img',
-          domain: window.location.hostname || 'localhost',
-          url: window.location.href,
-          pixelType: 'beacon',
-          platform: platform,
-          scriptSrc: img.src,
-          detectionLatency: Math.round(detectionTime * 100) / 100,
-          timestamp: Date.now(),
-        });
-      }
-    }
+    detections.push(
+      ...collectDetectionsFromElements(imgs, (platform, src) => ({
+        detected: true,
+        method: 'img',
+        domain: window.location.hostname || 'localhost',
+        url: window.location.href,
+        pixelType: 'beacon',
+        platform: platform,
+        scriptSrc: src,
+        detectionLatency:
+          Math.round((performance.now() - startTime) * 100) / 100,
+        timestamp: Date.now(),
+      }))
+    );
 
     // Check for iframes
     const iframes = Array.from(document.querySelectorAll('iframe[src]'));
-    for (const iframe of iframes) {
-      const platform = detectPlatformFromUrl(iframe.src);
-      if (platform && !seenPlatforms.has(platform)) {
-        seenPlatforms.add(platform);
-        const detectionTime = performance.now() - startTime;
-        detections.push({
-          detected: true,
-          method: 'iframe',
-          domain: window.location.hostname || 'localhost',
-          url: window.location.href,
-          pixelType: 'iframe',
-          platform: platform,
-          scriptSrc: iframe.src,
-          detectionLatency: Math.round(detectionTime * 100) / 100,
-          timestamp: Date.now(),
-        });
-      }
-    }
+    detections.push(
+      ...collectDetectionsFromElements(iframes, (platform, src) => ({
+        detected: true,
+        method: 'iframe',
+        domain: window.location.hostname || 'localhost',
+        url: window.location.href,
+        pixelType: 'iframe',
+        platform: platform,
+        scriptSrc: src,
+        detectionLatency:
+          Math.round((performance.now() - startTime) * 100) / 100,
+        timestamp: Date.now(),
+      }))
+    );
 
     return detections;
   } catch (error) {
@@ -700,13 +717,13 @@ export function detectFacebookPixelElements() {
  * Combines script and element scans and returns one entry per platform.
  * @returns {Array<Object>} - Array of detection results (possibly empty)
  */
-export function detectFacebookPixel() {
+export function detectAllPlatforms() {
   const startTime = performance.now();
 
   try {
     // Try script detection first (most common)
-    const scripts = detectFacebookPixelScripts();
-    const elements = detectFacebookPixelElements();
+    const scripts = detectAllPlatformsScripts();
+    const elements = detectAllPlatformsElements();
 
     // Merge while keeping at most one entry per platform.
     const merged = [];

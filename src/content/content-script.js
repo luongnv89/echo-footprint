@@ -5,7 +5,7 @@
  */
 
 import {
-  detectFacebookPixel,
+  detectAllPlatforms,
   observeDynamicPixels,
 } from '../lib/pixel-detector.js';
 import { isDomainExcluded } from './domain-utils.js';
@@ -198,7 +198,7 @@ async function runPixelDetection() {
   debug(`Found ${allScripts.length} scripts on page`);
 
   // Run pixel detection — now returns an array of all matching platforms
-  const detections = detectFacebookPixel();
+  const detections = detectAllPlatforms();
 
   const totalTime = performance.now() - startTime;
   debug(`Detection completed in ${Math.round(totalTime * 100) / 100}ms`);
