@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EchoFootPrint — Privacy Policy</title>
+    <meta name="description" content="EchoFootPrint Privacy Policy — all data stays local in your browser." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -23,9 +24,7 @@
         <div class="nav">
           <a href="./index.html">Home</a>
         </div>
-        <a class="button primary" href="./index.html#install"
-          >Install Extension</a
-        >
+        <a class="button primary" href="./index.html#install">Install Extension</a>
       </div>
     </header>
 
@@ -34,101 +33,112 @@
         <p class="eyebrow">Privacy Policy</p>
         <h1>EchoFootPrint</h1>
         <p class="body" style="max-width: 760px">
-          This Privacy Policy explains how EchoFootPrint handles data inside the
-          browser extension. EchoFootPrint is designed to be privacy-first: data
-          stays on your device, and nothing is transmitted to our servers.
+          Last updated: November 2025 (GDPR refresh).
+          EchoFootPrint is a privacy-first browser extension that helps you understand
+          how ad and analytics platforms track you across the web. The extension has
+          <strong>no backend</strong>; everything runs locally in your browser.
         </p>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>What data we collect</h3>
+        <h3>0. Data Controller and Contact</h3>
         <ul>
-          <li>
-            Detected tracking events: URL, domain, timestamp, pixel type,
-            platform label.
+          <li><strong>Controller:</strong> EchoFootPrint project maintainer</li>
+          <li><strong>Contact:</strong> Open an issue at
+            <a href="https://github.com/luongnv89/echo-footprint" target="_blank" rel="noopener">
+              github.com/luongnv89/echo-footprint
+            </a>
           </li>
-          <li>
-            Optional geolocation cache: country/region lookups for detected
-            domains (stored locally).
-          </li>
-          <li>Preferences: view selections, filters, and excluded domains.</li>
+        </ul>
+      </section>
+
+      <section class="container card" style="margin-bottom: 24px">
+        <h3>1. Data the Extension Accesses</h3>
+        <p>While you browse, EchoFootPrint inspects pages to detect tracking pixels and related scripts. To do this, the extension may access and store locally:</p>
+        <ul>
+          <li>URL of the page you are visiting when a supported tracking pixel is detected.</li>
+          <li>Domain names of third-party resources (e.g., ad and analytics scripts).</li>
+          <li>Technical details about the detection: pixel type/detection method, platform (ad/analytics network), and timestamp.</li>
         </ul>
         <p class="body muted">
-          We do not collect names, emails, passwords, or account identifiers.
+          The extension does <strong>not</strong> read or store form contents, passwords, payment details, or other sensitive input fields.
         </p>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>How data is used</h3>
+        <h3>2. Purpose and Legal Basis (GDPR)</h3>
         <ul>
-          <li>
-            Render visualizations (radial graph, bipartite graph, map, data
-            table).
-          </li>
-          <li>
-            Calculate statistics (platform counts, domain totals, time filters).
-          </li>
-          <li>Support CSV export when you choose to download your data.</li>
+          <li><strong>Purpose:</strong> Provide you with a local view of tracking activity (graphs, tables, stats) in your browser.</li>
+          <li><strong>Legal basis:</strong> Art. 6(1)(b) GDPR (performance of a service you request) and Art. 6(1)(f) GDPR (legitimate interest in understanding and limiting tracking), applied strictly client-side.</li>
+          <li>No automated decision-making or profiling beyond the on-device statistics and visualizations you control.</li>
         </ul>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>Where data is stored</h3>
-        <p>All data is stored locally in your browser using IndexedDB.</p>
-        <p class="body muted">
-          There is no cloud sync, telemetry, analytics, or server-side storage.
-        </p>
-      </section>
-
-      <section class="container card" style="margin-bottom: 24px">
-        <h3>Permissions</h3>
+        <h3>3. How Data Is Stored and Processed</h3>
         <ul>
-          <li>
-            <strong>Access to all sites you visit</strong> — required to detect
-            tracking pixels as pages load.
-          </li>
-          <li>
-            <strong>Storage (IndexedDB)</strong> — required to store detections,
-            settings, and geo cache locally.
-          </li>
+          <li>All data stays <strong>locally on your device</strong> in your browser's IndexedDB.</li>
+          <li>No data is sent to external servers, third-party analytics, or cloud storage, <strong>with one exception you control</strong>: the optional Map View geolocation lookup described in Section 4.</li>
+          <li>Nothing else leaves your device unless you export it.</li>
         </ul>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>Your controls</h3>
+        <h3>4. Sharing and Subprocessors</h3>
         <ul>
-          <li>Pause or resume detection at any time.</li>
           <li>
-            Exclude domains (e.g., localhost, internal networks) from detection.
+            <strong>Optional Map View geolocation (off by default).</strong> The Map View can resolve the approximate location of the sites you have tracked. This feature is <strong>disabled by default</strong>. Only when you explicitly enable it in Settings → Privacy does the extension send the <strong>domain names</strong> of tracked sites to the ip-api.com geolocation service (<a href="https://ip-api.com" target="_blank" rel="noopener">ip-api.com</a>) over HTTPS to fetch their approximate location. As with any web request, the lookup itself reveals your IP address to that service; no page contents, cookie data, or your stored detection history are ever sent. Results are cached locally for 7 days, the lookup respects a 45 requests/minute limit, and you can disable the feature or clear the cache at any time in Settings.
           </li>
-          <li>Clear all data via Settings → Clear All Data.</li>
-          <li>Export your data as CSV from the Data Table.</li>
+          <li>The extension does <strong>not</strong> share data with advertisers, data brokers, or other third parties.</li>
+          <li>No other subprocessors are used. There is no backend.</li>
         </ul>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>Data sharing</h3>
-        <p>
-          EchoFootPrint does not share or sell any data. Nothing is transmitted
-          to the developers or third parties.
-        </p>
+        <h3>5. Retention</h3>
+        <ul>
+          <li>Data persists locally until you clear it in Settings or uninstall the extension.</li>
+          <li>Uninstalling the extension removes its local storage (IndexedDB) and deletes the data.</li>
+        </ul>
       </section>
 
       <section class="container card" style="margin-bottom: 24px">
-        <h3>Contact</h3>
-        <p>
-          For privacy questions or requests, please reach out through the same
-          channel where you obtained the extension (support email or form
-          provided with your build).
-        </p>
+        <h3>6. User Controls and Data Subject Rights</h3>
+        <p>Inside the extension:</p>
+        <ul>
+          <li>Clear all stored detections from Settings (danger zone / clear data).</li>
+          <li>Export your data (e.g., CSV) for your own use.</li>
+        </ul>
+        <p>GDPR rights (where applicable):</p>
+        <ul>
+          <li>Access, rectification, erasure, restriction, objection, and data portability.</li>
+          <li>Because data never leaves your device, exercising these rights generally means using the in-extension delete/export tools or uninstalling the extension.</li>
+          <li>You may lodge a complaint with your supervisory authority if you believe your rights are violated.</li>
+        </ul>
+      </section>
+
+      <section class="container card" style="margin-bottom: 24px">
+        <h3>7. Permissions</h3>
+        <ul>
+          <li>Page access is used only to observe and log when known tracking pixels load.</li>
+          <li>Local storage (IndexedDB) is used to save detection history and settings on your device.</li>
+          <li>The extension does not inject additional trackers or send telemetry.</li>
+        </ul>
+      </section>
+
+      <section class="container card" style="margin-bottom: 24px">
+        <h3>8. Changes to This Policy</h3>
+        <p>Policy updates are published in the repository. Material changes will be noted in the Chrome Web Store listing when required.</p>
       </section>
 
       <section class="container card" style="margin-bottom: 48px">
-        <h3>Policy updates</h3>
+        <h3>9. Contact</h3>
         <p>
-          We may update this policy to reflect product changes or legal
-          requirements. Updated versions will be provided with the extension
-          build or via the landing page.
+          For privacy questions or requests, open an issue at
+          <a href="https://github.com/luongnv89/echo-footprint" target="_blank" rel="noopener">
+            github.com/luongnv89/echo-footprint
+          </a>.
+          Since data does not leave your device, you may be asked to use the in-extension export/delete features to fulfill your request.
         </p>
       </section>
     </main>
