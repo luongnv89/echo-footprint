@@ -39,6 +39,37 @@ function SortIcon({ active, asc }) {
   );
 }
 
+const SORT_COLUMNS = [
+  { column: 'timestamp', label: 'Latest Timestamp' },
+  { column: 'domain', label: 'Domain' },
+  { column: 'url', label: 'URL' },
+  { column: 'platform', label: 'Platform' },
+  { column: 'pixelType', label: 'Pixel Type' },
+  { column: 'region', label: 'Region' },
+  { column: 'count', label: 'Count' },
+];
+
+function SortableHeader({ column, label, sortBy, sortOrder, onSort }) {
+  const active = sortBy === column;
+  const direction = sortOrder === 'asc' ? 'ascending' : 'descending';
+  const ariaLabel = active
+    ? `Sort by ${label}, ${direction}`
+    : `Sort by ${label}`;
+  return (
+    <th aria-sort={active ? direction : 'none'}>
+      <button
+        type="button"
+        className={`sort-button ${active ? 'active' : ''}`}
+        onClick={() => onSort(column)}
+        aria-label={ariaLabel}
+      >
+        {label}
+        <SortIcon active={active} asc={sortOrder === 'asc'} />
+      </button>
+    </th>
+  );
+}
+
 function DataTable({ footprints, stats }) {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('timestamp'); // 'timestamp','domain','url','platform','pixelType','region','count'
@@ -195,6 +226,12 @@ function DataTable({ footprints, stats }) {
       setSortBy(column);
       setSortOrder('desc');
     }
+  };
+
+  const toggleGroup = key => {
+    const next = new Set(expandedGroups);
+    next.has(key) ? next.delete(key) : next.add(key);
+    setExpandedGroups(next);
   };
 
   const handlePageChange = newPage => {
@@ -376,97 +413,16 @@ function DataTable({ footprints, stats }) {
         <table className="data-table" role="table">
           <thead>
             <tr>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'timestamp' ? 'active' : ''}`}
-                  onClick={() => handleSort('timestamp')}
-                  aria-label="Sort by latest timestamp"
-                >
-                  Latest Timestamp
-                  <SortIcon
-                    active={sortBy === 'timestamp'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'domain' ? 'active' : ''}`}
-                  onClick={() => handleSort('domain')}
-                  aria-label="Sort by domain"
-                >
-                  Domain
-                  <SortIcon
-                    active={sortBy === 'domain'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'url' ? 'active' : ''}`}
-                  onClick={() => handleSort('url')}
-                  aria-label="Sort by URL"
-                >
-                  URL
-                  <SortIcon
-                    active={sortBy === 'url'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'platform' ? 'active' : ''}`}
-                  onClick={() => handleSort('platform')}
-                  aria-label="Sort by platform"
-                >
-                  Platform
-                  <SortIcon
-                    active={sortBy === 'platform'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'pixelType' ? 'active' : ''}`}
-                  onClick={() => handleSort('pixelType')}
-                  aria-label="Sort by pixel type"
-                >
-                  Pixel Type
-                  <SortIcon
-                    active={sortBy === 'pixelType'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'region' ? 'active' : ''}`}
-                  onClick={() => handleSort('region')}
-                  aria-label="Sort by region"
-                >
-                  Region
-                  <SortIcon
-                    active={sortBy === 'region'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'count' ? 'active' : ''}`}
-                  onClick={() => handleSort('count')}
-                  aria-label="Sort by count"
-                >
-                  Count
-                  <SortIcon
-                    active={sortBy === 'count'}
-                    asc={sortOrder === 'asc'}
-                  />
-                </button>
-              </th>
+              {SORT_COLUMNS.map(({ column, label }) => (
+                <SortableHeader
+                  key={column}
+                  column={column}
+                  label={label}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                />
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -486,37 +442,39 @@ function DataTable({ footprints, stats }) {
                 <React.Fragment key={group.key}>
                   <tr
                     className={`group-row ${isExpanded ? 'expanded' : ''}`}
-                    onClick={() => {
-                      const next = new Set(expandedGroups);
-                      next.has(group.key)
-                        ? next.delete(group.key)
-                        : next.add(group.key);
-                      setExpandedGroups(next);
-                    }}
-                    tabIndex={0}
-                    role="button"
-                    aria-expanded={isExpanded}
-                    onKeyDown={e => {
-                      if (
-                        e.target !== e.currentTarget &&
-                        e.target.closest('a, button, input, select, textarea')
-                      ) {
-                        return;
-                      }
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        const next = new Set(expandedGroups);
-                        next.has(group.key)
-                          ? next.delete(group.key)
-                          : next.add(group.key);
-                        setExpandedGroups(next);
-                      }
-                    }}
+                    onClick={() => toggleGroup(group.key)}
                   >
                     <td
                       className="timestamp-cell"
                       data-label="Latest Timestamp"
                     >
+                      <button
+                        type="button"
+                        className="group-expand-btn"
+                        aria-expanded={isExpanded}
+                        aria-label={
+                          isExpanded
+                            ? `Collapse group ${group.domain}`
+                            : `Expand group ${group.domain}`
+                        }
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleGroup(group.key);
+                        }}
+                      >
+                        <svg
+                          className="group-expand-icon"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          aria-hidden="true"
+                        >
+                          <path d="M6 3.5l5 4.5-5 4.5" />
+                        </svg>
+                      </button>
                       {formatTimestamp(group.latestTimestamp)}
                     </td>
                     <td className="domain-cell" data-label="Domain">

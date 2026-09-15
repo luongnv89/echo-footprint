@@ -53,10 +53,16 @@ function SettingsSheet({ isOpen, onClose, stats }) {
   const [isPaused, setIsPaused] = useState(false);
   const [geoOptIn, setGeoOptInLocal] = useState(false);
 
+  const handleClose = () => {
+    setShowClearConfirm(false);
+    setConfirmText('');
+    onClose();
+  };
+
   const sheetRef = useRef(null);
   const handleSheetKeyDown = useSheetFocus({
     isOpen,
-    onClose,
+    onClose: handleClose,
     dialogRef: sheetRef,
   });
 
@@ -170,12 +176,6 @@ function SettingsSheet({ isOpen, onClose, stats }) {
     } finally {
       setIsClearing(false);
     }
-  };
-
-  const handleClose = () => {
-    setShowClearConfirm(false);
-    setConfirmText('');
-    onClose();
   };
 
   const formatBytes = bytes => {
@@ -299,7 +299,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                   onClick={togglePause}
                   role="switch"
                   aria-checked={!isPaused}
-                  aria-label={isPaused ? 'Resume detection' : 'Pause detection'}
+                  aria-label="Detection"
                   type="button"
                 >
                   <span className="toggle-slider" aria-hidden="true"></span>
@@ -509,10 +509,15 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                   <li>All geolocation cache</li>
                   <li>All settings and preferences</li>
                 </ul>
-                <p className="confirm-instruction">
+                <label
+                  htmlFor="settings-confirm-delete"
+                  className="confirm-instruction"
+                >
                   Type <strong>DELETE</strong> to confirm:
-                </p>
+                </label>
                 <input
+                  id="settings-confirm-delete"
+                  name="confirm-delete"
                   type="text"
                   className="confirm-input input"
                   value={confirmText}

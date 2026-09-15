@@ -193,6 +193,35 @@
   white-space: nowrap;
 }
 
+.group-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: var(--space-2);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.group-expand-btn:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+}
+
+.group-expand-btn[aria-expanded='true'] .group-expand-icon {
+  transform: rotate(90deg);
+}
+
+.group-expand-icon {
+  transition: transform var(--duration-fast) ease;
+}
+
 .domain-badge {
   font-size: var(--text-base);
   font-weight: 500;
@@ -367,9 +396,17 @@
     padding: var(--space-4);
   }
 
-  /* Stacked-card layout */
+  /* Stacked-card layout — keep column headers in the a11y tree */
   .data-table thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .data-table tbody tr {

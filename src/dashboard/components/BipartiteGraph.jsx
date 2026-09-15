@@ -367,8 +367,9 @@ function BipartiteGraph({ footprints, stats }) {
             <div className="filter-panel panel">
               <div className="panel-title">Filters</div>
               <div className="filter-section">
-                <label>Search domains</label>
+                <label htmlFor="bipartite-filter-search">Search domains</label>
                 <input
+                  id="bipartite-filter-search"
                   type="text"
                   placeholder="Filter domains..."
                   value={searchTerm}
@@ -378,8 +379,9 @@ function BipartiteGraph({ footprints, stats }) {
               </div>
 
               <div className="filter-section">
-                <label>Platform</label>
+                <label htmlFor="bipartite-filter-platform">Platform</label>
                 <select
+                  id="bipartite-filter-platform"
                   value={selectedPlatformFilter}
                   onChange={e => setSelectedPlatformFilter(e.target.value)}
                   className="filter-select select"
@@ -394,10 +396,11 @@ function BipartiteGraph({ footprints, stats }) {
               </div>
 
               <div className="filter-section">
-                <label>
+                <label htmlFor="bipartite-filter-min-detections">
                   Min detections: <span className="num">{minDetections}</span>
                 </label>
                 <input
+                  id="bipartite-filter-min-detections"
                   type="range"
                   min="1"
                   max="50"
@@ -436,8 +439,9 @@ function BipartiteGraph({ footprints, stats }) {
             <div className="sort-panel panel">
               <div className="panel-title">Sort</div>
               <div className="sort-section">
-                <label>Domains</label>
+                <label htmlFor="bipartite-sort-domains">Domains</label>
                 <select
+                  id="bipartite-sort-domains"
                   value={domainSort}
                   onChange={e => setDomainSort(e.target.value)}
                   className="sort-select select"
@@ -449,8 +453,9 @@ function BipartiteGraph({ footprints, stats }) {
               </div>
 
               <div className="sort-section">
-                <label>Platforms</label>
+                <label htmlFor="bipartite-sort-platforms">Platforms</label>
                 <select
+                  id="bipartite-sort-platforms"
                   value={platformSort}
                   onChange={e => setPlatformSort(e.target.value)}
                   className="sort-select select"

@@ -8,6 +8,12 @@ import { useSheetFocus } from '../hooks/useSheetFocus.js';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/HelpSheet.css';
 
+const HELP_TABS = [
+  { id: 'getting-started', label: 'Getting Started' },
+  { id: 'features', label: 'Features' },
+  { id: 'faq', label: 'FAQ' },
+];
+
 function HelpSheet({ isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('getting-started');
   const platformNames = useMemo(() => {
@@ -68,31 +74,35 @@ function HelpSheet({ isOpen, onClose }) {
         </div>
 
         {/* Tab Navigation */}
-        <div className="help-tabs segmented">
-          <button
-            className={`help-tab segmented-item pressable ${activeTab === 'getting-started' ? 'active' : ''}`}
-            onClick={() => setActiveTab('getting-started')}
-          >
-            Getting Started
-          </button>
-          <button
-            className={`help-tab segmented-item pressable ${activeTab === 'features' ? 'active' : ''}`}
-            onClick={() => setActiveTab('features')}
-          >
-            Features
-          </button>
-          <button
-            className={`help-tab segmented-item pressable ${activeTab === 'faq' ? 'active' : ''}`}
-            onClick={() => setActiveTab('faq')}
-          >
-            FAQ
-          </button>
+        <div
+          className="help-tabs segmented"
+          role="tablist"
+          aria-label="Help sections"
+        >
+          {HELP_TABS.map(tab => (
+            <button
+              key={tab.id}
+              id={`help-tab-${tab.id}`}
+              type="button"
+              role="tab"
+              className={`help-tab segmented-item pressable ${activeTab === tab.id ? 'active' : ''}`}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`help-panel-${tab.id}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Content */}
         <div className="sheet-body help-content">
           {activeTab === 'getting-started' && (
-            <section>
+            <section
+              id="help-panel-getting-started"
+              role="tabpanel"
+              aria-labelledby="help-tab-getting-started"
+            >
               <h3>Welcome to EchoFootPrint</h3>
               <p>
                 EchoFootPrint helps you visualize how you're being tracked
@@ -153,7 +163,11 @@ function HelpSheet({ isOpen, onClose }) {
           )}
 
           {activeTab === 'features' && (
-            <section>
+            <section
+              id="help-panel-features"
+              role="tabpanel"
+              aria-labelledby="help-tab-features"
+            >
               <h3>Features Guide</h3>
 
               <div className="feature-item">
@@ -227,7 +241,11 @@ function HelpSheet({ isOpen, onClose }) {
           )}
 
           {activeTab === 'faq' && (
-            <section>
+            <section
+              id="help-panel-faq"
+              role="tabpanel"
+              aria-labelledby="help-tab-faq"
+            >
               <h3>Frequently Asked Questions</h3>
 
               <div className="faq-item">

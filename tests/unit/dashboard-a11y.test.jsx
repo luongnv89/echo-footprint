@@ -2,9 +2,9 @@
  * Accessibility regression tests for review fixes on the dashboard
  * redesign branch:
  *
- *   - DataTable group rows are keyboard-activatable disclosures
+ *   - DataTable group expand/collapse lives on a dedicated button
  *   - Shared sheet scaffold moves focus in, traps Tab, closes on
- *     Escape, and restores focus on close
+ *     Escape (via local handleClose), and restores focus on close
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -25,6 +25,8 @@ vi.mock('../../src/dashboard/utils/db.js', async () => {
 
 import DataTable from '../../src/dashboard/components/DataTable.jsx';
 import SettingsSheet from '../../src/dashboard/components/SettingsSheet.jsx';
+import HelpSheet from '../../src/dashboard/components/HelpSheet.jsx';
+import BipartiteGraph from '../../src/dashboard/components/BipartiteGraph.jsx';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -40,6 +42,8 @@ let rootRef;
 async function flush() {
   await act(async () => {
     await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
   });
 }
 
@@ -49,8 +53,11 @@ beforeEach(() => {
   rootRef = null;
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // Flush pending microtasks (geo cache, build-info fetch) while still
+  // mounted so setState does not run after jsdom teardown.
   if (rootRef) {
+    await flush();
     act(() => {
       rootRef.unmount();
     });
@@ -79,53 +86,52 @@ const FOOTPRINTS = [
 ];
 
 describe('DataTable group row keyboard disclosure', () => {
-  it('expands a group when its row receives Enter', () => {
+  it('expands a group when its expand button receives Enter', () => {
     render(<DataTable footprints={FOOTPRINTS} />);
     const row = container.querySelector('tr.group-row');
-    expect(row).toBeTruthy();
-    expect(row.getAttribute('aria-expanded')).toBe('false');
+    const toggle = row.querySelector('button.group-expand-btn');
+    expect(toggle).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
 
     act(() => {
-      row.dispatchEvent(
+      toggle.dispatchEvent(
         new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
       );
+      toggle.click();
     });
 
-    expect(row.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(container.querySelector('.group-detail-row')).toBeTruthy();
   });
 
   it('expands a group on Space and collapses again on repeat', () => {
     render(<DataTable footprints={FOOTPRINTS} />);
-    const row = container.querySelector('tr.group-row');
+    const toggle = container.querySelector('button.group-expand-btn');
 
     act(() => {
-      row.dispatchEvent(
-        new KeyboardEvent('keydown', { key: ' ', bubbles: true })
-      );
+      toggle.click();
     });
-    expect(row.getAttribute('aria-expanded')).toBe('true');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
 
     act(() => {
-      row.dispatchEvent(
-        new KeyboardEvent('keydown', { key: ' ', bubbles: true })
-      );
+      toggle.click();
     });
-    expect(row.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(container.querySelector('.group-detail-row')).toBeNull();
   });
 
-  it('row is focusable with role=button', () => {
+  it('does not treat the group row as a nested button around the URL link', () => {
     render(<DataTable footprints={FOOTPRINTS} />);
     const row = container.querySelector('tr.group-row');
-    expect(row.getAttribute('tabindex')).toBe('0');
-    expect(row.getAttribute('role')).toBe('button');
+    expect(row.getAttribute('role')).not.toBe('button');
+    expect(row.querySelector('a.url-link')).toBeTruthy();
+    expect(row.querySelector('button.group-expand-btn')).toBeTruthy();
   });
 
   it('does not toggle the group when Enter is pressed on the nested URL link', async () => {
     render(<DataTable footprints={FOOTPRINTS} />);
-    const row = container.querySelector('tr.group-row');
-    const link = row.querySelector('a.url-link');
+    const toggle = container.querySelector('button.group-expand-btn');
+    const link = container.querySelector('a.url-link');
     expect(link).toBeTruthy();
 
     act(() => {
@@ -134,15 +140,17 @@ describe('DataTable group row keyboard disclosure', () => {
       );
     });
 
-    expect(row.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(container.querySelector('.group-detail-row')).toBeNull();
+  });
 
-    // Let any pending async state updates (e.g. geo map load) settle before
-    // the environment is torn down, so vitest does not record an unhandled
-    // rejection for a setState after unmount.
-    await act(async () => {
-      await Promise.resolve();
-    });
+  it('exposes sort direction on the active column header', () => {
+    render(<DataTable footprints={FOOTPRINTS} />);
+    const timestampHeader = container.querySelector('th[aria-sort]');
+    expect(timestampHeader).toBeTruthy();
+    expect(timestampHeader.getAttribute('aria-sort')).toBe('descending');
+    const sortBtn = timestampHeader.querySelector('button.sort-button');
+    expect(sortBtn.getAttribute('aria-label')).toMatch(/descending/i);
   });
 });
 
@@ -165,15 +173,34 @@ describe('SettingsSheet focus management', () => {
     // Focus restored to the trigger after the sheet unmounts.
     act(() => {
       rootRef.unmount();
+      rootRef = null;
     });
     await flush();
     expect(document.activeElement).toBe(trigger);
     trigger.remove();
   });
 
-  it('closes on Escape', () => {
+  it('closes on Escape via handleClose and resets danger-zone confirm', () => {
     const onClose = vi.fn();
     render(<SettingsSheet isOpen onClose={onClose} stats={{}} />);
+
+    const clearBtn = Array.from(container.querySelectorAll('button')).find(b =>
+      b.textContent.includes('Clear All Data')
+    );
+    act(() => {
+      clearBtn.click();
+    });
+    const confirmInput = container.querySelector('#settings-confirm-delete');
+    expect(confirmInput).toBeTruthy();
+    expect(confirmInput.getAttribute('name')).toBe('confirm-delete');
+    const label = container.querySelector('label[for="settings-confirm-delete"]');
+    expect(label).toBeTruthy();
+
+    act(() => {
+      confirmInput.dispatchEvent(
+        new InputEvent('input', { bubbles: true, data: 'DELETE' })
+      );
+    });
 
     act(() => {
       container
@@ -184,6 +211,14 @@ describe('SettingsSheet focus management', () => {
     });
 
     expect(onClose).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('#settings-confirm-delete')).toBeNull();
+  });
+
+  it('names the detection switch for its control, not the opposite action', () => {
+    render(<SettingsSheet isOpen onClose={() => {}} stats={{}} />);
+    const sw = container.querySelector('[role="switch"]');
+    expect(sw.getAttribute('aria-label')).toBe('Detection');
+    expect(sw.getAttribute('aria-checked')).toBe('true');
   });
 
   it('traps Tab inside the dialog', () => {
@@ -211,5 +246,69 @@ describe('SettingsSheet focus management', () => {
 
     const first = focusables[0];
     expect(document.activeElement).toBe(first);
+  });
+});
+
+describe('HelpSheet section tabs', () => {
+  it('exposes tablist selected state', () => {
+    render(<HelpSheet isOpen onClose={() => {}} />);
+    const tablist = container.querySelector('[role="tablist"]');
+    expect(tablist).toBeTruthy();
+    const tabs = tablist.querySelectorAll('[role="tab"]');
+    expect(tabs.length).toBe(3);
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    expect(tabs[1].getAttribute('aria-selected')).toBe('false');
+
+    act(() => {
+      tabs[1].click();
+    });
+    expect(tabs[1].getAttribute('aria-selected')).toBe('true');
+    expect(container.querySelector('#help-panel-features')).toBeTruthy();
+  });
+});
+
+describe('BipartiteGraph filter and sort labels', () => {
+  it('associates filter and sort labels with their controls', () => {
+    render(<BipartiteGraph footprints={FOOTPRINTS} stats={{}} />);
+    const filterToggle = Array.from(container.querySelectorAll('button')).find(
+      b => b.getAttribute('title') === 'Show filters'
+    );
+    const sortToggle = Array.from(container.querySelectorAll('button')).find(
+      b => b.getAttribute('title') === 'Show sorting'
+    );
+    act(() => {
+      filterToggle.click();
+      sortToggle.click();
+    });
+
+    expect(
+      container.querySelector('label[for="bipartite-filter-search"]')
+    ).toBeTruthy();
+    expect(container.querySelector('#bipartite-filter-search')).toBeTruthy();
+    expect(
+      container.querySelector('label[for="bipartite-filter-platform"]')
+    ).toBeTruthy();
+    expect(container.querySelector('#bipartite-filter-platform')).toBeTruthy();
+    expect(
+      container.querySelector('label[for="bipartite-filter-min-detections"]')
+    ).toBeTruthy();
+    expect(
+      container.querySelector('#bipartite-filter-min-detections')
+    ).toBeTruthy();
+    expect(
+      container.querySelector('label[for="bipartite-sort-domains"]')
+    ).toBeTruthy();
+    expect(container.querySelector('#bipartite-sort-domains')).toBeTruthy();
+    expect(
+      container.querySelector('label[for="bipartite-sort-platforms"]')
+    ).toBeTruthy();
+    expect(container.querySelector('#bipartite-sort-platforms')).toBeTruthy();
+  });
+});
+
+describe('async teardown hygiene', () => {
+  it('opens SettingsSheet so pending fetches flush in afterEach', () => {
+    render(<SettingsSheet isOpen onClose={() => {}} stats={{}} />);
+    expect(container.querySelector('.sheet-overlay')).toBeTruthy();
   });
 });

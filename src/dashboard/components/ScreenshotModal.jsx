@@ -16,9 +16,16 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef(null);
   const sheetRef = useRef(null);
+
+  const handleClose = () => {
+    setScreenshot(null);
+    setCopied(false);
+    onClose();
+  };
+
   const handleSheetKeyDown = useSheetFocus({
     isOpen,
-    onClose,
+    onClose: handleClose,
     dialogRef: sheetRef,
   });
 
@@ -129,13 +136,6 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
         'Failed to copy to clipboard. Your browser may not support this feature.'
       );
     }
-  };
-
-  // Close modal and reset state
-  const handleClose = () => {
-    setScreenshot(null);
-    setCopied(false);
-    onClose();
   };
 
   if (!isOpen) return null;
