@@ -374,7 +374,7 @@ Proprietary and confidential. All rights reserved. Redistribution or public post
 
 ## Status
 
-**Current Version**: 1.2.0
+**Current Version**: 1.3.0
 **Status**: Production-ready with 50-platform detection
 **Next Milestone**: Chrome Web Store submission
 

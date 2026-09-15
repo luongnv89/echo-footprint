@@ -7,6 +7,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { getGeoCache } from '../utils/db.js';
+import { cssVar, platformChipStyle } from '../utils/theme.js';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/RadialGraph.css';
 
@@ -88,7 +89,7 @@ function RadialGraph({
     if (focusedPlatform) {
       const platformId = focusedPlatform.platform || focusedPlatform.platformId;
       const platformConfig = TRACKING_PLATFORMS[platformId] || {
-        color: '#4a90e2',
+        color: cssVar('--info'),
         name: 'Unknown',
       };
 
@@ -116,7 +117,7 @@ function RadialGraph({
       const platformDomains = Object.keys(platformDomainMap).map(
         (domain, index) => {
           const config = TRACKING_PLATFORMS[platformId] || {
-            color: '#4a90e2',
+            color: cssVar('--info'),
             name: 'Unknown',
           };
           const count = platformDomainMap[domain];
@@ -148,13 +149,13 @@ function RadialGraph({
         type: 'user',
         label: 'You',
         size: 20,
-        color: '#00d4aa',
+        color: cssVar('--accent'),
       };
 
       const domainNodes = Object.keys(domainCounts).map((domain, index) => {
         const platform = domainPlatforms[domain] || 'facebook';
         const platformConfig = TRACKING_PLATFORMS[platform] || {
-          color: '#4a90e2',
+          color: cssVar('--info'),
           name: 'Unknown',
         };
 
@@ -242,7 +243,7 @@ function RadialGraph({
         .attr('markerHeight', 8)
         .append('svg:path')
         .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-        .attr('fill', '#666');
+        .attr('fill', 'rgba(255,255,255,0.22)');
     }
 
     // Create/reuse zoom group (only set up zoom behavior once)
@@ -306,7 +307,7 @@ function RadialGraph({
         enter =>
           enter
             .append('line')
-            .attr('stroke', '#666')
+            .attr('stroke', 'rgba(255,255,255,0.22)')
             .attr('stroke-opacity', 0.6)
             .attr('stroke-width', d => Math.min(d.value / 2, 3))
             .attr('marker-end', 'url(#arrowhead)'),
@@ -355,7 +356,7 @@ function RadialGraph({
             })
             .on('mouseleave', function () {
               setTooltip({ visible: false, x: 0, y: 0, data: null });
-              d3.select(this).select('circle').attr('stroke-width', 2);
+              d3.select(this).select('circle').attr('stroke-width', 1.5);
             })
             .on('click', (event, d) => {
               if (d.type === 'domain') {
@@ -383,8 +384,8 @@ function RadialGraph({
             .append('circle')
             .attr('r', d => d.size)
             .attr('fill', d => d.color)
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2);
+            .attr('stroke', cssVar('--surface-1'))
+            .attr('stroke-width', 1.5);
           enterG
             .append('text')
             .attr('class', 'node-label')
@@ -398,7 +399,7 @@ function RadialGraph({
             .attr('font-weight', d =>
               d.type === 'platform-center' ? 'bold' : 'normal'
             )
-            .attr('fill', '#e0e0e0')
+            .attr('fill', cssVar('--text-secondary'))
             .attr('pointer-events', 'none');
           enterG
             .filter(d => d.type === 'domain' || d.type === 'platform-center')
@@ -412,7 +413,7 @@ function RadialGraph({
               d.type === 'platform-center' ? '12px' : '10px'
             )
             .attr('font-weight', 'bold')
-            .attr('fill', '#fff')
+            .attr('fill', cssVar('--text-primary'))
             .attr('pointer-events', 'none');
           return enterG.transition().duration(500).attr('opacity', 1);
         },
@@ -494,7 +495,7 @@ function RadialGraph({
       id: platformId,
       ...(TRACKING_PLATFORMS[platformId] || {
         name: 'Unknown',
-        color: '#4a90e2',
+        color: cssVar('--info'),
       }),
     }));
   }, [footprints]);
@@ -508,10 +509,10 @@ function RadialGraph({
 
   return (
     <div className="radial-graph-container">
-      <div className="graph-controls">
+      <div className="graph-controls panel">
         {focusedPlatform && (
           <button
-            className="control-button back-button"
+            className="btn btn-sm pressable back-button"
             onClick={() => {
               setFocusedPlatform(null);
               if (onPlatformFocusChange) {
@@ -520,29 +521,49 @@ function RadialGraph({
             }}
             title="Back to user view"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
-              />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 3.5L5.5 8l4.5 4.5" />
             </svg>
-            <span style={{ marginLeft: '5px' }}>Back to User View</span>
+            <span>All platforms</span>
           </button>
         )}
         <button
-          className="control-button"
+          className="icon-btn pressable"
+          type="button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg
-              .transition()
-              .duration(750)
-              .call(d3.zoom().transform, d3.zoomIdentity);
+            const reset = selection =>
+              selection.call(d3.zoom().transform, d3.zoomIdentity);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              reset(svg);
+            } else {
+              reset(svg.transition().duration(750));
+            }
           }}
           title="Reset zoom"
+          aria-label="Reset zoom"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
-            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
+            <path d="M13.7 1.8v2.6h-2.6" />
           </svg>
         </button>
         <div className="zoom-hint">
@@ -552,27 +573,16 @@ function RadialGraph({
         </div>
       </div>
 
-      {/* Platform Legend */}
-      {detectedPlatforms.length > 0 && (
-        <div className="platform-legend">
-          <div className="legend-title">Platforms Detected:</div>
-          {detectedPlatforms.map(platform => (
-            <div key={platform.id} className="legend-item">
-              <div
-                className="legend-color"
-                style={{ backgroundColor: platform.color }}
-              ></div>
-              <span className="legend-label">{platform.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <svg ref={svgRef} className="radial-graph-svg"></svg>
+      <svg
+        ref={svgRef}
+        className="radial-graph-svg"
+        role="img"
+        aria-label="Radial graph of tracking domains connected to you"
+      ></svg>
 
       {tooltip.visible && tooltip.data && (
         <div
-          className="graph-tooltip"
+          className="graph-tooltip tooltip"
           style={{
             left: `${tooltip.x + 10}px`,
             top: `${tooltip.y + 10}px`,
@@ -588,11 +598,15 @@ function RadialGraph({
               <>
                 <strong>{tooltip.data.label}</strong>
                 <p>{tooltip.data.count} tracking events</p>
-                <p style={{ color: tooltip.data.color }}>
+                <p
+                  style={{
+                    color: platformChipStyle(tooltip.data.color).color,
+                  }}
+                >
                   Platform: {tooltip.data.platformName}
                 </p>
                 {typeof tooltip.data.domainTotal === 'number' && (
-                  <p style={{ fontSize: '11px', marginTop: '5px' }}>
+                  <p>
                     Showing {tooltip.data.domainTotal} domain
                     {tooltip.data.domainTotal === 1 ? '' : 's'} from this
                     platform
@@ -604,57 +618,95 @@ function RadialGraph({
                 <strong>{tooltip.data.label}</strong>
                 <p>{tooltip.data.count} tracking events</p>
                 {tooltip.data.platformName && (
-                  <p style={{ color: tooltip.data.color }}>
+                  <p
+                    style={{
+                      color: platformChipStyle(tooltip.data.color).color,
+                    }}
+                  >
                     Platform: {tooltip.data.platformName}
                   </p>
                 )}
-                <p style={{ fontSize: '11px', marginTop: '5px' }}>
-                  Double-click to explore platform
-                </p>
+                <p className="tooltip-hint">Double-click to explore platform</p>
               </>
             )}
           </div>
         </div>
       )}
 
-      {selectedNode && selectedNode.type === 'domain' && (
-        <div className="node-detail-panel">
-          <div className="detail-panel-header">
-            <h3>{selectedNode.label}</h3>
-            <button
-              className="close-button"
-              onClick={() => setSelectedNode(null)}
-            >
-              ×
-            </button>
-          </div>
-          <div className="detail-panel-body">
-            {selectedNode.platformName && (
-              <div className="detail-stat">
-                <span className="detail-label">Platform:</span>
-                <span
-                  className="detail-value"
-                  style={{ color: selectedNode.color }}
-                >
-                  {selectedNode.platformName}
-                </span>
+      {/* Left column: legend top, detail panel pinned to bottom */}
+      <div className="graph-side">
+        {/* Platform Legend */}
+        {detectedPlatforms.length > 0 && (
+          <div className="platform-legend panel">
+            <div className="panel-title">Platforms</div>
+            {detectedPlatforms.map(platform => (
+              <div key={platform.id} className="legend-item">
+                <div
+                  className="legend-color"
+                  style={{ backgroundColor: platform.color }}
+                ></div>
+                <span className="legend-label">{platform.name}</span>
               </div>
-            )}
-            <div className="detail-stat">
-              <span className="detail-label">Tracking Events:</span>
-              <span className="detail-value">{selectedNode.count}</span>
+            ))}
+          </div>
+        )}
+
+        {selectedNode && selectedNode.type === 'domain' && (
+          <div className="node-detail-panel panel">
+            <div className="detail-panel-header">
+              <h3 title={selectedNode.label}>{selectedNode.label}</h3>
+              <button
+                className="icon-btn pressable"
+                onClick={() => setSelectedNode(null)}
+                aria-label="Close details"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                >
+                  <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+                </svg>
+              </button>
             </div>
-            <div className="detail-stat">
-              <span className="detail-label">First Seen:</span>
-              <span className="detail-value">
-                {new Date(
-                  footprints.find(f => f.domain === selectedNode.id)?.timestamp
-                ).toLocaleDateString()}
-              </span>
+            <div className="detail-panel-body">
+              <div className="kv">
+                {selectedNode.platformName && (
+                  <div className="kv-row">
+                    <span className="kv-label">Platform</span>
+                    <span
+                      className="kv-value"
+                      style={{
+                        color: platformChipStyle(selectedNode.color).color,
+                      }}
+                    >
+                      {selectedNode.platformName}
+                    </span>
+                  </div>
+                )}
+                <div className="kv-row">
+                  <span className="kv-label">Tracking events</span>
+                  <span className="kv-value num">{selectedNode.count}</span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-label">First seen</span>
+                  <span className="kv-value">
+                    {new Date(
+                      footprints.find(
+                        f => f.domain === selectedNode.id
+                      )?.timestamp
+                    ).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

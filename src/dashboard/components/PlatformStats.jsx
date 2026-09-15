@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
+import { cssVar } from '../utils/theme.js';
 import '../styles/PlatformStats.css';
 
 function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
@@ -43,7 +44,7 @@ function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
         {sortedPlatforms.map(platformId => {
           const platform = TRACKING_PLATFORMS[platformId] || {
             name: platformId,
-            color: '#999',
+            color: cssVar('--info'),
           };
           const data = platformStats[platformId];
           const percentage = (
@@ -58,11 +59,12 @@ function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
           return (
             <div
               key={platformId}
-              className={`platform-item ${isSelected ? 'active' : ''} ${onPlatformSelect ? 'clickable' : ''}`}
+              className={`platform-item ${isSelected ? 'active' : ''} ${onPlatformSelect ? 'clickable pressable' : ''}`}
               onClick={() => handlePlatformClick(platformId, data)}
               role={onPlatformSelect ? 'button' : undefined}
+              aria-pressed={onPlatformSelect ? isSelected : undefined}
               tabIndex={onPlatformSelect ? 0 : undefined}
-              onKeyPress={e => {
+              onKeyDown={e => {
                 if (onPlatformSelect && (e.key === 'Enter' || e.key === ' ')) {
                   e.preventDefault();
                   handlePlatformClick(platformId, data);
@@ -77,16 +79,18 @@ function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
                   ></div>
                   <span className="platform-name">{platform.name}</span>
                 </div>
-                <span className="platform-percentage">{percentage}%</span>
+                <span className="platform-percentage num">{percentage}%</span>
               </div>
               <div className="platform-stats-details">
                 <span className="stat-item">
-                  <strong>{data.detections}</strong> detection
+                  <strong className="num">{data.detections}</strong> detection
                   {data.detections !== 1 ? 's' : ''}
                 </span>
-                <span className="stat-separator">•</span>
+                <span className="stat-separator" aria-hidden="true">
+                  ·
+                </span>
                 <span className="stat-item">
-                  <strong>{data.domains}</strong> domain
+                  <strong className="num">{data.domains}</strong> domain
                   {data.domains !== 1 ? 's' : ''}
                 </span>
               </div>

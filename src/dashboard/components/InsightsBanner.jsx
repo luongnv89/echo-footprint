@@ -12,13 +12,10 @@ export default function InsightsBanner({ messages, visible, onDismiss }) {
   if (!visible) return null;
   return (
     <div
-      className="dashboard-insights-banner"
+      className="dashboard-insights"
       role="status"
       aria-label="Tracking insights"
     >
-      <div className="insight-banner-icon" aria-hidden="true">
-        ★
-      </div>
       <div className="dashboard-insights-text">
         {messages && messages.length > 0 ? (
           messages.map((msg, idx) => (
@@ -32,11 +29,22 @@ export default function InsightsBanner({ messages, visible, onDismiss }) {
       </div>
       <button
         type="button"
-        className="insight-dismiss"
+        className="insight-dismiss pressable"
         aria-label="Dismiss insights"
         onClick={onDismiss}
       >
-        ×
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 4l8 8M12 4l-8 8" />
+        </svg>
       </button>
     </div>
   );

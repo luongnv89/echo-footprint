@@ -6,6 +6,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import { getGeoCache } from '../utils/db.js';
+import { cssVar, platformChipStyle } from '../utils/theme.js';
 import '../styles/DataTable.css';
 import { sanitizeUrl, isSafeUrl } from '../utils/security.js';
 
@@ -17,6 +18,58 @@ export const escapeCSV = field => {
   }
   return `"${str.replace(/"/g, '""')}"`;
 };
+
+// 12px chevron; rotated up when ascending. Dimmed until the column is sorted.
+function SortIcon({ active, asc }) {
+  return (
+    <svg
+      className={`sort-icon${active ? ' active' : ''}${active && asc ? ' asc' : ''}`}
+      width="12"
+      height="12"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 6.5l4 4 4-4" />
+    </svg>
+  );
+}
+
+const SORT_COLUMNS = [
+  { column: 'timestamp', label: 'Latest Timestamp' },
+  { column: 'domain', label: 'Domain' },
+  { column: 'url', label: 'URL' },
+  { column: 'platform', label: 'Platform' },
+  { column: 'pixelType', label: 'Pixel Type' },
+  { column: 'region', label: 'Region' },
+  { column: 'count', label: 'Count' },
+];
+
+function SortableHeader({ column, label, sortBy, sortOrder, onSort }) {
+  const active = sortBy === column;
+  const direction = sortOrder === 'asc' ? 'ascending' : 'descending';
+  const ariaLabel = active
+    ? `Sort by ${label}, ${direction}`
+    : `Sort by ${label}`;
+  return (
+    <th aria-sort={active ? direction : 'none'}>
+      <span className="sort-header-text">{label}</span>
+      <button
+        type="button"
+        className={`sort-button ${active ? 'active' : ''}`}
+        onClick={() => onSort(column)}
+        aria-label={ariaLabel}
+      >
+        {label}
+        <SortIcon active={active} asc={sortOrder === 'asc'} />
+      </button>
+    </th>
+  );
+}
 
 function DataTable({ footprints, stats }) {
   const [search, setSearch] = useState('');
@@ -176,6 +229,12 @@ function DataTable({ footprints, stats }) {
     }
   };
 
+  const toggleGroup = key => {
+    const next = new Set(expandedGroups);
+    next.has(key) ? next.delete(key) : next.add(key);
+    setExpandedGroups(next);
+  };
+
   const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -260,42 +319,56 @@ function DataTable({ footprints, stats }) {
       <div className="table-controls">
         <div className="search-box">
           <svg
-            width="16"
-            height="16"
+            width="14"
+            height="14"
             viewBox="0 0 16 16"
-            fill="currentColor"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
             className="search-icon"
           >
-            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+            <circle cx="7" cy="7" r="5" />
+            <path d="M11 11l3.5 3.5" />
           </svg>
           <input
             type="text"
             placeholder="Search by domain, URL, pixel type, or region..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="search-input"
+            className="search-input input"
             aria-label="Search tracking data"
           />
           {search && (
             <button
-              className="clear-search"
+              className="clear-search icon-btn pressable"
               onClick={() => setSearch('')}
               aria-label="Clear search"
             >
-              ×
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              >
+                <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+              </svg>
             </button>
           )}
         </div>
 
         <div className="table-actions">
           <button
-            className="export-button"
+            className="export-button btn pressable"
             onClick={handleExportCSV}
             disabled={groupedData.length === 0}
             aria-label="Export grouped data to CSV with injection protections"
             title="Export data to CSV (formulas escaped for security)"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
               <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z" />
             </svg>
@@ -303,7 +376,7 @@ function DataTable({ footprints, stats }) {
           </button>
 
           <select
-            className="per-page-select"
+            className="per-page-select select"
             value={itemsPerPage}
             onChange={e => {
               setItemsPerPage(Number(e.target.value));
@@ -323,13 +396,15 @@ function DataTable({ footprints, stats }) {
       <div className="results-info">
         {search ? (
           <span>
-            Showing {groupedData.length} grouped results (from{' '}
-            {footprints.length} detections)
+            Showing <span className="num">{groupedData.length}</span> grouped
+            results (from <span className="num">{footprints.length}</span>{' '}
+            detections)
           </span>
         ) : (
           <span>
-            Showing all {groupedData.length} grouped results (from{' '}
-            {footprints.length} detections)
+            Showing all <span className="num">{groupedData.length}</span>{' '}
+            grouped results (from{' '}
+            <span className="num">{footprints.length}</span> detections)
           </span>
         )}
       </div>
@@ -339,90 +414,16 @@ function DataTable({ footprints, stats }) {
         <table className="data-table" role="table">
           <thead>
             <tr>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'timestamp' ? 'active' : ''}`}
-                  onClick={() => handleSort('timestamp')}
-                  aria-label="Sort by latest timestamp"
-                >
-                  Latest Timestamp
-                  <span className="sort-icon">
-                    {sortBy === 'timestamp' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'domain' ? 'active' : ''}`}
-                  onClick={() => handleSort('domain')}
-                  aria-label="Sort by domain"
-                >
-                  Domain
-                  <span className="sort-icon">
-                    {sortBy === 'domain' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'url' ? 'active' : ''}`}
-                  onClick={() => handleSort('url')}
-                  aria-label="Sort by URL"
-                >
-                  URL
-                  <span className="sort-icon">
-                    {sortBy === 'url' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'platform' ? 'active' : ''}`}
-                  onClick={() => handleSort('platform')}
-                  aria-label="Sort by platform"
-                >
-                  Platform
-                  <span className="sort-icon">
-                    {sortBy === 'platform' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'pixelType' ? 'active' : ''}`}
-                  onClick={() => handleSort('pixelType')}
-                  aria-label="Sort by pixel type"
-                >
-                  Pixel Type
-                  <span className="sort-icon">
-                    {sortBy === 'pixelType' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'region' ? 'active' : ''}`}
-                  onClick={() => handleSort('region')}
-                  aria-label="Sort by region"
-                >
-                  Region
-                  <span className="sort-icon">
-                    {sortBy === 'region' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
-              <th>
-                <button
-                  className={`sort-button ${sortBy === 'count' ? 'active' : ''}`}
-                  onClick={() => handleSort('count')}
-                  aria-label="Sort by count"
-                >
-                  Count
-                  <span className="sort-icon">
-                    {sortBy === 'count' && sortOrder === 'asc' ? '↑' : '↓'}
-                  </span>
-                </button>
-              </th>
+              {SORT_COLUMNS.map(({ column, label }) => (
+                <SortableHeader
+                  key={column}
+                  column={column}
+                  label={label}
+                  sortBy={sortBy}
+                  sortOrder={sortOrder}
+                  onSort={handleSort}
+                />
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -436,28 +437,48 @@ function DataTable({ footprints, stats }) {
                 'Unknown';
               const platformColor =
                 TRACKING_PLATFORMS[group.platform || 'facebook']?.color ||
-                '#4a90e2';
+                cssVar('--info');
 
               return (
                 <React.Fragment key={group.key}>
-                  <tr
-                    className={`group-row ${isExpanded ? 'expanded' : ''}`}
-                    onClick={() => {
-                      const next = new Set(expandedGroups);
-                      next.has(group.key)
-                        ? next.delete(group.key)
-                        : next.add(group.key);
-                      setExpandedGroups(next);
-                    }}
-                    aria-expanded={isExpanded}
-                  >
-                    <td className="timestamp-cell">
+                  <tr className={`group-row ${isExpanded ? 'expanded' : ''}`}>
+                    <td
+                      className="timestamp-cell"
+                      data-label="Latest Timestamp"
+                    >
+                      <button
+                        type="button"
+                        className="group-expand-btn"
+                        aria-expanded={isExpanded}
+                        aria-label={
+                          isExpanded
+                            ? `Collapse group ${group.domain}`
+                            : `Expand group ${group.domain}`
+                        }
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleGroup(group.key);
+                        }}
+                      >
+                        <svg
+                          className="group-expand-icon"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          aria-hidden="true"
+                        >
+                          <path d="M6 3.5l5 4.5-5 4.5" />
+                        </svg>
+                      </button>
                       {formatTimestamp(group.latestTimestamp)}
                     </td>
-                    <td className="domain-cell">
+                    <td className="domain-cell" data-label="Domain">
                       <span className="domain-badge">{group.domain}</span>
                     </td>
-                    <td className="url-cell">
+                    <td className="url-cell" data-label="URL">
                       {isSafeUrl(url) ? (
                         <a
                           href={sanitizeUrl(url)}
@@ -484,28 +505,31 @@ function DataTable({ footprints, stats }) {
                         </span>
                       )}
                     </td>
-                    <td className="platform-cell">
+                    <td className="platform-cell" data-label="Platform">
                       <span
-                        className="platform-badge"
-                        style={{
-                          backgroundColor: platformColor,
-                          color: '#fff',
-                        }}
+                        className="platform-badge chip"
+                        style={platformChipStyle(platformColor)}
                       >
                         {platformName}
                       </span>
                     </td>
-                    <td className="pixel-type-cell">{group.pixelType}</td>
-                    <td className="region-cell">{group.region}</td>
-                    <td className="count-cell">{group.count}</td>
+                    <td className="pixel-type-cell" data-label="Pixel Type">
+                      {group.pixelType}
+                    </td>
+                    <td className="region-cell" data-label="Region">
+                      {group.region}
+                    </td>
+                    <td className="count-cell num" data-label="Count">
+                      {group.count}
+                    </td>
                   </tr>
                   {isExpanded && (
                     <tr className="group-detail-row">
                       <td colSpan={7}>
                         <div className="group-detail-header">
                           <span>
-                            Showing {group.count} event
-                            {group.count === 1 ? '' : 's'} for this group
+                            Showing <span className="num">{group.count}</span>{' '}
+                            event{group.count === 1 ? '' : 's'} for this group
                           </span>
                         </div>
                         <div className="timeline">
@@ -541,41 +565,86 @@ function DataTable({ footprints, stats }) {
       {totalPages > 1 && (
         <div className="pagination">
           <button
-            className="page-button"
+            className="page-button icon-btn pressable"
             onClick={() => handlePageChange(1)}
             disabled={currentPage === 1}
             aria-label="Go to first page"
           >
-            «
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M8 3.5L3.5 8l4.5 4.5M12.5 3.5L8 8l4.5 4.5" />
+            </svg>
           </button>
           <button
-            className="page-button"
+            className="page-button icon-btn pressable"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             aria-label="Go to previous page"
           >
-            ‹
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 3.5L5.5 8l4.5 4.5" />
+            </svg>
           </button>
 
           <span className="page-info">
-            Page {currentPage} of {totalPages}
+            Page <span className="num">{currentPage}</span> of{' '}
+            <span className="num">{totalPages}</span>
           </span>
 
           <button
-            className="page-button"
+            className="page-button icon-btn pressable"
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
             aria-label="Go to next page"
           >
-            ›
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 3.5l4.5 4.5L6 12.5" />
+            </svg>
           </button>
           <button
-            className="page-button"
+            className="page-button icon-btn pressable"
             onClick={() => handlePageChange(totalPages)}
             disabled={currentPage === totalPages}
             aria-label="Go to last page"
           >
-            »
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3.5 3.5L8 8l-4.5 4.5M8 3.5l4.5 4.5L8 12.5" />
+            </svg>
           </button>
         </div>
       )}

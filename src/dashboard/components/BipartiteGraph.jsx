@@ -21,6 +21,7 @@ import {
   exportBipartiteSVG,
 } from '../utils/bipartiteExport.js';
 import { drawBipartiteGraph } from '../utils/bipartiteLayout.js';
+import { platformChipStyle } from '../utils/theme.js';
 import '../styles/BipartiteGraph.css';
 
 function BipartiteGraph({ footprints, stats }) {
@@ -186,46 +187,67 @@ function BipartiteGraph({ footprints, stats }) {
   return (
     <div className="bipartite-graph-container">
       {/* Controls */}
-      <div className="graph-controls bipartite-controls">
+      <div className="graph-controls bipartite-controls panel">
         {isolatedView && (
           <button
-            className="control-button back-button"
+            className="btn btn-sm pressable back-button"
             onClick={() => {
               setIsolatedView(null);
               setSelectedNode(null);
             }}
             title="Back to full view"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"
-              />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 3.5L5.5 8l4.5 4.5" />
             </svg>
-            <span style={{ marginLeft: '5px' }}>Back to Full View</span>
+            <span>Full view</span>
           </button>
         )}
         <button
-          className="control-button"
+          className="icon-btn pressable"
+          type="button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg
-              .transition()
-              .duration(750)
-              .call(d3.zoom().transform, d3.zoomIdentity);
+            const reset = selection =>
+              selection.call(d3.zoom().transform, d3.zoomIdentity);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              reset(svg);
+            } else {
+              reset(svg.transition().duration(750));
+            }
           }}
           title="Reset zoom"
+          aria-label="Reset zoom"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
-            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9" />
+            <path d="M13.7 1.8v2.6h-2.6" />
           </svg>
         </button>
         <div className="export-dropdown">
           <button
-            className={`control-button export-button ${showExportMenu ? 'active' : ''}`}
+            className={`btn btn-sm pressable export-button ${showExportMenu ? 'active' : ''}`}
             onClick={() => setShowExportMenu(!showExportMenu)}
             title="Export graph"
+            aria-expanded={showExportMenu}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z" />
@@ -236,6 +258,7 @@ function BipartiteGraph({ footprints, stats }) {
           {showExportMenu && (
             <div className="export-menu">
               <button
+                className="export-menu-item"
                 onClick={() => {
                   handleExportPNG();
                   setShowExportMenu(false);
@@ -244,6 +267,7 @@ function BipartiteGraph({ footprints, stats }) {
                 Export as PNG
               </button>
               <button
+                className="export-menu-item"
                 onClick={() => {
                   handleExportSVG();
                   setShowExportMenu(false);
@@ -252,6 +276,7 @@ function BipartiteGraph({ footprints, stats }) {
                 Export as SVG
               </button>
               <button
+                className="export-menu-item"
                 onClick={() => {
                   handleExportCSV();
                   setShowExportMenu(false);
@@ -264,9 +289,14 @@ function BipartiteGraph({ footprints, stats }) {
         </div>
         <div className="toggle-controls">
           <button
-            className={`control-button toggle-all-button ${allPanelsVisible ? 'active' : ''}`}
+            className={`icon-btn pressable ${allPanelsVisible ? 'active' : ''}`}
+            type="button"
             onClick={toggleAllPanels}
             title={allPanelsVisible ? 'Hide all panels' : 'Show all panels'}
+            aria-label={
+              allPanelsVisible ? 'Hide all panels' : 'Show all panels'
+            }
+            aria-pressed={allPanelsVisible}
           >
             {allPanelsVisible ? (
               <svg
@@ -293,36 +323,48 @@ function BipartiteGraph({ footprints, stats }) {
           </button>
           <div className="toggle-separator"></div>
           <button
-            className={`control-button toggle-button ${showFilters ? 'active' : ''}`}
+            className={`icon-btn pressable ${showFilters ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             title={showFilters ? 'Hide filters' : 'Show filters'}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+            aria-pressed={showFilters}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z" />
             </svg>
           </button>
           <button
-            className={`control-button toggle-button ${showSorting ? 'active' : ''}`}
+            className={`icon-btn pressable ${showSorting ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowSorting(!showSorting)}
             title={showSorting ? 'Hide sorting' : 'Show sorting'}
+            aria-label={showSorting ? 'Hide sorting' : 'Show sorting'}
+            aria-pressed={showSorting}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z" />
             </svg>
           </button>
           <button
-            className={`control-button toggle-button ${showStatistics ? 'active' : ''}`}
+            className={`icon-btn pressable ${showStatistics ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowStatistics(!showStatistics)}
             title={showStatistics ? 'Hide statistics' : 'Show statistics'}
+            aria-label={showStatistics ? 'Hide statistics' : 'Show statistics'}
+            aria-pressed={showStatistics}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h-2V2h2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1h-2zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3z" />
             </svg>
           </button>
           <button
-            className={`control-button toggle-button ${showLegend ? 'active' : ''}`}
+            className={`icon-btn pressable ${showLegend ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowLegend(!showLegend)}
             title={showLegend ? 'Hide legend' : 'Show legend'}
+            aria-label={showLegend ? 'Hide legend' : 'Show legend'}
+            aria-pressed={showLegend}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z" />
@@ -334,245 +376,282 @@ function BipartiteGraph({ footprints, stats }) {
         </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <div className="filter-panel">
-          <div className="filter-section">
-            <label>Search Domains:</label>
-            <input
-              type="text"
-              placeholder="Filter domains..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="filter-input"
-            />
-          </div>
-
-          <div className="filter-section">
-            <label>Platform:</label>
-            <select
-              value={selectedPlatformFilter}
-              onChange={e => setSelectedPlatformFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">All Platforms</option>
-              {availablePlatforms.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-section">
-            <label>Min Detections: {minDetections}</label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={minDetections}
-              onChange={e => setMinDetections(parseInt(e.target.value))}
-              className="filter-range"
-            />
-          </div>
-
-          <div className="filter-section checkbox-section">
-            <label>
-              <input
-                type="checkbox"
-                checked={showMultiPlatformOnly}
-                onChange={e => setShowMultiPlatformOnly(e.target.checked)}
-              />
-              Multi-platform domains only (2+)
-            </label>
-          </div>
-
-          <div className="filter-section checkbox-section">
-            <label>
-              <input
-                type="checkbox"
-                checked={showWidespreadOnly}
-                onChange={e => setShowWidespreadOnly(e.target.checked)}
-              />
-              Widespread platforms only (5+ domains)
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* Sorting Controls */}
-      {showSorting && (
-        <div className="sort-panel">
-          <div className="sort-section">
-            <label>Sort Domains:</label>
-            <select
-              value={domainSort}
-              onChange={e => setDomainSort(e.target.value)}
-              className="sort-select"
-            >
-              <option value="platforms-desc">Most Platforms</option>
-              <option value="detections-desc">Most Detections</option>
-              <option value="alpha">Alphabetical</option>
-            </select>
-          </div>
-
-          <div className="sort-section">
-            <label>Sort Platforms:</label>
-            <select
-              value={platformSort}
-              onChange={e => setPlatformSort(e.target.value)}
-              className="sort-select"
-            >
-              <option value="domains-desc">Most Domains</option>
-              <option value="detections-desc">Most Detections</option>
-              <option value="alpha">Alphabetical</option>
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* Statistics Panel */}
-      {showStatistics && (
-        <div className="statistics-panel">
-          <div className="stats-title">GRAPH STATISTICS</div>
-          <div className="stat-row">
-            <span className="stat-label">Total Domains:</span>
-            <span className="stat-value">{stats_data.totalDomains}</span>
-          </div>
-          <div className="stat-row">
-            <span className="stat-label">Total Platforms:</span>
-            <span className="stat-value">{stats_data.totalPlatforms}</span>
-          </div>
-          <div className="stat-row">
-            <span className="stat-label">Total Connections:</span>
-            <span className="stat-value">{stats_data.totalConnections}</span>
-          </div>
-          <div className="stat-divider"></div>
-          <div className="stat-row">
-            <span className="stat-label">Multi-Platform Domains:</span>
-            <span className="stat-value highlight">
-              {stats_data.multiPlatformDomains} (
-              {stats_data.multiPlatformPercentage}%)
-            </span>
-          </div>
-          <div className="stat-row">
-            <span className="stat-label">Widespread Platforms:</span>
-            <span className="stat-value highlight">
-              {stats_data.widespreadPlatforms} (
-              {stats_data.widespreadPercentage}%)
-            </span>
-          </div>
-          {stats_data.mostConnectedDomain && (
-            <>
-              <div className="stat-divider"></div>
-              <div className="stat-row">
-                <span className="stat-label">Most Connected Domain:</span>
-                <span className="stat-value small">
-                  {stats_data.mostConnectedDomain.label} (
-                  {stats_data.mostConnectedDomain.platformCount} platforms)
-                </span>
+      {/* Side column: Filters / Sort / Statistics / Legend */}
+      {(showFilters || showSorting || showStatistics || showLegend) && (
+        <div className="bipartite-side">
+          {/* Filters */}
+          {showFilters && (
+            <div className="filter-panel panel">
+              <div className="panel-title">Filters</div>
+              <div className="filter-section">
+                <label htmlFor="bipartite-filter-search">Search domains</label>
+                <input
+                  id="bipartite-filter-search"
+                  type="text"
+                  placeholder="Filter domains..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="filter-input input"
+                />
               </div>
-            </>
-          )}
-          {stats_data.mostWidespreadPlatform && (
-            <div className="stat-row">
-              <span className="stat-label">Most Widespread Platform:</span>
-              <span className="stat-value small">
-                {stats_data.mostWidespreadPlatform.label} (
-                {stats_data.mostWidespreadPlatform.domainCount} domains)
-              </span>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Legend */}
-      {showLegend && (
-        <div className="graph-legend">
-          <div className="legend-title">LEGEND</div>
-          <div className="legend-section">
-            <div className="legend-subtitle">Node Size:</div>
-            <div className="legend-item">
-              <svg width="20" height="20">
-                <circle cx="10" cy="10" r="4" fill="#4a90e2" />
-              </svg>
-              <span>Few connections/detections</span>
-            </div>
-            <div className="legend-item">
-              <svg width="20" height="20">
-                <circle cx="10" cy="10" r="8" fill="#4a90e2" />
-              </svg>
-              <span>Many connections/detections</span>
-            </div>
-          </div>
-          <div className="legend-section">
-            <div className="legend-subtitle">Highlights:</div>
-            <div className="legend-item">
-              <svg width="20" height="20">
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="6"
-                  fill="#ff6b6b"
-                  stroke="#ff6b6b"
-                  strokeWidth="2"
+              <div className="filter-section">
+                <label htmlFor="bipartite-filter-platform">Platform</label>
+                <select
+                  id="bipartite-filter-platform"
+                  value={selectedPlatformFilter}
+                  onChange={e => setSelectedPlatformFilter(e.target.value)}
+                  className="filter-select select"
+                >
+                  <option value="all">All Platforms</option>
+                  {availablePlatforms.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-section">
+                <label htmlFor="bipartite-filter-min-detections">
+                  Min detections: <span className="num">{minDetections}</span>
+                </label>
+                <input
+                  id="bipartite-filter-min-detections"
+                  type="range"
+                  min="1"
+                  max="50"
+                  value={minDetections}
+                  onChange={e => setMinDetections(parseInt(e.target.value))}
+                  className="filter-range"
                 />
-              </svg>
-              <span>Multi-platform domain</span>
+              </div>
+
+              <div className="filter-section checkbox-section">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={showMultiPlatformOnly}
+                    onChange={e => setShowMultiPlatformOnly(e.target.checked)}
+                  />
+                  Multi-platform domains only (2+)
+                </label>
+              </div>
+
+              <div className="filter-section checkbox-section">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={showWidespreadOnly}
+                    onChange={e => setShowWidespreadOnly(e.target.checked)}
+                  />
+                  Widespread platforms only (5+ domains)
+                </label>
+              </div>
             </div>
-            <div className="legend-item">
-              <svg width="20" height="20">
-                <circle
-                  cx="10"
-                  cy="10"
-                  r="6"
-                  fill="#4a90e2"
-                  stroke="#ffd700"
-                  strokeWidth="2"
-                />
-              </svg>
-              <span>Widespread platform</span>
+          )}
+
+          {/* Sorting Controls */}
+          {showSorting && (
+            <div className="sort-panel panel">
+              <div className="panel-title">Sort</div>
+              <div className="sort-section">
+                <label htmlFor="bipartite-sort-domains">Domains</label>
+                <select
+                  id="bipartite-sort-domains"
+                  value={domainSort}
+                  onChange={e => setDomainSort(e.target.value)}
+                  className="sort-select select"
+                >
+                  <option value="platforms-desc">Most Platforms</option>
+                  <option value="detections-desc">Most Detections</option>
+                  <option value="alpha">Alphabetical</option>
+                </select>
+              </div>
+
+              <div className="sort-section">
+                <label htmlFor="bipartite-sort-platforms">Platforms</label>
+                <select
+                  id="bipartite-sort-platforms"
+                  value={platformSort}
+                  onChange={e => setPlatformSort(e.target.value)}
+                  className="sort-select select"
+                >
+                  <option value="domains-desc">Most Domains</option>
+                  <option value="detections-desc">Most Detections</option>
+                  <option value="alpha">Alphabetical</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div className="legend-section">
-            <div className="legend-subtitle">Edge Width:</div>
-            <div className="legend-item">
-              <svg width="30" height="10">
-                <line
-                  x1="0"
-                  y1="5"
-                  x2="30"
-                  y2="5"
-                  stroke="#666"
-                  strokeWidth="1"
-                />
-              </svg>
-              <span>Few detections</span>
+          )}
+
+          {/* Statistics Panel */}
+          {showStatistics && (
+            <div className="statistics-panel panel">
+              <div className="panel-title">Statistics</div>
+              <div className="kv">
+                <div className="kv-row">
+                  <span className="kv-label">Total domains</span>
+                  <span className="kv-value num">
+                    {stats_data.totalDomains}
+                  </span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-label">Total platforms</span>
+                  <span className="kv-value num">
+                    {stats_data.totalPlatforms}
+                  </span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-label">Total connections</span>
+                  <span className="kv-value num">
+                    {stats_data.totalConnections}
+                  </span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-label">Multi-platform domains</span>
+                  <span className="kv-value num highlight">
+                    {stats_data.multiPlatformDomains} (
+                    {stats_data.multiPlatformPercentage}%)
+                  </span>
+                </div>
+                <div className="kv-row">
+                  <span className="kv-label">Widespread platforms</span>
+                  <span className="kv-value num highlight">
+                    {stats_data.widespreadPlatforms} (
+                    {stats_data.widespreadPercentage}%)
+                  </span>
+                </div>
+                {stats_data.mostConnectedDomain && (
+                  <div className="kv-row">
+                    <span className="kv-label">Most connected domain</span>
+                    <span className="kv-value small">
+                      {stats_data.mostConnectedDomain.label} (
+                      {stats_data.mostConnectedDomain.platformCount} platforms)
+                    </span>
+                  </div>
+                )}
+                {stats_data.mostWidespreadPlatform && (
+                  <div className="kv-row">
+                    <span className="kv-label">Most widespread platform</span>
+                    <span className="kv-value small">
+                      {stats_data.mostWidespreadPlatform.label} (
+                      {stats_data.mostWidespreadPlatform.domainCount} domains)
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="legend-item">
-              <svg width="30" height="10">
-                <line
-                  x1="0"
-                  y1="5"
-                  x2="30"
-                  y2="5"
-                  stroke="#666"
-                  strokeWidth="4"
-                />
-              </svg>
-              <span>Many detections</span>
+          )}
+
+          {/* Legend */}
+          {showLegend && (
+            <div className="graph-legend panel">
+              <div className="panel-title">Legend</div>
+              <div className="legend-section">
+                <div className="legend-subtitle">Node size</div>
+                <div className="legend-item">
+                  <svg width="20" height="20">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="4"
+                      style={{ fill: 'var(--info)' }}
+                    />
+                  </svg>
+                  <span>Few connections/detections</span>
+                </div>
+                <div className="legend-item">
+                  <svg width="20" height="20">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="8"
+                      style={{ fill: 'var(--info)' }}
+                    />
+                  </svg>
+                  <span>Many connections/detections</span>
+                </div>
+              </div>
+              <div className="legend-section">
+                <div className="legend-subtitle">Highlights</div>
+                <div className="legend-item">
+                  <svg width="20" height="20">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="6"
+                      style={{
+                        fill: 'var(--danger)',
+                        stroke: 'var(--danger)',
+                      }}
+                      strokeWidth="2"
+                    />
+                  </svg>
+                  <span>Multi-platform domain</span>
+                </div>
+                <div className="legend-item">
+                  <svg width="20" height="20">
+                    <circle
+                      cx="10"
+                      cy="10"
+                      r="6"
+                      style={{
+                        fill: 'var(--info)',
+                        stroke: 'var(--warning)',
+                      }}
+                      strokeWidth="2"
+                    />
+                  </svg>
+                  <span>Widespread platform</span>
+                </div>
+              </div>
+              <div className="legend-section">
+                <div className="legend-subtitle">Edge width</div>
+                <div className="legend-item">
+                  <svg width="30" height="10">
+                    <line
+                      x1="0"
+                      y1="5"
+                      x2="30"
+                      y2="5"
+                      style={{ stroke: 'rgba(255,255,255,0.22)' }}
+                      strokeWidth="1"
+                    />
+                  </svg>
+                  <span>Few detections</span>
+                </div>
+                <div className="legend-item">
+                  <svg width="30" height="10">
+                    <line
+                      x1="0"
+                      y1="5"
+                      x2="30"
+                      y2="5"
+                      style={{ stroke: 'rgba(255,255,255,0.22)' }}
+                      strokeWidth="4"
+                    />
+                  </svg>
+                  <span>Many detections</span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* SVG Canvas */}
-      <svg ref={svgRef} className="bipartite-graph-svg"></svg>
+      <svg
+        ref={svgRef}
+        className="bipartite-graph-svg"
+        role="img"
+        aria-label="Bipartite graph of domains and tracking platforms"
+      ></svg>
 
       {/* Tooltip */}
       {tooltip.visible && tooltip.data && (
         <div
-          className="graph-tooltip"
+          className="graph-tooltip tooltip"
           style={{
             left: `${tooltip.x + 10}px`,
             top: `${tooltip.y + 10}px`,
@@ -591,7 +670,7 @@ function BipartiteGraph({ footprints, stats }) {
                 <p
                   key={i}
                   style={{
-                    color: p.color,
+                    color: platformChipStyle(p.color).color,
                     fontSize: '11px',
                     marginLeft: '8px',
                   }}
@@ -601,17 +680,21 @@ function BipartiteGraph({ footprints, stats }) {
               ))}
               {tooltip.data.platforms.length > 5 && (
                 <p
-                  style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}
+                  style={{
+                    fontSize: '11px',
+                    marginLeft: '8px',
+                    color: 'var(--text-tertiary)',
+                  }}
                 >
                   ... {tooltip.data.platforms.length - 5} more
                 </p>
               )}
               <div className="tooltip-divider"></div>
-              <p style={{ fontSize: '10px', color: '#888' }}>
+              <p className="tooltip-meta">
                 First Seen:{' '}
                 {new Date(tooltip.data.firstSeen).toLocaleDateString()}
               </p>
-              <p style={{ fontSize: '10px', color: '#888' }}>
+              <p className="tooltip-meta">
                 Last Seen:{' '}
                 {new Date(tooltip.data.lastSeen).toLocaleDateString()}
               </p>
@@ -620,7 +703,11 @@ function BipartiteGraph({ footprints, stats }) {
           {tooltip.type === 'platform' && (
             <div className="tooltip-content">
               <div className="tooltip-header">
-                <strong style={{ color: tooltip.data.color }}>
+                <strong
+                  style={{
+                    color: platformChipStyle(tooltip.data.color).color,
+                  }}
+                >
                   {tooltip.data.label}
                 </strong>
               </div>
@@ -635,7 +722,11 @@ function BipartiteGraph({ footprints, stats }) {
               ))}
               {tooltip.data.domains.length > 5 && (
                 <p
-                  style={{ fontSize: '11px', marginLeft: '8px', color: '#888' }}
+                  style={{
+                    fontSize: '11px',
+                    marginLeft: '8px',
+                    color: 'var(--text-tertiary)',
+                  }}
                 >
                   ... {tooltip.data.domains.length - 5} more
                 </p>
@@ -652,11 +743,11 @@ function BipartiteGraph({ footprints, stats }) {
                 </strong>
               </div>
               <p>Detections: {tooltip.data.detections}</p>
-              <p style={{ fontSize: '10px', color: '#888' }}>
+              <p className="tooltip-meta">
                 First Detection:{' '}
                 {new Date(tooltip.data.firstSeen).toLocaleDateString()}
               </p>
-              <p style={{ fontSize: '10px', color: '#888' }}>
+              <p className="tooltip-meta">
                 Last Detection:{' '}
                 {new Date(tooltip.data.lastSeen).toLocaleDateString()}
               </p>

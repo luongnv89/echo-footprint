@@ -17,19 +17,23 @@ import {
   getGeoOptIn,
 } from '../utils/geolocation.js';
 import { escapeHtml } from '../utils/security.js';
+import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
+import { cssVar } from '../utils/theme.js';
 import '../styles/MapView.css';
 
-// Fix Leaflet default marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
-  iconUrl:
-    'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyLjUgMEMxOS40IDAgMjUgNS42IDI1IDEyLjVjMCAxMC05IDIxLjUtMTIuNSAyOC41QzggMzQgMCAyMi41IDAgMTIuNSAwIDUuNiA1LjYgMCAxMi41IDB6IiBmaWxsPSIjMDBkNGFhIi8+PGNpcmNsZSBjeD0iMTIuNSIgY3k9IjEyLjUiIHI9IjUiIGZpbGw9IiNmZmYiLz48L3N2Zz4=',
-  shadowUrl: null,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
+// Pin icon built from the accent token — data URIs need a resolved colour.
+function mapPinIcon() {
+  const svg =
+    `<svg width="25" height="41" xmlns="http://www.w3.org/2000/svg">` +
+    `<path d="M12.5 0C19.4 0 25 5.6 25 12.5c0 10-9 21.5-12.5 28.5C8 34 0 22.5 0 12.5 0 5.6 5.6 0 12.5 0z" fill="${cssVar('--accent')}"/>` +
+    `<circle cx="12.5" cy="12.5" r="5" fill="${cssVar('--text-primary')}"/>` +
+    `</svg>`;
+  return L.icon({
+    iconUrl: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+  });
+}
 
 function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const safeFootprints = Array.isArray(footprints) ? footprints : [];
@@ -43,6 +47,12 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
   const [geoProgress, setGeoProgress] = useState({ current: 0, total: 0 });
   const [locationGroups, setLocationGroups] = useState({});
   const [geoOptIn, setGeoOptInState] = useState(false);
+
+  // Brand colour of the first-seen platform for a domain (drawer dots)
+  const platformColorForDomain = domain => {
+    const fp = safeFootprints.find(f => f.domain === domain);
+    return fp ? TRACKING_PLATFORMS[fp.platform]?.color : undefined;
+  };
 
   // Load geolocation data for all domains
   async function loadGeoData() {
@@ -268,7 +278,9 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
 
     // Add markers for each location
     Object.values(grouped).forEach(location => {
-      const marker = L.marker([location.lat, location.lon]);
+      const marker = L.marker([location.lat, location.lon], {
+        icon: mapPinIcon(),
+      });
 
       // Create popup content — every external geo/domain string is escaped
       // before interpolation (bindPopup renders raw HTML)
@@ -383,9 +395,9 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
 
   return (
     <div className="map-view-container">
-      <div className="map-controls">
+      <div className="map-controls panel">
         <button
-          className="map-control-button"
+          className="icon-btn pressable"
           onClick={toggleTheme}
           aria-label={`Switch to ${mapTheme === 'dark' ? 'light' : 'dark'} theme`}
           title={`Switch to ${mapTheme === 'dark' ? 'light' : 'dark'} theme`}
@@ -402,7 +414,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
         </button>
 
         <button
-          className="map-control-button"
+          className="icon-btn pressable"
           onClick={handleClearCache}
           aria-label="Clear geolocation cache"
           title="Clear cached geolocation data and reload"
@@ -418,12 +430,15 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
 
         <div className="map-info">
           <span className="map-stat">
-            {Object.keys(locationGroups).length} locations
+            <span className="num">{Object.keys(locationGroups).length}</span>{' '}
+            locations
           </span>
-          <span className="map-stat-sep">•</span>
+          <span className="map-stat-sep">·</span>
           <span className="map-stat">
-            {safeFootprints.filter(f => geoData[f.domain]).length} tracked
-            events
+            <span className="num">
+              {safeFootprints.filter(f => geoData[f.domain]).length}
+            </span>{' '}
+            tracked events
           </span>
         </div>
       </div>
@@ -436,35 +451,57 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
       ></div>
 
       {selectedRegion && (
-        <div className="region-detail-drawer">
+        <div className="region-detail-drawer panel">
           <div className="drawer-header">
-            <h3>{selectedRegion.city || selectedRegion.region}</h3>
+            <h3 title={selectedRegion.city || selectedRegion.region}>
+              {selectedRegion.city || selectedRegion.region}
+            </h3>
             <button
-              className="close-drawer"
+              className="icon-btn pressable"
               onClick={() => setSelectedRegion(null)}
               aria-label="Close region details"
             >
-              ×
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              >
+                <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+              </svg>
             </button>
           </div>
           <div className="drawer-body">
-            <div className="detail-item">
-              <span className="detail-label">Country:</span>
-              <span className="detail-value">{selectedRegion.country}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Region:</span>
-              <span className="detail-value">{selectedRegion.region}</span>
-            </div>
-            <div className="detail-item">
-              <span className="detail-label">Tracking Domains:</span>
-              <span className="detail-value">
-                {selectedRegion.domains.length}
-              </span>
+            <div className="kv">
+              <div className="kv-row">
+                <span className="kv-label">Country</span>
+                <span className="kv-value">{selectedRegion.country}</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-label">Region</span>
+                <span className="kv-value">{selectedRegion.region}</span>
+              </div>
+              <div className="kv-row">
+                <span className="kv-label">Tracking domains</span>
+                <span className="kv-value num">
+                  {selectedRegion.domains.length}
+                </span>
+              </div>
             </div>
             <div className="domains-detail-list">
               {selectedRegion.domains.map(domain => (
                 <div key={domain} className="domain-item">
+                  <span
+                    className="domain-dot"
+                    style={{
+                      backgroundColor:
+                        platformColorForDomain(domain) ||
+                        'var(--text-tertiary)',
+                    }}
+                  />
                   {domain}
                 </div>
               ))}
@@ -474,11 +511,12 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
       )}
 
       {isLoadingGeo && (
-        <div className="map-overlay-message">
+        <div className="map-overlay-message panel">
           <p>
-            Fetching geolocation data for tracked domains...
+            Fetching geolocation data for tracked domains…
             <br />
-            {geoProgress.current} / {geoProgress.total} domains processed
+            <span className="num">{geoProgress.current}</span> /{' '}
+            <span className="num">{geoProgress.total}</span> domains processed
           </p>
           <div className="geo-progress-bar">
             <div
@@ -494,7 +532,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
       {!isLoadingGeo &&
         Object.keys(geoData).length === 0 &&
         footprints.length > 0 && (
-          <div className="map-overlay-message">
+          <div className="map-overlay-message panel">
             {geoOptIn ? (
               <p>
                 No geolocation data available for tracked domains.

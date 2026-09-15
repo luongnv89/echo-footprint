@@ -8,8 +8,7 @@
 
 import html2canvas from 'html2canvas';
 import { downloadTextFile } from './csv.js';
-
-const SVG_BG = '#1a1a1a';
+import { cssVar } from './theme.js';
 
 /**
  * Render the Bipartite Graph container to PNG and trigger a download.
@@ -22,7 +21,7 @@ const SVG_BG = '#1a1a1a';
 async function exportBipartitePNG(container, filename) {
   if (!container) return;
   const canvas = await html2canvas(container, {
-    backgroundColor: SVG_BG,
+    backgroundColor: cssVar('--surface-1'),
     scale: 2,
   });
   await new Promise(resolve => {
@@ -58,7 +57,7 @@ function exportBipartiteSVG(svgElement, filename) {
   const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   rect.setAttribute('width', '100%');
   rect.setAttribute('height', '100%');
-  rect.setAttribute('fill', SVG_BG);
+  rect.setAttribute('fill', cssVar('--surface-1'));
   clone.insertBefore(rect, clone.firstChild);
 
   const serializer = new XMLSerializer();

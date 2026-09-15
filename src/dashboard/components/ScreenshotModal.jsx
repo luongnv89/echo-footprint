@@ -6,6 +6,8 @@
 
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { useSheetFocus } from '../hooks/useSheetFocus.js';
+import { cssVar } from '../utils/theme.js';
 import '../styles/ScreenshotModal.css';
 
 function ScreenshotModal({ isOpen, onClose, activeView }) {
@@ -13,6 +15,19 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
   const [screenshot, setScreenshot] = useState(null);
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef(null);
+  const sheetRef = useRef(null);
+
+  const handleClose = () => {
+    setScreenshot(null);
+    setCopied(false);
+    onClose();
+  };
+
+  const handleSheetKeyDown = useSheetFocus({
+    isOpen,
+    onClose: handleClose,
+    dialogRef: sheetRef,
+  });
 
   // Capture screenshot of the active visualization
   const captureScreenshot = async () => {
@@ -36,7 +51,7 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
 
       // Capture the element
       const canvas = await html2canvas(targetElement, {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: cssVar('--surface-1'),
         scale: 2, // Higher quality
         logging: false,
         useCORS: true,
@@ -51,21 +66,21 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
       const newCtx = newCanvas.getContext('2d');
 
       // Copy original canvas
-      newCtx.fillStyle = '#1a1a1a';
+      newCtx.fillStyle = cssVar('--surface-1');
       newCtx.fillRect(0, 0, newCanvas.width, newCanvas.height);
       newCtx.drawImage(canvas, 0, 0);
 
       // Add watermark bar
-      newCtx.fillStyle = '#0f0f0f';
+      newCtx.fillStyle = cssVar('--surface-0');
       newCtx.fillRect(0, canvas.height, newCanvas.width, watermarkHeight);
 
       // Add text
-      newCtx.fillStyle = '#00d4aa';
+      newCtx.fillStyle = cssVar('--accent');
       newCtx.font =
         'bold 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       newCtx.fillText('EchoFootPrint', 30, canvas.height + 38);
 
-      newCtx.fillStyle = '#666';
+      newCtx.fillStyle = cssVar('--text-tertiary');
       newCtx.font =
         '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       const rightText = 'Privacy-first tracking visualization';
@@ -123,47 +138,51 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
     }
   };
 
-  // Close modal and reset state
-  const handleClose = () => {
-    setScreenshot(null);
-    setCopied(false);
-    onClose();
-  };
-
   if (!isOpen) return null;
 
   return (
     <div
-      className="screenshot-modal-overlay"
+      className="sheet-overlay"
       onClick={handleClose}
+      onKeyDown={handleSheetKeyDown}
       role="dialog"
       aria-modal="true"
       aria-labelledby="screenshot-modal-title"
     >
-      <div className="screenshot-modal" onClick={e => e.stopPropagation()}>
+      <div className="sheet" ref={sheetRef} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="modal-header">
+        <div className="sheet-header">
           <h2 id="screenshot-modal-title">Export Visualization</h2>
           <button
-            className="close-button"
+            className="icon-btn pressable"
             onClick={handleClose}
             aria-label="Close modal"
           >
-            ×
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
           </button>
         </div>
 
         {/* Content */}
-        <div className="modal-body">
+        <div className="sheet-body modal-body">
           {!screenshot && !isCapturing && (
             <div className="capture-prompt">
               <svg
-                width="64"
-                height="64"
+                width="40"
+                height="40"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.5"
                 className="camera-icon"
               >
                 <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
@@ -194,17 +213,17 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
                 Screenshots are processed locally and never uploaded.
               </p>
               <button
-                className="capture-button"
+                className="btn btn-primary pressable capture-button"
                 onClick={captureScreenshot}
                 disabled={isCapturing}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.5"
                 >
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
                   <circle cx="12" cy="13" r="4" />
@@ -216,7 +235,7 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
 
           {isCapturing && (
             <div className="capturing-state">
-              <div className="spinner"></div>
+              <div className="loading-spinner"></div>
               <p>Capturing screenshot...</p>
             </div>
           )}
@@ -230,7 +249,7 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
               />
               <div className="screenshot-actions">
                 <button
-                  className="action-button primary"
+                  className="btn btn-primary pressable"
                   onClick={downloadScreenshot}
                 >
                   <svg
@@ -245,7 +264,7 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
                   Download PNG
                 </button>
                 <button
-                  className="action-button secondary"
+                  className="btn pressable"
                   onClick={copyToClipboard}
                   disabled={copied}
                 >
@@ -277,7 +296,7 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
                   )}
                 </button>
                 <button
-                  className="action-button secondary"
+                  className="btn pressable"
                   onClick={() => {
                     setScreenshot(null);
                     setCopied(false);
