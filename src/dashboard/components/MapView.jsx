@@ -19,6 +19,7 @@ import {
 import { escapeHtml } from '../utils/security.js';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import { cssVar } from '../utils/theme.js';
+import { OSM_TILE_URL, osmTileLayerOptions } from '../utils/map-tiles.js';
 import '../styles/MapView.css';
 
 // Pin icon built from the accent token — data URIs need a resolved colour.
@@ -138,18 +139,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
       worldCopyJump: true,
     });
 
-    // Add tile layer
-    const tileUrl =
-      mapTheme === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-
-    L.tileLayer(tileUrl, {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(map);
+    L.tileLayer(OSM_TILE_URL, osmTileLayerOptions()).addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -173,18 +163,9 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
       }
     });
 
-    // Add new tile layer
-    const tileUrl =
-      mapTheme === 'dark'
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-
-    L.tileLayer(tileUrl, {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(mapInstanceRef.current);
+    L.tileLayer(OSM_TILE_URL, osmTileLayerOptions()).addTo(
+      mapInstanceRef.current
+    );
   }, [mapTheme]);
 
   // Add markers when geo data changes
@@ -445,7 +426,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
 
       <div
         ref={mapRef}
-        className="leaflet-map"
+        className={`leaflet-map map-theme-${mapTheme}`}
         role="region"
         aria-label="Geographic tracking map"
       ></div>
