@@ -183,7 +183,12 @@ function MapView({
 
   // Add markers when geo data changes
   useEffect(() => {
-    if (!mapInstanceRef.current || Object.keys(geoData).length === 0) return;
+    if (
+      !isActive ||
+      !mapInstanceRef.current ||
+      Object.keys(geoData).length === 0
+    )
+      return;
 
     // Remove existing markers
     if (markersLayerRef.current) {
@@ -320,7 +325,7 @@ function MapView({
         maxZoom: 10,
       });
     }
-  }, [geoData, safeFootprints, onLocationStatsUpdate]);
+  }, [geoData, safeFootprints, onLocationStatsUpdate, isActive]);
   // Update parent when footprints change but geo data already present (counts might shift)
   // If no geo data yet, report unknown stats upstream
   useEffect(() => {
