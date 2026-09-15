@@ -1,6 +1,6 @@
 /**
  * Dashboard Geolocation Utilities
- * Fetches geolocation data for domains using https://ip-api.com (opt-in, off by default)
+ * Fetches geolocation data for domains using http://ip-api.com (opt-in, off by default)
  * Implements sophisticated rate limiting (45 req/min) and multi-layer caching
  *
  * Features:
@@ -11,10 +11,17 @@
  * - Cache expiration (7 days default)
  */
 
-import { getGeoCache, setGeoCache, getSetting, setSetting } from './db.js';
+import {
+  deleteGeoCache,
+  getGeoCache,
+  setGeoCache,
+  getSetting,
+  setSetting,
+} from './db.js';
 
 // Configuration
-const GEO_API_URL = 'https://ip-api.com/json/';
+// Free tier is HTTP-only; HTTPS returns 403 (SSL is for paid plans per ip-api.com).
+const GEO_API_URL = 'http://ip-api.com/json/';
 const GEO_API_FIELDS = 'status,message,country,regionName,city,lat,lon,isp,org';
 const RATE_LIMIT_PER_MINUTE = 45;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -145,6 +152,16 @@ async function recordRequest() {
  * @param {Object} cacheEntry - Cache entry from IndexedDB
  * @returns {boolean} - True if cache is still valid
  */
+function hasValidCoordinates(geo) {
+  return (
+    geo &&
+    typeof geo.lat === 'number' &&
+    typeof geo.lon === 'number' &&
+    Number.isFinite(geo.lat) &&
+    Number.isFinite(geo.lon)
+  );
+}
+
 function isCacheValid(cacheEntry) {
   if (!cacheEntry) return false;
 
@@ -167,19 +184,21 @@ async function getCachedGeolocation(domain) {
   // Layer 1: Check memory cache (ultra-fast)
   if (memoryCache.has(domain)) {
     const cached = memoryCache.get(domain);
-    if (isCacheValid(cached)) {
+    if (isCacheValid(cached) && hasValidCoordinates(cached)) {
       return { ...cached, cacheLayer: 'memory' };
-    } else {
-      memoryCache.delete(domain);
     }
+    memoryCache.delete(domain);
   }
 
   // Layer 2: Check IndexedDB cache
   const dbCached = await getGeoCache(domain);
   if (dbCached && isCacheValid(dbCached)) {
-    // Promote to memory cache
-    memoryCache.set(domain, dbCached);
-    return { ...dbCached, cacheLayer: 'indexeddb' };
+    if (hasValidCoordinates(dbCached)) {
+      memoryCache.set(domain, dbCached);
+      return { ...dbCached, cacheLayer: 'indexeddb' };
+    }
+    // Drop stale "Unknown" rows from failed lookups so opt-in can retry.
+    await deleteGeoCache(domain);
   }
 
   return null;
@@ -251,7 +270,7 @@ export async function setGeoOptIn(enabled) {
 }
 
 /**
- * Fetch geolocation for a domain from https://ip-api.com (requires opt-in)
+ * Fetch geolocation for a domain from ip-api.com (requires opt-in)
  * @param {string} domain - Domain to lookup
  * @param {number} attempt - Current retry attempt (0-indexed)
  * @returns {Promise<Object|null>} - Geolocation data or null
@@ -285,7 +304,11 @@ async function fetchGeolocation(domain, attempt = 0) {
     );
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const httpError = new Error(
+        `HTTP ${response.status}: ${response.statusText}`
+      );
+      httpError.status = response.status;
+      throw httpError;
     }
 
     const data = await response.json();
@@ -325,6 +348,17 @@ async function fetchGeolocation(domain, attempt = 0) {
       return null;
     }
   } catch (error) {
+    const status = error?.status;
+    const nonRetryable =
+      status === 403 || status === 401 || status === 404 || status === 400;
+
+    if (nonRetryable) {
+      console.warn(
+        `Dashboard Geolocation: lookup failed for ${domain} (${error.message})`
+      );
+      return null;
+    }
+
     console.error(
       `Dashboard Geolocation: Error fetching for ${domain}:`,
       error
@@ -422,7 +456,7 @@ export async function getGeolocationForDomain(domain) {
         }
 
         // Return "Unknown" fallback
-        const fallback = {
+        return {
           country: 'Unknown',
           region: 'Unknown',
           city: 'Unknown',
@@ -432,11 +466,6 @@ export async function getGeolocationForDomain(domain) {
           org: null,
           fromCache: false,
         };
-
-        // Cache the "Unknown" result to avoid repeated lookups
-        await setCachedGeolocation(normalizedDomain, fallback);
-
-        return fallback;
       } finally {
         // Clean up active request tracking
         activeRequests.delete(normalizedDomain);

@@ -270,13 +270,14 @@
 /* Overlay message (geo off / fetching) */
 .map-overlay-message {
   position: absolute;
-  top: 50%;
+  bottom: var(--space-4);
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   z-index: 500;
-  max-width: 360px;
+  max-width: 420px;
   text-align: center;
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  pointer-events: none;
 }
 
 .map-overlay-message p {

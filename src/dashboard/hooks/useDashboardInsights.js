@@ -236,7 +236,7 @@ export function useMapInsights(mapLocationStats, footprints) {
       `${topLocation || 'Top region'} holds ${topShare}% of mapped detections (${topCount} event${topCount === 1 ? '' : 's'}).`,
       unknownCount > 0
         ? `${unknownShare}% of detections have unknown location (cached lookup pending or unavailable).`
-        : 'Data stays local; map geolocation is opt-in and only sends tracked domain names over HTTPS.',
+        : 'Data stays local; map geolocation is opt-in and only sends tracked domain names to ip-api.com.',
     ];
 
     return { messages };

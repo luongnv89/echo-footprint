@@ -124,20 +124,8 @@ describe('Geolocation Utilities', () => {
         fromCache: false,
       });
 
-      // Check that setGeoCache was called with expected fields (ignoring cachedAt)
-      expect(setGeoCache).toHaveBeenCalled();
-      const cacheCall = setGeoCache.mock.calls[0];
-      expect(cacheCall[0]).toBe('invalid-domain.test');
-      expect(cacheCall[1]).toMatchObject({
-        country: 'Unknown',
-        region: 'Unknown',
-        city: 'Unknown',
-        lat: null,
-        lon: null,
-        isp: null,
-        org: null,
-      });
-      expect(cacheCall[1]).toHaveProperty('cachedAt');
+      // Failed lookups are not cached without coordinates (allows retry after fixes).
+      expect(setGeoCache).not.toHaveBeenCalled();
     });
   });
 
@@ -417,7 +405,7 @@ describe('Geolocation Utilities', () => {
       expect(result).toBeNull();
     });
 
-    it('fetches over https after explicit opt-in', async () => {
+    it('fetches over http after explicit opt-in', async () => {
       const { getGeoCache } = await import('../../src/dashboard/utils/db.js');
       getGeoCache.mockResolvedValue(null);
       global.fetch.mockResolvedValue({
@@ -437,7 +425,7 @@ describe('Geolocation Utilities', () => {
 
       expect(global.fetch).toHaveBeenCalled();
       const calledUrl = global.fetch.mock.calls[0][0];
-      expect(calledUrl.startsWith('https://ip-api.com/json/')).toBe(true);
+      expect(calledUrl.startsWith('http://ip-api.com/json/')).toBe(true);
     });
 
     it('returns cached data without live lookups while opted out', async () => {

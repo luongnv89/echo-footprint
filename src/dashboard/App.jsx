@@ -258,6 +258,7 @@ function App() {
               <MapView
                 footprints={footprints}
                 stats={stats}
+                isActive={activeView === 'map'}
                 onLocationStatsUpdate={setMapLocationStats}
               />
             </div>
