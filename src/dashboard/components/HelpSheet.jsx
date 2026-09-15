@@ -25,41 +25,51 @@ function HelpSheet({ isOpen, onClose }) {
 
   return (
     <div
-      className="help-sheet-overlay"
+      className="sheet-overlay"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-sheet-title"
     >
-      <div className="help-sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet help-sheet" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="sheet-header">
           <h2 id="help-sheet-title">Help & Documentation</h2>
           <button
-            className="close-button"
+            className="icon-btn pressable"
             onClick={onClose}
             aria-label="Close help"
           >
-            ×
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="help-tabs">
+        <div className="help-tabs segmented">
           <button
-            className={`help-tab ${activeTab === 'getting-started' ? 'active' : ''}`}
+            className={`help-tab segmented-item pressable ${activeTab === 'getting-started' ? 'active' : ''}`}
             onClick={() => setActiveTab('getting-started')}
           >
             Getting Started
           </button>
           <button
-            className={`help-tab ${activeTab === 'features' ? 'active' : ''}`}
+            className={`help-tab segmented-item pressable ${activeTab === 'features' ? 'active' : ''}`}
             onClick={() => setActiveTab('features')}
           >
             Features
           </button>
           <button
-            className={`help-tab ${activeTab === 'faq' ? 'active' : ''}`}
+            className={`help-tab segmented-item pressable ${activeTab === 'faq' ? 'active' : ''}`}
             onClick={() => setActiveTab('faq')}
           >
             FAQ
@@ -119,7 +129,7 @@ function HelpSheet({ isOpen, onClose }) {
                   height="16"
                   viewBox="0 0 16 16"
                   fill="currentColor"
-                  style={{ marginRight: '8px', verticalAlign: 'middle' }}
+                  aria-hidden="true"
                 >
                   <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
                 </svg>
@@ -186,7 +196,7 @@ function HelpSheet({ isOpen, onClose }) {
                 </p>
                 <ul className="platform-tags" aria-label="Detected platforms">
                   {platformNames.map(name => (
-                    <li key={name} className="platform-tag">
+                    <li key={name} className="platform-tag chip">
                       {name}
                     </li>
                   ))}

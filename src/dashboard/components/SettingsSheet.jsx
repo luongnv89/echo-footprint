@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { clearAllData, checkStorageQuota } from '../utils/db.js';
 import { getGeoOptIn, setGeoOptIn } from '../utils/geolocation.js';
+import { cssVar } from '../utils/theme.js';
 import '../styles/SettingsSheet.css';
 
 // Storage helper: uses chrome.storage.local when available, otherwise falls back to localStorage (dev preview)
@@ -181,22 +182,32 @@ function SettingsSheet({ isOpen, onClose, stats }) {
 
   return (
     <div
-      className="settings-sheet-overlay"
+      className="sheet-overlay"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-sheet-title"
     >
-      <div className="settings-sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="sheet-header">
           <h2 id="settings-sheet-title">Settings</h2>
           <button
-            className="close-button"
+            className="icon-btn pressable"
             onClick={handleClose}
             aria-label="Close settings"
           >
-            ×
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" />
+            </svg>
           </button>
         </div>
 
@@ -204,33 +215,33 @@ function SettingsSheet({ isOpen, onClose, stats }) {
         <div className="sheet-body">
           {/* Storage Section */}
           <section className="settings-section">
-            <h3>Storage</h3>
+            <h3 className="eyebrow">Storage</h3>
 
             {storageInfo && (
-              <div className="storage-info">
-                <div className="storage-stat">
-                  <span className="stat-label">Total Detections</span>
-                  <span className="stat-value">
+              <div className="storage-info kv">
+                <div className="kv-row">
+                  <span className="kv-label">Total detections</span>
+                  <span className="kv-value num">
                     {stats?.totalFootprints || 0}
                   </span>
                 </div>
-                <div className="storage-stat">
-                  <span className="stat-label">Unique Domains</span>
-                  <span className="stat-value">
+                <div className="kv-row">
+                  <span className="kv-label">Unique domains</span>
+                  <span className="kv-value num">
                     {stats?.uniqueDomains || 0}
                   </span>
                 </div>
                 {storageInfo.usageMB !== undefined && (
                   <>
-                    <div className="storage-stat">
-                      <span className="stat-label">Storage Used</span>
-                      <span className="stat-value">
+                    <div className="kv-row">
+                      <span className="kv-label">Storage used</span>
+                      <span className="kv-value num">
                         {storageInfo.usageMB.toFixed(2)} MB
                       </span>
                     </div>
-                    <div className="storage-stat">
-                      <span className="stat-label">Storage Available</span>
-                      <span className="stat-value">
+                    <div className="kv-row">
+                      <span className="kv-label">Storage available</span>
+                      <span className="kv-value num">
                         {storageInfo.quotaMB.toFixed(2)} MB
                       </span>
                     </div>
@@ -241,16 +252,19 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                           style={{
                             width: `${storageInfo.percentUsed}%`,
                             backgroundColor:
-                              storageInfo.percentUsed > 80
-                                ? '#ff4757'
-                                : storageInfo.percentUsed > 50
-                                  ? '#ffa502'
-                                  : '#00d4aa',
+                              storageInfo.percentUsed >= 95
+                                ? cssVar('--danger')
+                                : storageInfo.percentUsed >= 80
+                                  ? cssVar('--warning')
+                                  : cssVar('--accent'),
                           }}
                         ></div>
                       </div>
                       <span className="progress-text">
-                        {storageInfo.percentUsed.toFixed(1)}% used
+                        <span className="num">
+                          {storageInfo.percentUsed.toFixed(1)}
+                        </span>
+                        % used
                       </span>
                     </div>
                   </>
@@ -261,90 +275,112 @@ function SettingsSheet({ isOpen, onClose, stats }) {
 
           {/* Privacy Section */}
           <section className="settings-section">
-            <h3>Privacy</h3>
+            <h3 className="eyebrow">Privacy</h3>
             <div className="setting-item">
               <div className="setting-info">
-                <strong>Global Controls</strong>
+                <strong>Detection</strong>
                 <p>
-                  Pause or resume tracking detection across all sites. When
-                  paused, EchoFootPrint will not inspect pages.
+                  Turn off to stop inspecting pages on all sites. Data already
+                  collected stays put.
                 </p>
               </div>
-              <button
-                className={`toggle-button ${isPaused ? 'paused' : 'active'}`}
-                onClick={togglePause}
-                aria-label={isPaused ? 'Resume detection' : 'Pause detection'}
-                type="button"
-              >
-                {isPaused ? 'Resume Detection' : 'Pause Detection'}
-              </button>
+              <div className="setting-control">
+                <button
+                  className={`toggle-button ${!isPaused ? 'active' : ''}`}
+                  onClick={togglePause}
+                  role="switch"
+                  aria-checked={!isPaused}
+                  aria-label={isPaused ? 'Resume detection' : 'Pause detection'}
+                  type="button"
+                >
+                  <span className="toggle-slider" aria-hidden="true"></span>
+                </button>
+                <span className="toggle-status">
+                  {isPaused ? 'Paused' : 'Active'}
+                </span>
+              </div>
             </div>
 
-            <div className="setting-item">
+            <div className="setting-item setting-item-column">
               <div className="setting-info">
-                <strong>Excluded Domains</strong>
+                <strong>Excluded domains</strong>
                 <p>
                   EchoFootPrint will not run on these domains. Use this to
                   exclude localhost, internal networks, or sensitive sites.
                 </p>
               </div>
-            </div>
-
-            <div className="exclusion-controls">
-              <div className="exclusion-input">
-                <input
-                  type="text"
-                  placeholder="e.g., localhost, *.corp, 192.168.*.*"
-                  value={newDomain}
-                  onChange={e => setNewDomain(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addDomain()}
-                  aria-label="Add domain exclusion pattern"
-                />
-                <button onClick={() => addDomain()} type="button">
-                  Add
-                </button>
-              </div>
-              <div className="exclusion-presets">
-                <span>Quick add:</span>
-                <div className="preset-buttons">
-                  {['localhost', '127.0.0.1', '*.local', '*.internal'].map(
-                    preset => (
-                      <button
-                        key={preset}
-                        onClick={() => addDomain(preset)}
-                        type="button"
-                      >
-                        + {preset}
-                      </button>
-                    )
-                  )}
+              <div className="exclusion-controls">
+                <div className="exclusion-input">
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="e.g., localhost, *.corp, 192.168.*.*"
+                    value={newDomain}
+                    onChange={e => setNewDomain(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addDomain()}
+                    aria-label="Add domain exclusion pattern"
+                  />
+                  <button
+                    className="btn pressable"
+                    onClick={() => addDomain()}
+                    type="button"
+                  >
+                    Add
+                  </button>
                 </div>
-              </div>
+                <div className="exclusion-presets">
+                  <span>Quick add:</span>
+                  <div className="preset-buttons">
+                    {['localhost', '127.0.0.1', '*.local', '*.internal'].map(
+                      preset => (
+                        <button
+                          key={preset}
+                          className="btn btn-sm pressable"
+                          onClick={() => addDomain(preset)}
+                          type="button"
+                        >
+                          + {preset}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
 
-              {excludedDomains.length > 0 ? (
-                <ul className="excluded-list">
-                  {excludedDomains.map(domain => (
-                    <li key={domain}>
-                      <span>{domain}</span>
-                      <button
-                        className="remove-exclusion"
-                        onClick={() => removeDomain(domain)}
-                        aria-label={`Remove exclusion ${domain}`}
-                        type="button"
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="excluded-empty">No domains excluded yet.</p>
-              )}
+                {excludedDomains.length > 0 ? (
+                  <ul className="excluded-list">
+                    {excludedDomains.map(domain => (
+                      <li key={domain}>
+                        <span className="excluded-domain">{domain}</span>
+                        <button
+                          className="icon-btn pressable remove-exclusion"
+                          onClick={() => removeDomain(domain)}
+                          aria-label={`Remove exclusion ${domain}`}
+                          type="button"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                          >
+                            <path d="M4 4l8 8M12 4l-8 8" />
+                          </svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="excluded-empty">No domains excluded yet.</p>
+                )}
+              </div>
             </div>
 
             <div className="setting-item">
               <div className="setting-info">
-                <strong>Map Geolocation</strong>
+                <strong>Map geolocation</strong>
                 <p>
                   Off by default. When enabled, Map View sends the domain names
                   of tracked sites to https://ip-api.com over HTTPS to resolve
@@ -352,41 +388,45 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                   contents or your stored data. Results are cached locally.
                 </p>
               </div>
-              <button
-                className={`toggle-button ${geoOptIn ? 'active' : 'paused'}`}
-                onClick={toggleGeoOptIn}
-                aria-label={
-                  geoOptIn
-                    ? 'Disable map geolocation lookups'
-                    : 'Enable map geolocation lookups'
-                }
-                aria-pressed={geoOptIn}
-                type="button"
-              >
-                {geoOptIn ? 'Enabled' : 'Disabled'}
-              </button>
+              <div className="setting-control">
+                <button
+                  className={`toggle-button ${geoOptIn ? 'active' : ''}`}
+                  onClick={toggleGeoOptIn}
+                  role="switch"
+                  aria-checked={geoOptIn}
+                  aria-label={
+                    geoOptIn
+                      ? 'Disable map geolocation lookups'
+                      : 'Enable map geolocation lookups'
+                  }
+                  type="button"
+                >
+                  <span className="toggle-slider" aria-hidden="true"></span>
+                </button>
+                <span className="toggle-status">{geoOptIn ? 'On' : 'Off'}</span>
+              </div>
             </div>
 
             <div className="setting-item">
               <div className="setting-info">
-                <strong>Local Storage Only</strong>
+                <strong>Local storage only</strong>
                 <p>
                   All data is stored locally in your browser. No cloud sync or
                   telemetry.
                 </p>
               </div>
-              <span className="badge success">Active</span>
+              <span className="chip chip-accent">Active</span>
             </div>
           </section>
 
           {/* About Section */}
           <section className="settings-section">
-            <h3>About</h3>
-            <div className="about-info">
-              <div className="about-item">
-                <span className="about-label">Version</span>
+            <h3 className="eyebrow">About</h3>
+            <div className="about-info kv">
+              <div className="kv-row">
+                <span className="kv-label">Version</span>
                 <span
-                  className="about-value"
+                  className="kv-value num"
                   title={
                     buildInfo?.gitCommitHash
                       ? `Commit: ${buildInfo.gitCommitHash}`
@@ -397,57 +437,58 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                 </span>
               </div>
               {buildInfo?.gitBranch && (
-                <div className="about-item">
-                  <span className="about-label">Branch</span>
-                  <span className="about-value">{buildInfo.gitBranch}</span>
+                <div className="kv-row">
+                  <span className="kv-label">Branch</span>
+                  <span className="kv-value num">{buildInfo.gitBranch}</span>
                 </div>
               )}
               {buildInfo?.buildTimestamp && (
-                <div className="about-item">
-                  <span className="about-label">Built</span>
+                <div className="kv-row">
+                  <span className="kv-label">Built</span>
                   <span
-                    className="about-value"
+                    className="kv-value num"
                     title={buildInfo.buildTimestamp}
                   >
                     {new Date(buildInfo.buildTimestamp).toLocaleDateString()}
                   </span>
                 </div>
               )}
-              <div className="about-item">
-                <span className="about-label">License</span>
-                <span className="about-value">Proprietary</span>
+              <div className="kv-row">
+                <span className="kv-label">License</span>
+                <span className="kv-value">Proprietary</span>
               </div>
             </div>
           </section>
 
           {/* Danger Zone */}
           <section className="settings-section danger-section">
-            <h3>Danger Zone</h3>
+            <h3 className="eyebrow">Danger zone</h3>
 
             {!showClearConfirm ? (
               <div className="danger-action">
                 <div className="danger-info">
-                  <strong>Clear All Data</strong>
+                  <strong>Clear all data</strong>
                   <p>
                     Permanently delete all tracking data, geolocation cache, and
                     settings. This action cannot be undone.
                   </p>
                 </div>
                 <button
-                  className="danger-button"
+                  className="btn btn-danger pressable"
                   onClick={() => setShowClearConfirm(true)}
                 >
                   Clear All Data
                 </button>
               </div>
             ) : (
-              <div className="confirm-clear">
+              <div className="danger-action confirm-clear">
                 <p className="confirm-warning">
                   <svg
-                    width="20"
-                    height="20"
+                    width="16"
+                    height="16"
                     viewBox="0 0 16 16"
                     fill="currentColor"
+                    aria-hidden="true"
                   >
                     <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
                   </svg>
@@ -464,7 +505,7 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                 </p>
                 <input
                   type="text"
-                  className="confirm-input"
+                  className="confirm-input input"
                   value={confirmText}
                   onChange={e => setConfirmText(e.target.value)}
                   placeholder="DELETE"
@@ -472,14 +513,14 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                 />
                 <div className="confirm-actions">
                   <button
-                    className="confirm-button danger"
+                    className="btn btn-danger pressable"
                     onClick={handleClearData}
                     disabled={confirmText !== 'DELETE' || isClearing}
                   >
                     {isClearing ? 'Clearing...' : 'Confirm Delete'}
                   </button>
                   <button
-                    className="confirm-button cancel"
+                    className="btn pressable"
                     onClick={() => {
                       setShowClearConfirm(false);
                       setConfirmText('');

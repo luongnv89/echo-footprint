@@ -4,7 +4,7 @@
  * Per PRD: Time filters, settings access
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlatformStats from './PlatformStats.jsx';
 import '../styles/Sidebar.css';
 import logoSvg from '../../assets/logo.svg?url';
@@ -22,6 +22,7 @@ function Sidebar({
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [buildVersion, setBuildVersion] = useState('vunknown');
+  const dropdownRef = useRef(null);
 
   // Load build info with commit hash
   useEffect(() => {
@@ -42,6 +43,27 @@ function Sidebar({
           });
       });
   }, []);
+
+  // Close the time-filter menu on Escape or a click outside of it
+  useEffect(() => {
+    if (!showDropdown) return undefined;
+    const onOutsidePointer = event => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    const onEscape = event => {
+      if (event.key === 'Escape') {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', onOutsidePointer);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onOutsidePointer);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [showDropdown]);
 
   const timeFilterOptions = [
     { value: '1hour', label: 'Last Hour' },
@@ -83,8 +105,8 @@ function Sidebar({
 
       <nav className="sidebar-nav">
         <div className="nav-section">
-          <h2>Time Filter</h2>
-          <div className="time-filter-dropdown">
+          <h2 className="eyebrow">Time range</h2>
+          <div className="time-filter-dropdown" ref={dropdownRef}>
             <button
               className="dropdown-button"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -141,20 +163,25 @@ function Sidebar({
           </div>
         </div>
 
-        <div className="nav-section stats-section">
-          <h2>Statistics</h2>
-          <div className="stat-card">
-            <div className="stat-label">Total Detections</div>
-            <div className="stat-value">{stats?.totalFootprints || 0}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Unique Domains</div>
-            <div className="stat-value">{stats?.uniqueDomains || 0}</div>
+        <div className="nav-section">
+          <h2 className="eyebrow">Overview</h2>
+          <div className="stats-section">
+            <div className="stat-card">
+              <div className="stat-label eyebrow">Detections</div>
+              <div className="stat-value num">
+                {stats?.totalFootprints || 0}
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label eyebrow">Domains</div>
+              <div className="stat-value num">{stats?.uniqueDomains || 0}</div>
+            </div>
           </div>
         </div>
 
         {/* Platform Breakdown */}
         <div className="nav-section platform-stats-sidebar">
+          <h2 className="eyebrow">Platforms</h2>
           <PlatformStats
             stats={stats}
             onPlatformSelect={onPlatformSelect}
@@ -164,14 +191,14 @@ function Sidebar({
       </nav>
 
       <footer className="sidebar-footer">
-        <button className="footer-button" onClick={onSettingsClick}>
+        <button className="footer-button pressable" onClick={onSettingsClick}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z" />
             <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319z" />
           </svg>
           Settings
         </button>
-        <button className="footer-button" onClick={onHelpClick}>
+        <button className="footer-button pressable" onClick={onHelpClick}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
             <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />

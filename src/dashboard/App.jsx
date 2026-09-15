@@ -37,6 +37,25 @@ import {
 } from './hooks/useDashboardInsights.js';
 import './styles/App.css';
 
+const VIEW_META = {
+  graph: {
+    title: 'Radial graph',
+    subtitle: 'Domains that loaded tracking pixels, arranged around you',
+  },
+  bipartite: {
+    title: 'Bipartite graph',
+    subtitle: 'Which platforms track you on which domains',
+  },
+  map: {
+    title: 'Map',
+    subtitle: 'Where the tracking domains are hosted (opt-in geolocation)',
+  },
+  table: {
+    title: 'Data table',
+    subtitle: 'Every detection, sortable and exportable',
+  },
+};
+
 function App() {
   const [filter, setFilter] = useState({
     timeRange: '24hours', // '1hour', '24hours', '7days', '30days', 'all', 'custom'
@@ -142,7 +161,7 @@ function App() {
       <div className="app">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <p>Loading your tracking data...</p>
+          <p>Loading your data…</p>
         </div>
       </div>
     );
@@ -188,25 +207,20 @@ function App() {
       />
       <main className="main-content">
         <header className="dashboard-header">
-          <div className="dashboard-header-top">
-            <h1>
-              {activeView === 'graph' &&
-                'Network visualization of your tracking footprint'}
-              {activeView === 'bipartite' &&
-                'Bipartite graph of platforms and domains'}
-              {activeView === 'map' &&
-                'Geographic distribution of tracking events'}
-              {activeView === 'table' &&
-                'Detailed table of all detected tracking pixels'}
-            </h1>
-            <InsightsBanner
-              messages={displayedInsights}
-              visible={showInsights}
-              onDismiss={() => setShowInsights(false)}
-            />
+          <div className="dashboard-header-row">
+            <div className="dashboard-title-block">
+              <h1>{VIEW_META[activeView].title}</h1>
+              <p className="dashboard-subtitle">
+                {VIEW_META[activeView].subtitle}
+              </p>
+            </div>
+            <ViewTabs activeView={activeView} onViewChange={setActiveView} />
           </div>
-
-          <ViewTabs activeView={activeView} onViewChange={setActiveView} />
+          <InsightsBanner
+            messages={displayedInsights}
+            visible={showInsights}
+            onDismiss={() => setShowInsights(false)}
+          />
         </header>
 
         <section className="visualization-section">
@@ -249,8 +263,8 @@ function App() {
 
         <footer className="dashboard-footer">
           <p>
-            All data stored locally. Zero telemetry. Optional map geolocation
-            (off by default) uses https://ip-api.com.{' '}
+            All data stays on this device. No telemetry. Map geolocation is
+            opt-in and uses ip-api.com.{' '}
             <a
               href="https://github.com/luongnv89/echo-footprint/blob/main/privacy-policy.md"
               target="_blank"
@@ -258,7 +272,9 @@ function App() {
             >
               Privacy Policy
             </a>
-            {' • '}
+            <span className="footer-sep" aria-hidden="true">
+              ·
+            </span>
             <a
               href="https://echo-footprint.luongnv.com/"
               target="_blank"

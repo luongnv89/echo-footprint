@@ -1,13 +1,16 @@
 /**
  * Radial Graph Component Styles
  * D3.js force-directed visualization
+ * Shared patterns (.panel, .icon-btn, .btn, .tooltip, .kv) live in
+ * components.css.
  */
 
 .radial-graph-container {
   width: 100%;
   height: 100%;
   position: relative;
-  background-color: var(--color-bg-dark);
+  background-color: var(--surface-1);
+  container-type: inline-size;
 }
 
 .radial-graph-svg {
@@ -20,144 +23,99 @@
   cursor: grabbing;
 }
 
+/* Controls panel (top-right) */
 .graph-controls {
   position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
+  top: var(--space-4);
+  right: var(--space-4);
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  background-color: var(--color-bg-darker);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  gap: var(--space-1);
+  padding: 4px;
   z-index: 10;
 }
 
-.platform-legend {
+.graph-controls .zoom-hint {
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* Left column: legend at top, detail panel pinned to the bottom so the
+   two can never collide at small heights */
+.graph-side {
   position: absolute;
-  top: var(--spacing-md);
-  left: var(--spacing-md);
-  background-color: var(--color-bg-darker);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  top: var(--space-4);
+  left: var(--space-4);
+  bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-3);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  pointer-events: none;
   z-index: 10;
 }
 
-.legend-title {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-sm);
-  font-weight: 600;
+.graph-side > * {
+  pointer-events: auto;
+}
+
+.graph-side .panel {
+  position: static;
+  max-height: none;
+  flex-shrink: 0;
+}
+
+/* Platform legend */
+.platform-legend {
+  max-width: 220px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
-}
-
-.legend-item:last-child {
-  margin-bottom: 0;
+  gap: var(--space-2);
+  padding: 2px 0;
+  font-size: var(--text-sm);
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .legend-label {
-  font-size: 12px;
-  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
-.control-button {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-lighter);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+/* Tooltip extras (shared .tooltip supplies position/padding/colours) */
+.graph-tooltip .tooltip-hint {
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
 }
 
-.control-button:hover {
-  background-color: var(--color-primary);
-  color: var(--color-bg-dark);
-}
-
-.control-button.back-button {
-  width: auto;
-  padding: 0 var(--spacing-md);
-  background-color: var(--color-primary);
-  color: white;
-  font-weight: 600;
-  gap: var(--spacing-xs);
-}
-
-.control-button.back-button:hover {
-  background-color: var(--color-primary-hover, var(--color-primary));
-  transform: translateX(-2px);
-}
-
-.zoom-hint {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-}
-
-.graph-tooltip {
-  position: fixed;
-  background-color: var(--color-bg-darker);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  pointer-events: none;
-  z-index: 1000;
-  box-shadow: var(--shadow-lg);
-  max-width: 250px;
-}
-
-.tooltip-header strong {
-  display: block;
-  color: var(--color-primary);
-  margin-bottom: var(--spacing-xs);
-  font-size: 14px;
-}
-
-.tooltip-header p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
+/* Node detail panel (bottom of .graph-side) */
 .node-detail-panel {
-  position: absolute;
-  bottom: var(--spacing-md);
-  left: var(--spacing-md);
   width: 300px;
-  background-color: var(--color-bg-darker);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-  animation: slideUp 0.3s ease;
+  padding: 0;
+  margin-top: auto;
+  overflow: hidden;
+  transition:
+    opacity var(--duration-normal) var(--ease-out),
+    transform var(--duration-normal) var(--ease-out);
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
+@starting-style {
+  .node-detail-panel {
     opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+    transform: translateY(8px);
   }
 }
 
@@ -165,63 +123,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-2);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .detail-panel-header h3 {
-  margin: 0;
-  color: var(--color-primary);
-  font-size: 16px;
-  word-break: break-all;
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.close-button {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-bg-lighter);
-  border-radius: var(--radius-sm);
-  font-size: 24px;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.close-button:hover {
-  background-color: var(--color-error);
-  color: white;
+.detail-panel-header .icon-btn {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .detail-panel-body {
-  padding: var(--spacing-md);
-}
-
-.detail-stat {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.detail-stat:last-child {
-  border-bottom: none;
-}
-
-.detail-label {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.detail-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-family: var(--font-family-mono);
+  padding: 8px 14px 12px;
 }
 
 /* D3 node and link styles */
@@ -230,19 +154,16 @@
 }
 
 .nodes .node circle {
-  transition: stroke-width 0.2s ease;
-}
-
-.nodes .node:hover circle {
-  filter: brightness(1.2);
+  transition: stroke-width var(--duration-fast) ease;
 }
 
 .links line {
-  transition: stroke-opacity 0.2s ease;
+  transition: stroke-opacity var(--duration-fast) ease;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .node-detail-panel {
-    animation: none;
+/* Hide the hint when the graph area itself is narrow */
+@container (max-width: 900px) {
+  .radial-graph-container .zoom-hint {
+    display: none;
   }
 }

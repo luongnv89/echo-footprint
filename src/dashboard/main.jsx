@@ -7,7 +7,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/jetbrains-mono';
 import './styles/global.css';
+import './styles/components.css';
 
 // Initialize database connection
 import { initDatabase } from './utils/db.js';
@@ -48,7 +51,7 @@ async function init() {
     const root = document.getElementById('root');
     const errorContainer = document.createElement('div');
     errorContainer.style.cssText =
-      'text-align: center; padding: 50px; color: #ff6b6b;';
+      'text-align: center; padding: 50px; color: var(--danger);';
 
     const title = document.createElement('h1');
     title.textContent = 'Failed to Load Dashboard';
@@ -57,7 +60,7 @@ async function init() {
     message.textContent = error.message || 'Unknown error';
 
     const help = document.createElement('p');
-    help.style.cssText = 'font-size: 14px; color: #999;';
+    help.style.cssText = 'font-size: 14px; color: var(--text-tertiary);';
     help.textContent =
       'Try refreshing the page. If the problem persists, contact the support team.';
 

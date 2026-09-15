@@ -8,6 +8,7 @@
  */
 
 import * as d3 from 'd3';
+import { cssVar } from './theme.js';
 
 const COLUMN_HEADER_Y = 30;
 const DOMAIN_LABEL_MAX = 20;
@@ -192,7 +193,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('class', 'edge')
     .on('mouseenter', function (event, d) {
       d3.select(this)
-        .attr('stroke-opacity', 0.9)
+        .attr('stroke-opacity', 0.6)
         .attr('stroke-width', getEdgeWidth(d.detections) + 2);
       handlers.onTooltip({
         visible: true,
@@ -229,7 +230,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
         .select('circle')
         .attr('stroke-width', 4)
         .attr('filter', 'brightness(1.3)');
-      edgePaths.attr('stroke-opacity', e => (e.source === d.id ? 0.9 : 0.05));
+      edgePaths.attr('stroke-opacity', e => (e.source === d.id ? 0.6 : 0.05));
       handlers.onTooltip({
         visible: true,
         x: event.pageX,
@@ -258,7 +259,9 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     domainNodeGroups
       .append('circle')
       .attr('r', d => d.radius)
-      .attr('stroke', d => (d.isMultiPlatform ? '#ff6b6b' : '#fff'))
+      .attr('stroke', d =>
+        d.isMultiPlatform ? cssVar('--danger') : cssVar('--text-primary')
+      )
       .attr('stroke-width', d => (d.isMultiPlatform ? 3 : 2))
       .attr('opacity', 0.9),
     svg
@@ -271,7 +274,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('y', 5)
     .attr('text-anchor', 'end')
     .attr('font-size', '11px')
-    .attr('fill', '#e0e0e0')
+    .attr('fill', cssVar('--text-secondary'))
     .attr('pointer-events', 'none');
 
   domainNodeGroups
@@ -283,7 +286,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('text-anchor', 'middle')
     .attr('font-size', '10px')
     .attr('font-weight', 'bold')
-    .attr('fill', '#fff')
+    .attr('fill', cssVar('--text-primary'))
     .attr('pointer-events', 'none');
 
   // Platform nodes
@@ -300,7 +303,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
         .select('circle')
         .attr('stroke-width', 4)
         .attr('filter', 'brightness(1.3)');
-      edgePaths.attr('stroke-opacity', e => (e.target === d.id ? 0.9 : 0.05));
+      edgePaths.attr('stroke-opacity', e => (e.target === d.id ? 0.6 : 0.05));
       handlers.onTooltip({
         visible: true,
         x: event.pageX,
@@ -329,8 +332,11 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .append('circle')
     .attr('r', d => d.radius)
     .attr('fill', d => d.color)
-    .attr('stroke', d => (d.isWidespread ? '#ffd700' : '#fff'))
-    .attr('stroke-width', d => (d.isWidespread ? 3 : 2))
+    .attr('stroke', d =>
+      d.isWidespread ? cssVar('--warning') : cssVar('--text-primary')
+    )
+    .attr('stroke-width', d => (d.isWidespread ? 1.5 : 2))
+    .attr('stroke-opacity', d => (d.isWidespread ? 0.8 : 1))
     .attr('opacity', 0.9);
 
   platformNodeGroups
@@ -341,7 +347,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('text-anchor', 'start')
     .attr('font-size', '12px')
     .attr('font-weight', d => (d.isWidespread ? 'bold' : 'normal'))
-    .attr('fill', '#e0e0e0')
+    .attr('fill', cssVar('--text-secondary'))
     .attr('pointer-events', 'none');
 
   platformNodeGroups
@@ -351,7 +357,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('y', 10)
     .attr('text-anchor', 'start')
     .attr('font-size', '10px')
-    .attr('fill', '#888')
+    .attr('fill', cssVar('--text-tertiary'))
     .attr('pointer-events', 'none');
 
   g.append('text')
@@ -361,7 +367,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('text-anchor', 'middle')
     .attr('font-size', '12px')
     .attr('font-weight', 'bold')
-    .attr('fill', '#888')
+    .attr('fill', cssVar('--text-tertiary'))
     .attr('letter-spacing', '0.1em');
 
   g.append('text')
@@ -371,7 +377,7 @@ function drawBipartiteGraph(svgElement, graph, handlers) {
     .attr('text-anchor', 'middle')
     .attr('font-size', '12px')
     .attr('font-weight', 'bold')
-    .attr('fill', '#888')
+    .attr('fill', cssVar('--text-tertiary'))
     .attr('letter-spacing', '0.1em');
 }
 

@@ -7,6 +7,7 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--surface-0);
 }
 
 .main-content {
@@ -14,142 +15,109 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--color-bg-dark);
+  background-color: var(--surface-1);
+  border-left: 1px solid var(--border-default);
+  margin-left: -1px; /* collapse onto the sidebar's own border-right */
+  min-width: 0;
 }
 
 .dashboard-header {
-  padding: var(--spacing-xl);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-bg-darker);
-  position: relative;
+  padding: var(--space-5) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--surface-1);
 }
 
-.dashboard-header-top {
+.dashboard-header-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
+  gap: var(--space-6);
 }
 
-.dashboard-header h1 {
-  margin: 0;
-  color: var(--color-primary);
+.dashboard-title-block h1 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.dashboard-insights-banner {
+.dashboard-subtitle {
+  margin-top: var(--space-1);
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+}
+
+/* View Tabs — segmented control (shared .segmented styles in components.css) */
+.view-tabs {
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .tab-button .tab-label {
+    display: none;
+  }
+}
+
+/* Insights — quiet inline strip under the header row */
+.dashboard-insights {
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: linear-gradient(
-    135deg,
-    rgba(0, 212, 170, 0.15),
-    rgba(0, 212, 170, 0.05)
-  );
-  border: 1px solid var(--color-primary);
-  border-radius: 12px;
-  min-width: 300px;
-  max-width: 520px;
-  position: absolute;
-  top: var(--spacing-xl);
-  right: var(--spacing-xl);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
-  z-index: 2;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 8px 12px;
+  background-color: rgba(0, 212, 170, 0.07);
+  border: 1px solid rgba(0, 212, 170, 0.18);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  max-width: 640px;
 }
 
-.insight-banner-icon {
-  color: var(--color-primary);
-  font-size: 18px;
-  line-height: 1;
-  margin-top: 2px;
+.dashboard-insights::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 7px;
+  border-radius: var(--radius-full);
+  background-color: var(--accent);
 }
 
 .dashboard-insights-text {
-  max-width: 440px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: var(--color-text-primary);
-  font-size: 14px;
-  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+  line-height: var(--leading-normal);
 }
 
-.insight-line {
-  margin: 0;
-  color: var(--color-text-secondary);
+.insight-line + .insight-line {
+  margin-top: 2px;
 }
 
 .insight-dismiss {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  color: var(--color-text-secondary);
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-}
-
-.insight-dismiss:hover,
-.insight-dismiss:focus {
-  color: var(--color-text-primary);
-}
-
-/* View Tabs */
-.view-tabs {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.tab-button {
-  display: flex;
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background-color: var(--color-bg-card);
-  border: 2px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: -2px -4px 0 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
 }
 
-.tab-button svg {
-  width: 20px;
-  height: 20px;
+.insight-dismiss:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-3);
 }
 
-.tab-button:hover {
-  background-color: var(--color-bg-hover);
-  border-color: var(--color-primary);
-  color: var(--color-text-primary);
-}
-
-.tab-button:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--color-primary);
-}
-
-.tab-button.active {
-  background-color: rgba(0, 212, 170, 0.1);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.tab-button[aria-selected='true'] {
-  font-weight: 600;
+.insight-dismiss svg {
+  width: 16px;
+  height: 16px;
 }
 
 .visualization-section {
   flex: 1;
-  overflow: hidden;
   position: relative;
+  overflow: hidden;
 }
 
 /* Ensure view containers fill the section */
@@ -163,23 +131,26 @@
 }
 
 .dashboard-footer {
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-top: 1px solid var(--color-border);
-  background-color: var(--color-bg-darker);
-  text-align: center;
+  padding: var(--space-2) var(--space-6);
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
 }
 
 .dashboard-footer p {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
 }
 
 .dashboard-footer a {
-  color: var(--color-primary);
-  text-decoration: underline;
+  color: var(--text-secondary);
+  text-underline-offset: 2px;
 }
 
 .dashboard-footer a:hover {
-  color: #00ffc8;
+  color: var(--text-primary);
+}
+
+.footer-sep {
+  margin: 0 var(--space-2);
+  color: var(--text-tertiary);
 }

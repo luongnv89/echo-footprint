@@ -10,6 +10,7 @@
  */
 
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
+import { cssVar } from './theme.js';
 
 /**
  * Convert raw footprint records into a bipartite graph structure.
@@ -67,7 +68,7 @@ function buildBipartiteGraph(footprints) {
         platform,
         count,
         name: TRACKING_PLATFORMS[platform]?.name || platform,
-        color: TRACKING_PLATFORMS[platform]?.color || '#4a90e2',
+        color: TRACKING_PLATFORMS[platform]?.color || cssVar('--info'),
       }));
 
     return {
@@ -85,7 +86,7 @@ function buildBipartiteGraph(footprints) {
           ? topPlatforms[0].color
           : platformCount <= 3
             ? topPlatforms.slice(0, 2).map(p => p.color)
-            : '#ff6b6b',
+            : cssVar('--warning'),
       isMultiPlatform: platformCount >= 2,
     };
   });
@@ -95,7 +96,7 @@ function buildBipartiteGraph(footprints) {
     const domainCount = Object.keys(data.domains).length;
     const platformConfig = TRACKING_PLATFORMS[platform] || {
       name: platform,
-      color: '#4a90e2',
+      color: cssVar('--info'),
     };
     const topDomains = Object.entries(data.domains)
       .sort((a, b) => b[1] - a[1])

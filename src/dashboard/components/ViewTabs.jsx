@@ -3,55 +3,36 @@
  *
  * Extracted from `App.jsx` (issue #33, F-CLEAN-002) so the App component
  * stays focused on layout, state plumbing, and view switching. The
- * `VIEWS` constant lists the supported views in render order; the
- * rendered SVGs match the originals one-for-one (no visual change).
+ * `VIEWS` constant lists the supported views in render order. Icons are
+ * 16px stroke glyphs so the active tab can tint them with the accent.
  */
 
 import React from 'react';
+
+const iconProps = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 16 16',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  'aria-hidden': true,
+};
 
 const VIEWS = [
   {
     id: 'graph',
     label: 'Graph View',
     svg: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <circle cx="10" cy="10" r="2" />
-        <circle cx="4" cy="6" r="2" />
-        <circle cx="16" cy="6" r="2" />
-        <circle cx="4" cy="14" r="2" />
-        <circle cx="16" cy="14" r="2" />
-        <line
-          x1="10"
-          y1="10"
-          x2="6"
-          y2="7"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="10"
-          y1="10"
-          x2="14"
-          y2="7"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="10"
-          y1="10"
-          x2="6"
-          y2="13"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="10"
-          y1="10"
-          x2="14"
-          y2="13"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
+      <svg {...iconProps}>
+        <circle cx="8" cy="8" r="2" />
+        <circle cx="3.5" cy="3.5" r="1.5" />
+        <circle cx="12.5" cy="3.5" r="1.5" />
+        <circle cx="3.5" cy="12.5" r="1.5" />
+        <circle cx="12.5" cy="12.5" r="1.5" />
+        <path d="M6.6 6.6 4.7 4.7M9.4 6.6l1.9-1.9M6.6 9.4l-1.9 1.9M9.4 9.4l1.9 1.9" />
       </svg>
     ),
   },
@@ -59,44 +40,13 @@ const VIEWS = [
     id: 'bipartite',
     label: 'Bipartite Graph',
     svg: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <circle cx="4" cy="4" r="2" />
-        <circle cx="4" cy="10" r="2" />
-        <circle cx="4" cy="16" r="2" />
-        <circle cx="16" cy="6" r="2" />
-        <circle cx="16" cy="14" r="2" />
-        <line
-          x1="6"
-          y1="4"
-          x2="14"
-          y2="6"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="6"
-          y1="10"
-          x2="14"
-          y2="6"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="6"
-          y1="10"
-          x2="14"
-          y2="14"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <line
-          x1="6"
-          y1="16"
-          x2="14"
-          y2="14"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
+      <svg {...iconProps}>
+        <circle cx="3" cy="3" r="1.5" />
+        <circle cx="3" cy="8" r="1.5" />
+        <circle cx="3" cy="13" r="1.5" />
+        <circle cx="13" cy="5" r="1.5" />
+        <circle cx="13" cy="11" r="1.5" />
+        <path d="M4.5 3.2 11.5 4.8M4.5 7.7l7-2.4M4.5 8.3l7 2.4M4.5 12.8l7-1.6" />
       </svg>
     ),
   },
@@ -104,8 +54,9 @@ const VIEWS = [
     id: 'map',
     label: 'Map View',
     svg: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M7 3l-5 2v11l5-2 6 2 5-2V3l-5 2-6-2zm0 2v9l6 2V7L7 5z" />
+      <svg {...iconProps}>
+        <path d="M1.5 4 5.5 2.5l5 2 4-1.5v9l-4 1.5-5-2-4 1.5V4Z" />
+        <path d="M5.5 2.5v9M10.5 4.5v9" />
       </svg>
     ),
   },
@@ -113,13 +64,9 @@ const VIEWS = [
     id: 'table',
     label: 'Data Table',
     svg: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-        <path
-          d="M3 3h14v14H3V3zm0 4h14M7 7v10"
-          stroke="currentColor"
-          fill="none"
-          strokeWidth="1.5"
-        />
+      <svg {...iconProps}>
+        <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" />
+        <path d="M1.5 6.5h13M6 6.5v7" />
       </svg>
     ),
   },
@@ -127,7 +74,7 @@ const VIEWS = [
 
 export default function ViewTabs({ activeView, onViewChange }) {
   return (
-    <nav className="view-tabs" role="tablist">
+    <nav className="view-tabs segmented" role="tablist">
       {VIEWS.map(view => (
         <button
           key={view.id}
@@ -135,11 +82,12 @@ export default function ViewTabs({ activeView, onViewChange }) {
           role="tab"
           aria-selected={activeView === view.id}
           aria-controls={`${view.id}-view`}
-          className={`tab-button ${activeView === view.id ? 'active' : ''}`}
+          className={`tab-button segmented-item pressable ${activeView === view.id ? 'active' : ''}`}
+          title={view.label}
           onClick={() => onViewChange(view.id)}
         >
           {view.svg}
-          {view.label}
+          <span className="tab-label">{view.label}</span>
         </button>
       ))}
     </nav>
