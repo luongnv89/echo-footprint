@@ -214,14 +214,19 @@ function BipartiteGraph({ footprints, stats }) {
         )}
         <button
           className="icon-btn pressable"
+          type="button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg
-              .transition()
-              .duration(750)
-              .call(d3.zoom().transform, d3.zoomIdentity);
+            const reset = selection =>
+              selection.call(d3.zoom().transform, d3.zoomIdentity);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              reset(svg);
+            } else {
+              reset(svg.transition().duration(750));
+            }
           }}
           title="Reset zoom"
+          aria-label="Reset zoom"
         >
           <svg
             width="16"
@@ -251,7 +256,7 @@ function BipartiteGraph({ footprints, stats }) {
             <span className="button-label">Export</span>
           </button>
           {showExportMenu && (
-            <div className="export-menu" role="menu">
+            <div className="export-menu">
               <button
                 className="export-menu-item"
                 onClick={() => {
@@ -285,8 +290,12 @@ function BipartiteGraph({ footprints, stats }) {
         <div className="toggle-controls">
           <button
             className={`icon-btn pressable ${allPanelsVisible ? 'active' : ''}`}
+            type="button"
             onClick={toggleAllPanels}
             title={allPanelsVisible ? 'Hide all panels' : 'Show all panels'}
+            aria-label={
+              allPanelsVisible ? 'Hide all panels' : 'Show all panels'
+            }
             aria-pressed={allPanelsVisible}
           >
             {allPanelsVisible ? (
@@ -315,8 +324,10 @@ function BipartiteGraph({ footprints, stats }) {
           <div className="toggle-separator"></div>
           <button
             className={`icon-btn pressable ${showFilters ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             title={showFilters ? 'Hide filters' : 'Show filters'}
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
             aria-pressed={showFilters}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -325,8 +336,10 @@ function BipartiteGraph({ footprints, stats }) {
           </button>
           <button
             className={`icon-btn pressable ${showSorting ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowSorting(!showSorting)}
             title={showSorting ? 'Hide sorting' : 'Show sorting'}
+            aria-label={showSorting ? 'Hide sorting' : 'Show sorting'}
             aria-pressed={showSorting}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -335,8 +348,10 @@ function BipartiteGraph({ footprints, stats }) {
           </button>
           <button
             className={`icon-btn pressable ${showStatistics ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowStatistics(!showStatistics)}
             title={showStatistics ? 'Hide statistics' : 'Show statistics'}
+            aria-label={showStatistics ? 'Hide statistics' : 'Show statistics'}
             aria-pressed={showStatistics}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -345,8 +360,10 @@ function BipartiteGraph({ footprints, stats }) {
           </button>
           <button
             className={`icon-btn pressable ${showLegend ? 'active' : ''}`}
+            type="button"
             onClick={() => setShowLegend(!showLegend)}
             title={showLegend ? 'Hide legend' : 'Show legend'}
+            aria-label={showLegend ? 'Hide legend' : 'Show legend'}
             aria-pressed={showLegend}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -624,7 +641,12 @@ function BipartiteGraph({ footprints, stats }) {
       )}
 
       {/* SVG Canvas */}
-      <svg ref={svgRef} className="bipartite-graph-svg"></svg>
+      <svg
+        ref={svgRef}
+        className="bipartite-graph-svg"
+        role="img"
+        aria-label="Bipartite graph of domains and tracking platforms"
+      ></svg>
 
       {/* Tooltip */}
       {tooltip.visible && tooltip.data && (

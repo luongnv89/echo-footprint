@@ -225,39 +225,51 @@ function App() {
 
         <section className="visualization-section">
           <Suspense fallback={<SkeletonPlaceholder />}>
-            {activeView === 'graph' && (
-              <div id="graph-view" role="tabpanel" aria-labelledby="graph-tab">
-                <RadialGraph
-                  footprints={footprints}
-                  stats={stats}
-                  externalPlatformFocus={selectedPlatform}
-                  onPlatformFocusChange={setSelectedPlatform}
-                />
-              </div>
-            )}
-            {activeView === 'bipartite' && (
-              <div
-                id="bipartite-view"
-                role="tabpanel"
-                aria-labelledby="bipartite-tab"
-              >
-                <BipartiteGraph footprints={footprints} stats={stats} />
-              </div>
-            )}
-            {activeView === 'map' && (
-              <div id="map-view" role="tabpanel" aria-labelledby="map-tab">
-                <MapView
-                  footprints={footprints}
-                  stats={stats}
-                  onLocationStatsUpdate={setMapLocationStats}
-                />
-              </div>
-            )}
-            {activeView === 'table' && (
-              <div id="table-view" role="tabpanel" aria-labelledby="table-tab">
-                <DataTable footprints={footprints} stats={stats} />
-              </div>
-            )}
+            <div
+              id="graph-view"
+              role="tabpanel"
+              aria-labelledby="graph-tab"
+              hidden={activeView !== 'graph'}
+              aria-hidden={activeView !== 'graph'}
+            >
+              <RadialGraph
+                footprints={footprints}
+                stats={stats}
+                externalPlatformFocus={selectedPlatform}
+                onPlatformFocusChange={setSelectedPlatform}
+              />
+            </div>
+            <div
+              id="bipartite-view"
+              role="tabpanel"
+              aria-labelledby="bipartite-tab"
+              hidden={activeView !== 'bipartite'}
+              aria-hidden={activeView !== 'bipartite'}
+            >
+              <BipartiteGraph footprints={footprints} stats={stats} />
+            </div>
+            <div
+              id="map-view"
+              role="tabpanel"
+              aria-labelledby="map-tab"
+              hidden={activeView !== 'map'}
+              aria-hidden={activeView !== 'map'}
+            >
+              <MapView
+                footprints={footprints}
+                stats={stats}
+                onLocationStatsUpdate={setMapLocationStats}
+              />
+            </div>
+            <div
+              id="table-view"
+              role="tabpanel"
+              aria-labelledby="table-tab"
+              hidden={activeView !== 'table'}
+              aria-hidden={activeView !== 'table'}
+            >
+              <DataTable footprints={footprints} stats={stats} />
+            </div>
           </Suspense>
         </section>
 

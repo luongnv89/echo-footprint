@@ -95,7 +95,7 @@ function Sidebar({
         <div className="logo">
           <img src={logoSvg} alt="EchoFootPrint Logo" className="logo-image" />
           <div className="logo-text">
-            <h1>EchoFootPrint</h1>
+            <p className="logo-title">EchoFootPrint</p>
             <span className="version" title={`Build: ${buildVersion}`}>
               {buildVersion}
             </span>

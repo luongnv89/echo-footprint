@@ -37,7 +37,7 @@
   min-width: 0;
 }
 
-.logo h1 {
+.logo-title {
   font-size: var(--text-md);
   font-weight: 600;
   letter-spacing: -0.01em;

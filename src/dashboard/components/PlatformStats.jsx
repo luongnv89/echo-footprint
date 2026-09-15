@@ -62,6 +62,7 @@ function PlatformStats({ stats, onPlatformSelect, selectedPlatform }) {
               className={`platform-item ${isSelected ? 'active' : ''} ${onPlatformSelect ? 'clickable pressable' : ''}`}
               onClick={() => handlePlatformClick(platformId, data)}
               role={onPlatformSelect ? 'button' : undefined}
+              aria-pressed={onPlatformSelect ? isSelected : undefined}
               tabIndex={onPlatformSelect ? 0 : undefined}
               onKeyDown={e => {
                 if (onPlatformSelect && (e.key === 'Enter' || e.key === ' ')) {

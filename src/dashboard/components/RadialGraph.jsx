@@ -538,14 +538,19 @@ function RadialGraph({
         )}
         <button
           className="icon-btn pressable"
+          type="button"
           onClick={() => {
             const svg = d3.select(svgRef.current);
-            svg
-              .transition()
-              .duration(750)
-              .call(d3.zoom().transform, d3.zoomIdentity);
+            const reset = selection =>
+              selection.call(d3.zoom().transform, d3.zoomIdentity);
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              reset(svg);
+            } else {
+              reset(svg.transition().duration(750));
+            }
           }}
           title="Reset zoom"
+          aria-label="Reset zoom"
         >
           <svg
             width="16"
@@ -568,7 +573,12 @@ function RadialGraph({
         </div>
       </div>
 
-      <svg ref={svgRef} className="radial-graph-svg"></svg>
+      <svg
+        ref={svgRef}
+        className="radial-graph-svg"
+        role="img"
+        aria-label="Radial graph of tracking domains connected to you"
+      ></svg>
 
       {tooltip.visible && tooltip.data && (
         <div

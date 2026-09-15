@@ -74,7 +74,11 @@ const VIEWS = [
 
 export default function ViewTabs({ activeView, onViewChange }) {
   return (
-    <nav className="view-tabs segmented" role="tablist">
+    <nav
+      className="view-tabs segmented"
+      role="tablist"
+      aria-label="Dashboard views"
+    >
       {VIEWS.map(view => (
         <button
           key={view.id}

@@ -441,10 +441,7 @@ function DataTable({ footprints, stats }) {
 
               return (
                 <React.Fragment key={group.key}>
-                  <tr
-                    className={`group-row ${isExpanded ? 'expanded' : ''}`}
-                    onClick={() => toggleGroup(group.key)}
-                  >
+                  <tr className={`group-row ${isExpanded ? 'expanded' : ''}`}>
                     <td
                       className="timestamp-cell"
                       data-label="Latest Timestamp"
