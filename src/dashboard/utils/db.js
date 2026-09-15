@@ -172,6 +172,15 @@ export async function getGeoCache(domain) {
  * @param {number} geoData.lon - Longitude (optional)
  * @returns {Promise<string>} - Domain (primary key)
  */
+export async function deleteGeoCache(domain) {
+  try {
+    await db.geoCache.delete(domain);
+  } catch (error) {
+    console.error('Error deleting geo cache:', error);
+    throw error;
+  }
+}
+
 export async function setGeoCache(domain, geoData) {
   try {
     await db.geoCache.put({

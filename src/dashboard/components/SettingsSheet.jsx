@@ -392,8 +392,8 @@ function SettingsSheet({ isOpen, onClose, stats }) {
                 <strong>Map geolocation</strong>
                 <p>
                   Off by default. When enabled, Map View sends the domain names
-                  of tracked sites to https://ip-api.com over HTTPS to resolve
-                  their approximate location. Only domains are sent — never page
+                  of tracked sites to http://ip-api.com to resolve their
+                  approximate location. Only domains are sent — never page
                   contents or your stored data. Results are cached locally.
                 </p>
               </div>

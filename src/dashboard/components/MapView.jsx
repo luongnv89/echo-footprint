@@ -36,7 +36,12 @@ function mapPinIcon() {
   });
 }
 
-function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
+function MapView({
+  footprints,
+  stats,
+  isActive = true,
+  onLocationStatsUpdate = () => {},
+}) {
   const safeFootprints = Array.isArray(footprints) ? footprints : [];
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -126,9 +131,9 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
     // re-register on footprints change so loadGeoData sees fresh data
   }, [safeFootprints]);
 
-  // Initialize map
+  // Initialize map once the tab panel is visible (hidden tabs have zero size).
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!isActive || !mapRef.current || mapInstanceRef.current) return;
 
     // Create map
     const map = L.map(mapRef.current, {
@@ -150,7 +155,15 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+  }, [isActive]);
+
+  useEffect(() => {
+    if (!isActive || !mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+    });
+  }, [isActive]);
 
   // Update tile layer when theme changes
   useEffect(() => {
@@ -170,7 +183,12 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
 
   // Add markers when geo data changes
   useEffect(() => {
-    if (!mapInstanceRef.current || Object.keys(geoData).length === 0) return;
+    if (
+      !isActive ||
+      !mapInstanceRef.current ||
+      Object.keys(geoData).length === 0
+    )
+      return;
 
     // Remove existing markers
     if (markersLayerRef.current) {
@@ -307,7 +325,7 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
         maxZoom: 10,
       });
     }
-  }, [geoData, safeFootprints, onLocationStatsUpdate]);
+  }, [geoData, safeFootprints, onLocationStatsUpdate, isActive]);
   // Update parent when footprints change but geo data already present (counts might shift)
   // If no geo data yet, report unknown stats upstream
   useEffect(() => {
@@ -516,9 +534,10 @@ function MapView({ footprints, stats, onLocationStatsUpdate = () => {} }) {
           <div className="map-overlay-message panel">
             {geoOptIn ? (
               <p>
-                No geolocation data available for tracked domains.
+                No domain locations to plot yet.
                 <br />
-                Domains may not have resolvable IP addresses.
+                Use the refresh control above to clear cached lookups and retry,
+                or check the browser console if lookups are blocked.
               </p>
             ) : (
               <p>
