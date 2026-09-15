@@ -3,7 +3,8 @@
  * Provides user guidance, FAQs, and documentation
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { useSheetFocus } from '../hooks/useSheetFocus.js';
 import { TRACKING_PLATFORMS } from '../../lib/tracking-platforms.js';
 import '../styles/HelpSheet.css';
 
@@ -21,17 +22,29 @@ function HelpSheet({ isOpen, onClose }) {
       .sort();
   }, []);
 
+  const sheetRef = useRef(null);
+  const handleSheetKeyDown = useSheetFocus({
+    isOpen,
+    onClose,
+    dialogRef: sheetRef,
+  });
+
   if (!isOpen) return null;
 
   return (
     <div
       className="sheet-overlay"
       onClick={onClose}
+      onKeyDown={handleSheetKeyDown}
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-sheet-title"
     >
-      <div className="sheet help-sheet" onClick={e => e.stopPropagation()}>
+      <div
+        className="sheet help-sheet"
+        ref={sheetRef}
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="sheet-header">
           <h2 id="help-sheet-title">Help & Documentation</h2>

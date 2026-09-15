@@ -4,7 +4,8 @@
  * Per PRD: Clear data flow, storage quota display, WCAG compliant
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import { useSheetFocus } from '../hooks/useSheetFocus.js';
 import { clearAllData, checkStorageQuota } from '../utils/db.js';
 import { getGeoOptIn, setGeoOptIn } from '../utils/geolocation.js';
 import { cssVar } from '../utils/theme.js';
@@ -51,6 +52,13 @@ function SettingsSheet({ isOpen, onClose, stats }) {
   const [newDomain, setNewDomain] = useState('');
   const [isPaused, setIsPaused] = useState(false);
   const [geoOptIn, setGeoOptInLocal] = useState(false);
+
+  const sheetRef = useRef(null);
+  const handleSheetKeyDown = useSheetFocus({
+    isOpen,
+    onClose,
+    dialogRef: sheetRef,
+  });
 
   // Load storage info and build info when sheet opens
   useEffect(() => {
@@ -184,11 +192,12 @@ function SettingsSheet({ isOpen, onClose, stats }) {
     <div
       className="sheet-overlay"
       onClick={handleClose}
+      onKeyDown={handleSheetKeyDown}
       role="dialog"
       aria-modal="true"
       aria-labelledby="settings-sheet-title"
     >
-      <div className="sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet" ref={sheetRef} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="sheet-header">
           <h2 id="settings-sheet-title">Settings</h2>

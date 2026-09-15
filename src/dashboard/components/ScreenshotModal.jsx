@@ -6,6 +6,7 @@
 
 import React, { useState, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { useSheetFocus } from '../hooks/useSheetFocus.js';
 import { cssVar } from '../utils/theme.js';
 import '../styles/ScreenshotModal.css';
 
@@ -14,6 +15,12 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
   const [screenshot, setScreenshot] = useState(null);
   const [copied, setCopied] = useState(false);
   const canvasRef = useRef(null);
+  const sheetRef = useRef(null);
+  const handleSheetKeyDown = useSheetFocus({
+    isOpen,
+    onClose,
+    dialogRef: sheetRef,
+  });
 
   // Capture screenshot of the active visualization
   const captureScreenshot = async () => {
@@ -137,11 +144,12 @@ function ScreenshotModal({ isOpen, onClose, activeView }) {
     <div
       className="sheet-overlay"
       onClick={handleClose}
+      onKeyDown={handleSheetKeyDown}
       role="dialog"
       aria-modal="true"
       aria-labelledby="screenshot-modal-title"
     >
-      <div className="sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet" ref={sheetRef} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="sheet-header">
           <h2 id="screenshot-modal-title">Export Visualization</h2>

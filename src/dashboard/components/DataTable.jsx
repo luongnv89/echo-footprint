@@ -493,7 +493,19 @@ function DataTable({ footprints, stats }) {
                         : next.add(group.key);
                       setExpandedGroups(next);
                     }}
+                    tabIndex={0}
+                    role="button"
                     aria-expanded={isExpanded}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const next = new Set(expandedGroups);
+                        next.has(group.key)
+                          ? next.delete(group.key)
+                          : next.add(group.key);
+                        setExpandedGroups(next);
+                      }
+                    }}
                   >
                     <td
                       className="timestamp-cell"
