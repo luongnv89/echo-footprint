@@ -497,6 +497,12 @@ function DataTable({ footprints, stats }) {
                     role="button"
                     aria-expanded={isExpanded}
                     onKeyDown={e => {
+                      if (
+                        e.target !== e.currentTarget &&
+                        e.target.closest('a, button, input, select, textarea')
+                      ) {
+                        return;
+                      }
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         const next = new Set(expandedGroups);

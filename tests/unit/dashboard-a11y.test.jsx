@@ -13,6 +13,16 @@ import { act } from 'react';
 import React from 'react';
 import 'fake-indexeddb/auto';
 
+// Mock getGeoCache so DataTable's geo effect resolves before the test
+// environment is torn down (avoids setState-after-teardown rejections).
+vi.mock('../../src/dashboard/utils/db.js', async () => {
+  const actual = await vi.importActual('../../src/dashboard/utils/db.js');
+  return {
+    ...actual,
+    getGeoCache: vi.fn(async () => null),
+  };
+});
+
 import DataTable from '../../src/dashboard/components/DataTable.jsx';
 import SettingsSheet from '../../src/dashboard/components/SettingsSheet.jsx';
 
@@ -110,6 +120,29 @@ describe('DataTable group row keyboard disclosure', () => {
     const row = container.querySelector('tr.group-row');
     expect(row.getAttribute('tabindex')).toBe('0');
     expect(row.getAttribute('role')).toBe('button');
+  });
+
+  it('does not toggle the group when Enter is pressed on the nested URL link', async () => {
+    render(<DataTable footprints={FOOTPRINTS} />);
+    const row = container.querySelector('tr.group-row');
+    const link = row.querySelector('a.url-link');
+    expect(link).toBeTruthy();
+
+    act(() => {
+      link.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+      );
+    });
+
+    expect(row.getAttribute('aria-expanded')).toBe('false');
+    expect(container.querySelector('.group-detail-row')).toBeNull();
+
+    // Let any pending async state updates (e.g. geo map load) settle before
+    // the environment is torn down, so vitest does not record an unhandled
+    // rejection for a setState after unmount.
+    await act(async () => {
+      await Promise.resolve();
+    });
   });
 });
 
