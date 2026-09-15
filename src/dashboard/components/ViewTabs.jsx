@@ -84,6 +84,7 @@ export default function ViewTabs({ activeView, onViewChange }) {
           key={view.id}
           id={`${view.id}-tab`}
           role="tab"
+          aria-label={view.label}
           aria-selected={activeView === view.id}
           aria-controls={`${view.id}-view`}
           className={`tab-button segmented-item pressable ${activeView === view.id ? 'active' : ''}`}
