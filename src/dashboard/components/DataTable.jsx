@@ -57,6 +57,7 @@ function SortableHeader({ column, label, sortBy, sortOrder, onSort }) {
     : `Sort by ${label}`;
   return (
     <th aria-sort={active ? direction : 'none'}>
+      <span className="sort-header-text">{label}</span>
       <button
         type="button"
         className={`sort-button ${active ? 'active' : ''}`}

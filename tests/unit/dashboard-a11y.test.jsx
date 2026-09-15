@@ -151,6 +151,11 @@ describe('DataTable group row keyboard disclosure', () => {
     expect(timestampHeader.getAttribute('aria-sort')).toBe('descending');
     const sortBtn = timestampHeader.querySelector('button.sort-button');
     expect(sortBtn.getAttribute('aria-label')).toMatch(/descending/i);
+    // Plain header text remains when stacked layout hides sort buttons
+    // (display:none at ≤768px) so they leave the tab order.
+    expect(
+      timestampHeader.querySelector('.sort-header-text').textContent
+    ).toBe('Latest Timestamp');
   });
 });
 

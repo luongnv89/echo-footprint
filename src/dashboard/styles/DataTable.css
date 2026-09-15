@@ -131,6 +131,12 @@
   border-bottom: 1px solid var(--border-default);
 }
 
+/* Desktop uses the sort button as the header; this text is for the
+   clipped thead at ≤768px once buttons are display:none (out of tab order). */
+.sort-header-text {
+  display: none;
+}
+
 .sort-button {
   display: inline-flex;
   align-items: center;
@@ -407,6 +413,15 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* display:none removes clipped sort buttons from tab order */
+  .data-table thead .sort-button {
+    display: none;
+  }
+
+  .data-table thead .sort-header-text {
+    display: inline;
   }
 
   .data-table tbody tr {
