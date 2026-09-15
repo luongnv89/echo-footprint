@@ -172,6 +172,11 @@
   color: var(--text-tertiary);
 }
 
+/* Dark theme: keyless OSM tiles inverted on the tile pane only (markers stay normal). */
+.leaflet-map.map-theme-dark .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(0.92) contrast(0.88);
+}
+
 /* Attribution */
 .leaflet-control-attribution {
   background: rgba(11, 13, 16, 0.7);
