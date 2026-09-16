@@ -475,7 +475,7 @@ web-ext lint
 
 **Phase:** P4 — polish, the final phase of the modernization plan
 (`MODERNIZATION_PLAN.md`, tracked by epic #6).
-**Version:** `1.2.0` in `package.json` and `manifest.json`; `README.md` states
+**Version:** `1.3.0` in `package.json` and `manifest.json`; `README.md` states
 the same number under Status. Bump all three together.
 
 The extension is shipped and in production use: content script, service worker,

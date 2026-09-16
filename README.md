@@ -340,6 +340,9 @@ This project is distributed privately. Please contact the maintainers for access
 - [x] **Bipartite Graph Visualization** - Advanced domain-platform relationship mapping (v1.1.0)
 - [x] **Advanced Filtering** - Multi-platform and widespread platform filters (v1.1.0)
 - [x] **Enhanced Export** - PNG, SVG, and CSV export capabilities (v1.1.0)
+- [x] **Instrument-Panel Dashboard Redesign** - Token-based instrument-panel theme with overview stats card (v1.3.0)
+- [x] **Map Fixes** - OSM tile layer and geolocation lookup fixes (v1.3.0)
+- [x] **Landing Page** - Public landing page hosted on GitHub Pages (v1.3.0)
 - [ ] Firefox support (Manifest V2 branch)
 - [ ] Export to JSON format
 - [ ] Custom domain pattern matching
