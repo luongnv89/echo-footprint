@@ -3,33 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EchoFootPrint — Visualize Cross-Site Tracking</title>
+    <title>EchoFootPrint — See who tracks you across the web</title>
+    <meta
+      name="description"
+      content="EchoFootPrint is a privacy-first browser extension that reveals cross-site tracking from 50 major ad platforms. All data stays on your device."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <!-- Design choice: Fraunces (editorial serif) + Instrument Sans (clean body).
+         Deliberately avoids generic Inter-as-display for a premium voice. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
       rel="stylesheet"
     />
-    <script src="https://unpkg.com/lucide@0.500.0/dist/umd/lucide.min.js" integrity="sha384-95GjIy+1kYvR/3MDNwk4xge8Pc5LuOcYqCo+5safKY4B6gW1upbpor9VhtrNRMZZ" crossorigin="anonymous"></script>
+    <script
+      src="https://unpkg.com/lucide@0.500.0/dist/umd/lucide.min.js"
+      integrity="sha384-95GjIy+1kYvR/3MDNwk4xge8Pc5LuOcYqCo+5safKY4B6gW1upbpor9VhtrNRMZZ"
+      crossorigin="anonymous"
+    ></script>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <header class="site-header">
       <div class="container header-inner">
-        <div class="brand">
+        <a class="brand" href="./index.html" aria-label="EchoFootPrint home">
           <img src="./logo.svg" alt="EchoFootPrint logo" class="logo" />
           <span class="brand-name">EchoFootPrint</span>
-        </div>
-        <nav class="nav">
-          <a href="#features">Features</a>
-          <a href="#whats-new">What's New</a>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#how-it-works">How it works</a>
+          <a href="#views">Views</a>
           <a href="#platforms">Platforms</a>
-          <a href="#gallery">Gallery</a>
+          <a href="#faq">FAQ</a>
           <a href="./privacy.html">Privacy</a>
         </nav>
         <a
-          class="button primary"
+          class="button primary small"
           href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb"
           >Install Extension</a
         >
@@ -37,17 +47,20 @@
     </header>
 
     <main>
+      <!-- 01 · Hero: centered editorial, single framed print, stat strip -->
       <section class="hero" id="install">
-        <div class="container hero-grid">
+        <div class="container">
           <div class="hero-copy">
-            <p class="eyebrow">Privacy-first · Local-only</p>
-            <h1>See who tracks you across the web.</h1>
-            <p class="lede">
-              EchoFootPrint reveals 50 major ad and analytics platforms tracking
-              your browsing. Zero configuration, zero telemetry—just a clear
-              view of your footprint.
+            <p class="eyebrow reveal reveal-1">Privacy-first · Local-only</p>
+            <h1 class="reveal reveal-2">
+              See who follows you <em>around the web.</em>
+            </h1>
+            <p class="lede reveal reveal-3" style="margin: 22px auto 0 auto; text-align: center">
+              EchoFootPrint reveals tracking from 50 major ad and analytics
+              platforms as you browse — with zero configuration, zero accounts,
+              and zero telemetry.
             </p>
-            <div class="hero-actions">
+            <div class="hero-actions reveal reveal-4">
               <a
                 class="button primary"
                 href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb"
@@ -56,376 +69,424 @@
                 Install Extension
               </a>
               <a class="text-link" href="#how-it-works">See how it works</a>
-              <a
-                class="text-link"
-                href="https://github.com/luongnv89/echo-footprint/releases/tag/v1.3.0"
-                >What's new in v1.3.0</a
-              >
             </div>
-            <div class="hero-badges">
-              <span class="badge">
-                <i data-lucide="shield-check" class="icon"></i>Local data only
-              </span>
-              <span class="badge">
-                <i data-lucide="lock" class="icon"></i>No accounts
-              </span>
-              <span class="badge">
-                <i data-lucide="eye-off" class="icon"></i>Private build
-              </span>
+            <div class="trust-row reveal reveal-4">
+              <span>Local-only</span>
+              <span class="dot-sep" aria-hidden="true"></span>
+              <span>Zero telemetry</span>
+              <span class="dot-sep" aria-hidden="true"></span>
+              <span>Chrome Web Store</span>
+              <span class="dot-sep" aria-hidden="true"></span>
               <a
-                class="badge"
                 href="https://github.com/luongnv89/echo-footprint/releases/tag/v1.3.0"
+                >v1.3.0 — latest release</a
               >
-                <i data-lucide="tag" class="icon"></i>v1.3.0 — latest release
-              </a>
-            </div>
-            <div class="producthunt-badge" style="margin-top: 2rem">
-              <a
-                href="https://www.producthunt.com/products/echofootprint-track-your-tracker?embed=true&utm_source=badge-featured&utm_medium=badge"
-                target="_blank"
-                ><img
-                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1045755&theme=dark&t=1764915730901"
-                  alt="EchoFootprint&#0032;&#0045;&#0032;Track&#0032;your&#0032;Tracker - See&#0032;the&#0032;hidden&#0032;web&#0032;of&#0032;top&#0032;ad&#0032;trackers&#0032;–&#0032;all&#0032;locally | Product Hunt"
-                  style="width: 250px; height: 54px"
-                  width="250"
-                  height="54"
-              /></a>
             </div>
           </div>
-          <div class="hero-visual">
-            <div
-              class="visual-card focus-frame"
-              role="img"
-              aria-label="Bipartite graph preview"
-            >
+
+          <figure class="hero-figure reveal reveal-4" style="margin-top: 56px">
+            <div class="frame">
               <img
                 src="./screenshots/1.3.0/radial-graph.png"
-                alt="Radial graph view with instrument-panel dashboard (v1.3.0)"
-                class="screenshot full"
+                alt="EchoFootPrint dashboard showing the radial tracking graph"
               />
             </div>
+            <figcaption class="frame-caption">
+              <span>Radial graph — your cross-site footprint at a glance</span>
+              <span>v1.3.0 · Captured locally, never uploaded</span>
+            </figcaption>
+          </figure>
+
+          <div
+            class="stat-strip"
+            role="list"
+            aria-label="EchoFootPrint at a glance"
+          >
+            <div class="stat" role="listitem">
+              <div class="stat-value">50</div>
+              <div class="stat-label">Platforms detected</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value">4</div>
+              <div class="stat-label">Views · graph, map, table</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value"><span class="accent">0</span></div>
+              <div class="stat-label">Servers · data leaves device</div>
+            </div>
+            <div class="stat" role="listitem">
+              <div class="stat-value">&lt;100<span style="font-size: 0.55em">ms</span></div>
+              <div class="stat-label">Detection per page</div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="social-proof">
-        <div class="container proof-grid">
-          <div class="proof-item">
-            <div class="proof-badge">
-              <i data-lucide="shield-check" class="icon"></i>
-              Privacy-first, local-only
-            </div>
-            <p>
-              Zero telemetry or accounts. All detections stay on your device.
-            </p>
-          </div>
-          <div class="proof-item">
-            <div class="proof-badge">
-              <i data-lucide="sparkles" class="icon"></i>
-              Verified by Google
-            </div>
-            <p>
-              Distributed through the Chrome Web Store with reviewed
-              permissions.
-            </p>
-          </div>
-          <div class="proof-item">
-            <div class="proof-badge">
-              <i data-lucide="users" class="icon"></i>
-              Trusted by researchers
-            </div>
-            <p>
-              Built for journalists, analysts, and privacy teams to audit
-              tracking.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="platform-tags-section" id="platforms">
+      <!-- 02 · How it works: numbered editorial steps -->
+      <section class="block" id="how-it-works">
         <div class="container">
           <div class="section-header">
-            <p class="eyebrow">Platform Coverage</p>
-            <h2>Tracking detection across 50 platforms</h2>
-            <p class="body">
-              Social networks, programmatic exchanges, DSPs/SSPs, content
-              discovery, mobile, and data management providers—kept fully local
-              on your device.
+            <span class="section-index">01 — How it works</span>
+            <p class="eyebrow">Three steps to transparency</p>
+            <h2>Browse normally. <em>Understand completely.</em></h2>
+            <p class="lede">
+              No setup, no sign-in. EchoFootPrint runs silently and turns
+              invisible tracking into a picture you can read.
             </p>
-          </div>
-          <ul
-            class="platform-tags"
-            id="platform-tags"
-            aria-label="Supported tracking platforms"
-          ></ul>
-        </div>
-      </section>
-
-      <section class="feature-cards" id="features">
-        <div class="container cards-grid">
-          <article class="card">
-            <h3>Real-time detection</h3>
-            <p>
-              Automatic pixel detection from 50 major ad and analytics platforms
-              as you browse.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Visual network map</h3>
-            <p>
-              Explore radial, bipartite, map, and table views to see how
-              domains connect to each platform.
-            </p>
-          </article>
-          <article class="card">
-            <h3>Own your data</h3>
-            <p>
-              Local-only storage with PNG, SVG, and CSV export and a clear
-              data wipe in Settings.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="feature-cards" id="whats-new">
-        <div class="container">
-          <div class="section-header">
-            <p class="eyebrow">What's New in v1.3.0</p>
-            <h2>A sharper, faster dashboard</h2>
-            <p class="body">
-              The latest release redesigns the dashboard, fixes the map, and
-              trims load times — all still 100% local.
-              <a
-                class="text-link"
-                href="https://github.com/luongnv89/echo-footprint/releases/tag/v1.3.0"
-                >Read the release notes</a
-              >
-            </p>
-          </div>
-          <div class="cards-grid">
-            <article class="card">
-              <h3>Instrument-panel redesign</h3>
-              <p>
-                A token-based instrument-panel theme with an overview stats
-                card for your footprint at a glance.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Reliable map view</h3>
-              <p>
-                Keyless map tiles and fixed geo lookups, with geolocation
-                strictly behind your opt-in.
-              </p>
-            </article>
-            <article class="card">
-              <h3>Faster under the hood</h3>
-              <p>
-                Lazy-loaded views and indexed queries keep the dashboard
-                snappy, now on React 19.
-              </p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="how-it-works" id="how-it-works">
-        <div class="container">
-          <div class="section-header">
-            <p class="eyebrow">How It Works</p>
-            <h2>Three steps to transparency</h2>
           </div>
           <div class="steps">
             <div class="step">
-              <span class="step-badge">1</span>
-              <h4>Browse normally</h4>
-              <p>EchoFootPrint runs silently—no setup, no sign-in.</p>
+              <span class="step-num">— 01</span>
+              <h3>Browse normally</h3>
+              <p>Runs silently in the background. Nothing to configure.</p>
             </div>
             <div class="step">
-              <span class="step-badge">2</span>
-              <h4>Detect locally</h4>
+              <span class="step-num">— 02</span>
+              <h3>Detected locally</h3>
               <p>
-                Tracking pixels are detected and stored in IndexedDB on your
-                device.
+                Tracking pixels are matched on your device and stored in
+                local IndexedDB.
               </p>
             </div>
             <div class="step">
-              <span class="step-badge">3</span>
-              <h4>Visualize instantly</h4>
+              <span class="step-num">— 03</span>
+              <h3>Visualized instantly</h3>
               <p>
-                Switch between graph, bipartite, map, and table views to
-                understand your footprint.
+                Switch between graph, bipartite, map, and table views to read
+                your footprint.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="gallery" id="gallery">
+      <!-- 03 · Views: accessible tabbed showcase (replaces carousel) -->
+      <section class="block" id="views" style="background: var(--paper-soft)">
         <div class="container">
-          <div class="section-header">
-            <p class="eyebrow">Views</p>
-            <h2>Choose the lens that fits your analysis</h2>
+          <div class="section-header center">
+            <span class="section-index">02 — Views</span>
+            <p class="eyebrow center">One footprint, four lenses</p>
+            <h2>Choose the lens <em>that fits your question.</em></h2>
           </div>
-          <div class="carousel">
-            <div class="carousel-track" id="carousel-track">
-              <figure class="carousel-slide" aria-label="Radial graph preview">
-                <img
-                  src="./screenshots/1.3.0/radial-graph.png"
-                  alt="Radial graph screenshot (v1.3.0)"
-                  class="carousel-image"
-                />
-                <figcaption>Radial Graph</figcaption>
-              </figure>
-              <figure
-                class="carousel-slide"
-                aria-label="Bipartite graph preview"
-              >
-                <img
-                  src="./screenshots/1.3.0/bipartite-graph.png"
-                  alt="Bipartite graph screenshot (v1.3.0)"
-                  class="carousel-image"
-                />
-                <figcaption>Bipartite Graph</figcaption>
-              </figure>
-              <figure class="carousel-slide" aria-label="Map view preview">
-                <img
-                  src="./screenshots/1.3.0/map-view.png"
-                  alt="Map view screenshot (v1.3.0)"
-                  class="carousel-image"
-                />
-                <figcaption>Map View</figcaption>
-              </figure>
-              <figure
-                class="carousel-slide"
-                aria-label="Data table preview"
-              >
-                <img
-                  src="./screenshots/1.3.0/data-table.png"
-                  alt="Data table screenshot (v1.3.0)"
-                  class="carousel-image"
-                />
-                <figcaption>Data Table</figcaption>
-              </figure>
-              <figure class="carousel-slide" aria-label="Settings preview">
-                <img
-                  src="./screenshots/1.3.0/settings.png"
-                  alt="Settings and privacy controls screenshot (v1.3.0)"
-                  class="carousel-image"
-                />
-                <figcaption>Settings &amp; Privacy</figcaption>
-              </figure>
-            </div>
-            <div class="carousel-controls">
+          <div class="showcase">
+            <div class="showcase-tabs" role="tablist" aria-label="Dashboard views">
               <button
-                class="carousel-btn"
-                id="prev-slide"
-                aria-label="Previous view"
+                class="showcase-tab"
+                role="tab"
+                aria-selected="true"
+                data-view="radial"
               >
-                ‹
+                Radial Graph
               </button>
-              <div class="carousel-dots" id="carousel-dots"></div>
               <button
-                class="carousel-btn"
-                id="next-slide"
-                aria-label="Next view"
+                class="showcase-tab"
+                role="tab"
+                aria-selected="false"
+                data-view="bipartite"
               >
-                ›
+                Bipartite
+              </button>
+              <button
+                class="showcase-tab"
+                role="tab"
+                aria-selected="false"
+                data-view="map"
+              >
+                Map
+              </button>
+              <button
+                class="showcase-tab"
+                role="tab"
+                aria-selected="false"
+                data-view="table"
+              >
+                Data Table
+              </button>
+              <button
+                class="showcase-tab"
+                role="tab"
+                aria-selected="false"
+                data-view="settings"
+              >
+                Settings
               </button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="privacy-band">
-        <div class="container privacy-content">
-          <div class="privacy-copy">
-            <p class="eyebrow">Privacy First</p>
-            <h2>Your browsing data stays on your device</h2>
-            <p class="body">
-              No accounts, no telemetry, no cloud sync. Clear your footprint
-              anytime from Settings.
-            </p>
-            <a class="button secondary" href="./privacy.html"
-              >Read Privacy Policy</a
-            >
-          </div>
-          <div class="privacy-visual">
-            <div
-              class="visual-card focus-frame"
-              role="img"
-              aria-label="Settings preview"
-            >
+            <div class="showcase-panel active" data-panel="radial" role="tabpanel">
+              <img
+                src="./screenshots/1.3.0/radial-graph.png"
+                alt="Radial graph view of the tracking network"
+              />
+              <div class="showcase-meta">
+                <span>Radial Graph</span><span>Network shape of your footprint</span>
+              </div>
+            </div>
+            <div class="showcase-panel" data-panel="bipartite" role="tabpanel">
+              <img
+                src="./screenshots/1.3.0/bipartite-graph.png"
+                alt="Bipartite view mapping domains to platforms"
+              />
+              <div class="showcase-meta">
+                <span>Bipartite Graph</span><span>Which domains feed which platforms</span>
+              </div>
+            </div>
+            <div class="showcase-panel" data-panel="map" role="tabpanel">
+              <img
+                src="./screenshots/1.3.0/map-view.png"
+                alt="Map view of tracked site locations"
+              />
+              <div class="showcase-meta">
+                <span>Map View</span><span>Geography of tracking · opt-in only</span>
+              </div>
+            </div>
+            <div class="showcase-panel" data-panel="table" role="tabpanel">
+              <img
+                src="./screenshots/1.3.0/data-table.png"
+                alt="Sortable data table of detections"
+              />
+              <div class="showcase-meta">
+                <span>Data Table</span><span>Every detection, sortable · CSV export</span>
+              </div>
+            </div>
+            <div class="showcase-panel" data-panel="settings" role="tabpanel">
               <img
                 src="./screenshots/1.3.0/settings.png"
-                alt="Settings screenshot (v1.3.0)"
-                class="screenshot full"
+                alt="Settings and privacy controls"
+              />
+              <div class="showcase-meta">
+                <span>Settings</span><span>Your data, your controls · one-click wipe</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 · Features: three quiet cards -->
+      <section class="block" id="features">
+        <div class="container">
+          <div class="section-header">
+            <span class="section-index">03 — Why it matters</span>
+            <p class="eyebrow">Built for clarity</p>
+            <h2>Evidence, <em>not anxiety.</em></h2>
+          </div>
+          <div class="cards-grid">
+            <article class="card">
+              <span class="card-icon"
+                ><i data-lucide="radar" aria-hidden="true"></i
+              ></span>
+              <h3>Real-time detection</h3>
+              <p>
+                Automatic pixel detection across 50 major platforms, the moment
+                pages load.
+              </p>
+            </article>
+            <article class="card">
+              <span class="card-icon"
+                ><i data-lucide="network" aria-hidden="true"></i
+              ></span>
+              <h3>A map you can read</h3>
+              <p>
+                Radial, bipartite, map, and table views turn raw beacons into
+                an argument you can show.
+              </p>
+            </article>
+            <article class="card">
+              <span class="card-icon"
+                ><i data-lucide="key-round" aria-hidden="true"></i
+              ></span>
+              <h3>Yours, entirely</h3>
+              <p>
+                Local-only storage with PNG, SVG, and CSV export — and a clear
+                wipe in Settings.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- 05 · Platforms: categories first, full list on demand -->
+      <section class="block" id="platforms" style="background: var(--paper-soft)">
+        <div class="container">
+          <div class="section-header">
+            <span class="section-index">04 — Coverage</span>
+            <p class="eyebrow">Platform coverage</p>
+            <h2>Fifty platforms. <em>One picture.</em></h2>
+            <p class="lede">
+              Social networks, exchanges, DSPs, content discovery, mobile, and
+              data brokers — all matched locally on your device.
+            </p>
+          </div>
+          <div class="platform-cats">
+            <div class="platform-cat">
+              <h3>Social &amp; Search <span class="count">10</span></h3>
+              <p>Meta, Google, X, LinkedIn, TikTok, Amazon, Pinterest, and more.</p>
+            </div>
+            <div class="platform-cat">
+              <h3>Exchanges &amp; DSPs <span class="count">22</span></h3>
+              <p>Trade Desk, Xandr, OpenX, PubMatic, Magnite, Criteo, and more.</p>
+            </div>
+            <div class="platform-cat">
+              <h3>Mobile &amp; Data <span class="count">18</span></h3>
+              <p>Unity, ironSource, Lotame, BlueKai, Epsilon, Acxiom, and more.</p>
+            </div>
+          </div>
+          <details class="platform-disclosure">
+            <summary>Browse all 50 supported platforms</summary>
+            <ul
+              class="platform-tags"
+              id="platform-tags"
+              aria-label="Supported tracking platforms"
+            ></ul>
+          </details>
+        </div>
+      </section>
+
+      <!-- 06 · Privacy: the single dark editorial moment -->
+      <section class="block" id="privacy">
+        <div class="container">
+          <div class="band-dark">
+            <div>
+              <p class="eyebrow">Privacy first</p>
+              <h2>Your browsing data never leaves this device.</h2>
+              <p class="lede">
+                No accounts. No telemetry. No cloud sync. What EchoFootPrint
+                sees stays in your browser.
+              </p>
+              <ul class="check-list">
+                <li>
+                  <span class="tick" aria-hidden="true">✓</span>
+                  100% local IndexedDB storage
+                </li>
+                <li>
+                  <span class="tick" aria-hidden="true">✓</span>
+                  Geolocation strictly behind your opt-in
+                </li>
+                <li>
+                  <span class="tick" aria-hidden="true">✓</span>
+                  One-click wipe in Settings, anytime
+                </li>
+              </ul>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap">
+                <a class="button light" href="./privacy.html">Read Privacy Policy</a>
+                <a
+                  class="button ghost-light"
+                  href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb"
+                  >Install Extension</a
+                >
+              </div>
+            </div>
+            <div class="frame">
+              <img
+                src="./screenshots/1.3.0/settings.png"
+                alt="Settings screen showing local-only privacy controls"
               />
             </div>
           </div>
         </div>
       </section>
 
-      <section class="cta-band">
-        <div class="container cta-inner">
-          <div>
-            <h2>Ready to see your footprint?</h2>
-            <p class="body">
-              Install EchoFootPrint and reveal who tracks you across the web.
+      <!-- 07 · Release: slim note instead of a full section -->
+      <section class="block" style="padding-top: 0" aria-label="Latest release">
+        <div class="container">
+          <div class="release-note">
+            <span class="version-pill">v1.3.0</span>
+            <p>
+              <strong>A sharper, faster dashboard</strong> — instrument-panel
+              redesign, reliable keyless map, lazy-loaded views on React 19.
             </p>
+            <a
+              class="text-link"
+              href="https://github.com/luongnv89/echo-footprint/releases/tag/v1.3.0"
+              >Release notes</a
+            >
           </div>
-          <a
-            class="button primary"
-            href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb"
-            aria-label="Install EchoFootPrint extension"
-          >
-            Install Extension
-          </a>
         </div>
       </section>
 
-      <section class="faq" id="faq">
-        <div class="container faq-grid">
+      <!-- 08 · FAQ: hairline accordion -->
+      <section class="block" id="faq" style="padding-top: 0">
+        <div class="container">
           <div class="section-header">
-            <p class="eyebrow">FAQ</p>
-            <h2>Common questions</h2>
+            <span class="section-index">05 — FAQ</span>
+            <p class="eyebrow">Common questions</p>
+            <h2>Asked <em>often.</em></h2>
           </div>
-          <div class="faq-items">
-            <div class="faq-item">
-              <h4>Does EchoFootPrint block trackers?</h4>
-              <p>
-                No. It visualizes tracking so you can see the ecosystem. Use a
-                blocker if you want to stop requests.
-              </p>
-            </div>
-            <div class="faq-item">
-              <h4>What data is stored?</h4>
-              <p>
-                Detected domains, URLs, timestamps, pixel types, and platform
-                labels—stored locally in IndexedDB.
-              </p>
-            </div>
-            <div class="faq-item">
-              <h4>Is anything sent to servers?</h4>
-              <p>
-                No. There is no telemetry or analytics. Map geolocation is
-                strictly opt-in, and any cached geo data stays on your
-                device.
-              </p>
-            </div>
-            <div class="faq-item">
-              <h4>Can I clear my data?</h4>
-              <p>
-                Yes. Use Settings → Clear All Data to delete detections, geo
-                cache, and preferences.
-              </p>
-            </div>
-            <div class="faq-item">
-              <h4>Which browsers are supported?</h4>
-              <p>
-                Chromium-based browsers via Manifest V3 (e.g., Chrome, Edge).
-                Firefox support is planned separately.
-              </p>
-            </div>
+          <div class="faq-wrap">
+            <details class="faq-item" open>
+              <summary>Does EchoFootPrint block trackers?</summary>
+              <div class="faq-answer">
+                <p>
+                  No — it makes tracking visible so you can see the ecosystem.
+                  Pair it with a blocker if you want to stop requests.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>What data is stored?</summary>
+              <div class="faq-answer">
+                <p>
+                  Detected domains, URLs, timestamps, pixel types, and platform
+                  labels — stored locally in IndexedDB on your device.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>Is anything sent to servers?</summary>
+              <div class="faq-answer">
+                <p>
+                  No telemetry, ever. The only network call outside page loads
+                  is the strictly opt-in map geolocation lookup — cached
+                  locally for 7 days.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>Can I clear my data?</summary>
+              <div class="faq-answer">
+                <p>
+                  Yes — Settings → Clear All Data removes detections, the geo
+                  cache, and preferences. Uninstalling removes everything.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>Which browsers are supported?</summary>
+              <div class="faq-answer">
+                <p>
+                  Chromium browsers via Manifest V3 — Chrome, Edge, and
+                  others. Firefox support is planned separately.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- 09 · Final CTA -->
+      <section class="cta-final">
+        <div class="container">
+          <p class="eyebrow center">Begin in one click</p>
+          <h2>Ready to see <em>your footprint?</em></h2>
+          <p class="lede" style="margin-top: 16px">
+            Free, private, and installed in seconds.
+          </p>
+          <div class="hero-actions">
+            <a
+              class="button primary"
+              href="https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb"
+              aria-label="Install EchoFootPrint extension"
+            >
+              Install Extension
+            </a>
+          </div>
+          <div class="trust-row">
+            <a
+              href="https://www.producthunt.com/products/echofootprint-track-your-tracker?embed=true&utm_source=badge-featured&utm_medium=badge"
+              target="_blank"
+              rel="noopener"
+              >Featured on Product Hunt</a
+            >
+            <span class="dot-sep" aria-hidden="true"></span>
+            <span>Verified Chrome Web Store listing</span>
           </div>
         </div>
       </section>
@@ -433,74 +494,38 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <div class="brand">
+        <a class="brand" href="./index.html" aria-label="EchoFootPrint home">
           <img src="./logo.svg" alt="EchoFootPrint logo" class="logo" />
           <span class="brand-name">EchoFootPrint</span>
-        </div>
+        </a>
         <div class="footer-links">
           <a href="./privacy.html">Privacy Policy</a>
-          <span class="dot">•</span>
+          <span class="dot" aria-hidden="true">•</span>
           <a
             href="https://github.com/luongnv89/echo-footprint/releases/tag/v1.3.0"
             >v1.3.0</a
           >
-          <span class="dot">•</span>
+          <span class="dot" aria-hidden="true">•</span>
           <span class="muted">Local-only · Zero telemetry</span>
         </div>
       </div>
     </footer>
 
     <script>
+      // Full platform list (populates the on-demand disclosure only —
+      // categories above keep the page scannable per Krug rule #1).
       const platformTags = [
-        'Facebook/Meta',
-        'Google',
-        'Twitter/X',
-        'LinkedIn',
-        'TikTok',
-        'Amazon',
-        'Pinterest',
-        'Snapchat',
-        'Reddit',
-        'Microsoft/Bing',
-        'Criteo',
-        'The Trade Desk',
-        'Taboola',
-        'Outbrain',
-        'Yahoo DSP',
-        'AppNexus/Xandr',
-        'OpenX',
-        'Index Exchange',
-        'PubMatic',
-        'Magnite',
-        'Quantcast',
-        'Media.net',
-        'AdRoll',
-        'RevContent',
-        'InMobi',
-        'Smaato',
-        'Unity Ads',
-        'IronSource',
-        'Vungle',
-        'Chartboost',
-        'Moloco Ads',
-        'Digital Turbine (AdColony)',
-        'Flurry',
-        'Kargo',
-        'TripleLift',
-        'Zeta Global',
-        'Lotame',
-        'Nielsen Marketing Cloud',
-        'Oracle BlueKai',
-        'Epsilon',
-        'Acxiom',
-        'Experian Marketing Services',
-        'StackAdapt',
-        'Basis DSP (Centro)',
-        'Amobee',
-        'Verizon Media DSP',
-        'Adform',
-        'Sovrn',
-        'BidSwitch',
+        'Facebook/Meta', 'Google', 'Twitter/X', 'LinkedIn', 'TikTok',
+        'Amazon', 'Pinterest', 'Snapchat', 'Reddit', 'Microsoft/Bing',
+        'Criteo', 'The Trade Desk', 'Taboola', 'Outbrain', 'Yahoo DSP',
+        'AppNexus/Xandr', 'OpenX', 'Index Exchange', 'PubMatic', 'Magnite',
+        'Quantcast', 'Media.net', 'AdRoll', 'RevContent', 'InMobi',
+        'Smaato', 'Unity Ads', 'IronSource', 'Vungle', 'Chartboost',
+        'Moloco Ads', 'Digital Turbine (AdColony)', 'Flurry', 'Kargo',
+        'TripleLift', 'Zeta Global', 'Lotame', 'Nielsen Marketing Cloud',
+        'Oracle BlueKai', 'Epsilon', 'Acxiom',
+        'Experian Marketing Services', 'StackAdapt', 'Basis DSP (Centro)',
+        'Amobee', 'Verizon Media DSP', 'Adform', 'Sovrn', 'BidSwitch',
         'SmartyAds DSP',
       ];
 
@@ -516,34 +541,21 @@
         window.lucide.createIcons();
       }
 
-      // Simple carousel
-      const track = document.getElementById('carousel-track');
-      const dotsContainer = document.getElementById('carousel-dots');
-      const slides = Array.from(track.children);
-      let currentIndex = 0;
+      // Accessible tabbed showcase (keyboard: buttons are natively focusable).
+      const tabs = Array.from(document.querySelectorAll('.showcase-tab'));
+      const panels = Array.from(document.querySelectorAll('.showcase-panel'));
 
-      slides.forEach((_, idx) => {
-        const dot = document.createElement('button');
-        dot.className = idx === 0 ? 'active' : '';
-        dot.addEventListener('click', () => goToSlide(idx));
-        dotsContainer.appendChild(dot);
-      });
-
-      function goToSlide(idx) {
-        currentIndex = idx;
-        track.style.transform = `translateX(-${idx * 100}%)`;
-        Array.from(dotsContainer.children).forEach((dot, i) => {
-          dot.classList.toggle('active', i === idx);
-        });
+      function selectView(name) {
+        tabs.forEach(t =>
+          t.setAttribute('aria-selected', String(t.dataset.view === name))
+        );
+        panels.forEach(p =>
+          p.classList.toggle('active', p.dataset.panel === name)
+        );
       }
 
-      document.getElementById('prev-slide').addEventListener('click', () => {
-        const next = (currentIndex - 1 + slides.length) % slides.length;
-        goToSlide(next);
-      });
-      document.getElementById('next-slide').addEventListener('click', () => {
-        const next = (currentIndex + 1) % slides.length;
-        goToSlide(next);
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => selectView(tab.dataset.view));
       });
     </script>
   </body>
