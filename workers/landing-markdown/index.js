@@ -4,6 +4,7 @@ import {
   markdownResponseHeaders,
 } from '../../landing-page/lib/markdown-negotiation.js';
 import { withHomeLinkHeaders } from '../../landing-page/lib/link-headers.js';
+import { withWellKnownContentType } from '../../landing-page/lib/well-known-content-types.js';
 
 const DEFAULT_PAGES_ORIGIN = 'https://luongnv89.github.io/echo-footprint';
 
@@ -26,7 +27,8 @@ async function passThrough(request, env) {
   }
   const target = originAssetUrl(env, path);
   const resp = await fetch(new Request(target, request));
-  return withHomeLinkHeaders(resp, url.pathname);
+  const typed = withWellKnownContentType(resp, url.pathname);
+  return withHomeLinkHeaders(typed, url.pathname);
 }
 
 export default {

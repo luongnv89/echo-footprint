@@ -1,0 +1,40 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "EchoFootPrint",
+    "identifier": "did:web:echo-footprint.luongnv.com"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:echo-footprint.luongnv.com:agent:site",
+      "displayName": "EchoFootPrint Site Agent",
+      "type": "application/agent-card+json",
+      "url": "https://echo-footprint.luongnv.com/.well-known/agent-card.json",
+      "representativeQueries": [
+        "What is EchoFootPrint?",
+        "How does EchoFootPrint detect tracking pixels?",
+        "Does EchoFootPrint send data to the cloud?"
+      ]
+    },
+    {
+      "identifier": "urn:air:echo-footprint.luongnv.com:server:docs",
+      "displayName": "EchoFootPrint Documentation MCP",
+      "type": "application/mcp-server-card+json",
+      "url": "https://echo-footprint.luongnv.com/.well-known/mcp/server-card.json",
+      "representativeQueries": [
+        "Summarize the EchoFootPrint privacy policy",
+        "List EchoFootPrint dashboard views"
+      ]
+    },
+    {
+      "identifier": "urn:air:echo-footprint.luongnv.com:skills:catalog",
+      "displayName": "EchoFootPrint Agent Skills",
+      "type": "application/agent-skills-discovery+json",
+      "url": "https://echo-footprint.luongnv.com/.well-known/agent-skills/index.json",
+      "representativeQueries": [
+        "Find a skill that explains EchoFootPrint install steps",
+        "Which skill covers local-only storage?"
+      ]
+    }
+  ]
+}

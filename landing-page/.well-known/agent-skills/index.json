@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "product-overview",
+      "type": "skill-md",
+      "description": "Explain what EchoFootPrint does, how local pixel detection works, and dashboard views.",
+      "url": "/.well-known/agent-skills/product-overview/SKILL.md",
+      "digest": "sha256:e600e402a427e2294068efa6bcd7516424a8f5bf72314fe55ab50f503c366fa3"
+    },
+    {
+      "name": "privacy-and-data",
+      "type": "skill-md",
+      "description": "Summarize local-only IndexedDB storage, opt-in geolocation, and GDPR-aligned privacy practices.",
+      "url": "/.well-known/agent-skills/privacy-and-data/SKILL.md",
+      "digest": "sha256:f727171a2d5baf6ed604185cc5e6182ea4744a226c8af8289424a35a8c3b7665"
+    },
+    {
+      "name": "install-and-source",
+      "type": "skill-md",
+      "description": "Point to the Chrome Web Store listing, GitHub repository, and build-from-source steps.",
+      "url": "/.well-known/agent-skills/install-and-source/SKILL.md",
+      "digest": "sha256:4ad531624b0e56d35a0bfe34aba2b4e9ee58b8a264fde3d69966ec4b8db7834b"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://echo-footprint.luongnv.com/",
+      "service-doc": [
+        {
+          "href": "https://echo-footprint.luongnv.com/llms.txt",
+          "type": "text/plain"
+        }
+      ],
+      "service-desc": [
+        {
+          "href": "https://echo-footprint.luongnv.com/.well-known/agent-card.json",
+          "type": "application/json"
+        }
+      ]
+    },
+    {
+      "anchor": "https://echo-footprint.luongnv.com/mcp",
+      "service-desc": [
+        {
+          "href": "https://echo-footprint.luongnv.com/.well-known/mcp/server-card.json",
+          "type": "application/json"
+        }
+      ]
+    }
+  ]
+}

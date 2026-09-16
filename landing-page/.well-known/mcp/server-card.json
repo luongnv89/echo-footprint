@@ -1,0 +1,16 @@
+{
+  "serverInfo": {
+    "name": "EchoFootPrint Documentation",
+    "version": "1.3.0"
+  },
+  "description": "Discovery-oriented MCP server card for EchoFootPrint product documentation, privacy policy, and agent-ready artifacts. Public site content is readable without authentication.",
+  "url": "https://echo-footprint.luongnv.com/mcp",
+  "transport": {
+    "type": "streamable-http"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": false
+  }
+}
