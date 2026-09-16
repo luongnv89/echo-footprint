@@ -1,0 +1,24 @@
+; DNS-AID zone TEMPLATE for echo-footprint.luongnv.com — NOT published by git push alone.
+; Authoritative DNS: GoDaddy (luongnv.com zone, ns01/ns02.domaincontrol.com).
+; Copy into GoDaddy DNS (HTTPS/SVCB types) or run scripts/publish-dns-aid.sh when the
+; zone is hosted on Cloudflare. Enable DNSSEC on luongnv.com after records exist.
+;
+; STATUS: template / unpublished
+
+$ORIGIN echo-footprint.luongnv.com.
+$TTL 3600
+
+; General agent discovery index (minimum required set)
+_index._agents.echo-footprint.luongnv.com. 3600 IN SVCB 1 echo-footprint.luongnv.com. alpn=h2 port=443
+
+; Placeholder labels for scanners that probe well-known entrypoints (no live A2A/MCP transport)
+_a2a._agents.echo-footprint.luongnv.com. 3600 IN SVCB 1 echo-footprint.luongnv.com. alpn=h2 port=443
+_mcp._agents.echo-footprint.luongnv.com. 3600 IN SVCB 1 echo-footprint.luongnv.com. alpn=h2 port=443
+
+; Equivalent SVCB form (same wire format as HTTPS):
+; _index._agents.echo-footprint.luongnv.com. 3600 IN SVCB 1 echo-footprint.luongnv.com. alpn="h3,h2" port=443 mandatory=alpn,port
+
+; Optional TXT index fallback when the registrar UI cannot set SvcParams (draft §4).
+; _index._agents.echo-footprint.luongnv.com. 3600 IN TXT "dns-aid=index; site=https://echo-footprint.luongnv.com/"
+
+; DNSSEC: enable under GoDaddy → luongnv.com → DNS → DNSSEC (publishes DS at registrar).
