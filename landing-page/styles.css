@@ -282,6 +282,14 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* Privacy policy section headings are h2 for a correct outline (h1 → h2),
+   while keeping the quieter h3-scale visual treatment. */
+.privacy-body h2 {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .lede {
   color: var(--muted);
   font-size: clamp(17px, 2vw, 20px);

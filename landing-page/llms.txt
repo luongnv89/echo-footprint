@@ -1,0 +1,17 @@
+# EchoFootPrint
+
+> Privacy-first browser extension that reveals cross-site tracking from 50 major ad and analytics platforms. All data stays local on the device — no accounts, no telemetry, no cloud sync.
+
+## Pages
+
+- [Home](https://echo-footprint.luongnv.com/): What EchoFootPrint does, how it works, dashboard views, platform coverage, FAQ.
+- [Privacy Policy](https://echo-footprint.luongnv.com/privacy.html): Local-only data handling, retention, user controls and GDPR rights.
+
+## Key facts
+
+- [How it works](https://echo-footprint.luongnv.com/#how-it-works): Browse normally, pixels matched locally in IndexedDB, visualized instantly.
+- [Views](https://echo-footprint.luongnv.com/#views): Radial graph, bipartite graph, map (opt-in geolocation), sortable data table with CSV export.
+- [Platforms](https://echo-footprint.luongnv.com/#platforms): 50 supported platforms across social, search, exchanges, DSPs, mobile and data brokers.
+- [FAQ](https://echo-footprint.luongnv.com/#faq): Does not block trackers; stores detections locally only; one-click wipe in Settings.
+- Install: [Chrome Web Store](https://chromewebstore.google.com/detail/pbabepaamiligomhlcmkjabhmkmaekci?utm_source=item-share-cb)
+- Source and releases: [GitHub](https://github.com/luongnv89/echo-footprint)
