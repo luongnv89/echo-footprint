@@ -1,0 +1,58 @@
+{
+  "protocolVersion": "1.0",
+  "name": "EchoFootPrint Site Agent",
+  "description": "Privacy-first browser extension that visualizes cross-site tracking from 50 major ad and analytics platforms. This agent card describes how automated clients can discover product documentation, privacy practices, and install links for EchoFootPrint.",
+  "version": "1.3.0",
+  "documentationUrl": "https://echo-footprint.luongnv.com/",
+  "iconUrl": "https://echo-footprint.luongnv.com/favicon.svg",
+  "provider": {
+    "organization": "EchoFootPrint",
+    "url": "https://github.com/luongnv89/echo-footprint"
+  },
+  "supportedInterfaces": [
+    {
+      "url": "https://echo-footprint.luongnv.com/",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extendedAgentCard": false
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["text/plain", "text/markdown"],
+  "skills": [
+    {
+      "id": "product-overview",
+      "name": "Product overview",
+      "description": "Explain what EchoFootPrint does, how local pixel detection works, and how the dashboard visualizes cross-site tracking without sending data off-device.",
+      "tags": ["privacy", "tracking", "browser-extension", "overview"],
+      "examples": [
+        "What is EchoFootPrint?",
+        "How does EchoFootPrint detect trackers?"
+      ]
+    },
+    {
+      "id": "privacy-and-data",
+      "name": "Privacy and local data",
+      "description": "Summarize local-only IndexedDB storage, opt-in geolocation, user controls, and GDPR-aligned rights documented in the privacy policy.",
+      "tags": ["privacy", "gdpr", "local-storage", "policy"],
+      "examples": [
+        "Does EchoFootPrint collect personal data?",
+        "Where is tracking data stored?"
+      ]
+    },
+    {
+      "id": "install-and-source",
+      "name": "Install and source",
+      "description": "Point users and agents to the Chrome Web Store listing, GitHub repository, and release artifacts.",
+      "tags": ["install", "chrome-web-store", "github", "releases"],
+      "examples": [
+        "How do I install EchoFootPrint?",
+        "Where is the source code?"
+      ]
+    }
+  ]
+}
