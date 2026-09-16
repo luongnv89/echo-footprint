@@ -1,6 +1,12 @@
 /*
   Vary: Accept
 
+/
+  Link: </llms.txt>; rel="describedby"; type="text/plain", </index.md>; rel="alternate"; type="text/markdown"
+
+/index.html
+  Link: </llms.txt>; rel="describedby"; type="text/plain", </index.md>; rel="alternate"; type="text/markdown"
+
 /index.md
   Content-Type: text/markdown; charset=utf-8
   Vary: Accept
