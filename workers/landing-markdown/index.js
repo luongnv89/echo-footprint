@@ -3,6 +3,7 @@ import {
   htmlPathToMarkdown,
   markdownResponseHeaders,
 } from '../../landing-page/lib/markdown-negotiation.js';
+import { withHomeLinkHeaders } from '../../landing-page/lib/link-headers.js';
 
 const DEFAULT_PAGES_ORIGIN = 'https://luongnv89.github.io/echo-footprint';
 
@@ -17,19 +18,22 @@ function originAssetUrl(env, pathname) {
   return `${origin}${suffix}`;
 }
 
-function passThrough(request, env) {
+async function passThrough(request, env) {
   const url = new URL(request.url);
   let path = url.pathname;
   if (path === '/' || path === '') {
     path = '/index.html';
   }
   const target = originAssetUrl(env, path);
-  return fetch(new Request(target, request));
+  const resp = await fetch(new Request(target, request));
+  return withHomeLinkHeaders(resp, url.pathname);
 }
 
 export default {
   async fetch(request, env) {
     const method = request.method;
+    const url = new URL(request.url);
+
     if (method !== 'GET' && method !== 'HEAD') {
       return passThrough(request, env);
     }
@@ -39,7 +43,7 @@ export default {
       return passThrough(request, env);
     }
 
-    const mdUrl = htmlPathToMarkdown(new URL(request.url));
+    const mdUrl = htmlPathToMarkdown(url);
     if (!mdUrl) {
       return passThrough(request, env);
     }
@@ -52,11 +56,15 @@ export default {
     }
 
     const body = method === 'GET' ? await mdResp.text() : null;
-    const headers = markdownResponseHeaders(body, mdResp.headers.get('cache-control'));
+    const headers = markdownResponseHeaders(
+      body,
+      mdResp.headers.get('cache-control')
+    );
 
-    return new Response(method === 'HEAD' ? null : body, {
+    const mdResponse = new Response(method === 'HEAD' ? null : body, {
       status: 200,
       headers,
     });
+    return withHomeLinkHeaders(mdResponse, url.pathname);
   },
 };
