@@ -1,0 +1,10 @@
+/*
+  Vary: Accept
+
+/index.md
+  Content-Type: text/markdown; charset=utf-8
+  Vary: Accept
+
+/privacy.md
+  Content-Type: text/markdown; charset=utf-8
+  Vary: Accept

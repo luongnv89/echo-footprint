@@ -1,0 +1,12 @@
+name = "echo-footprint-landing-markdown"
+main = "index.js"
+compatibility_date = "2025-09-01"
+
+# Route must be attached after deploy (zone: luongnv.com).
+# wrangler deploy attaches the pattern when CLOUDFLARE_API_TOKEN has Zone:Edit.
+routes = [
+  { pattern = "echo-footprint.luongnv.com/*", zone_name = "luongnv.com" }
+]
+
+[vars]
+PAGES_ORIGIN = "https://luongnv89.github.io/echo-footprint"
