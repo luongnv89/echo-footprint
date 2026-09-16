@@ -4,6 +4,7 @@ import {
   markdownResponseHeaders,
 } from './lib/markdown-negotiation.js';
 import { withHomeLinkHeaders } from './lib/link-headers.js';
+import { withWellKnownContentType } from './lib/well-known-content-types.js';
 
 export default {
   async fetch(request, env) {
@@ -12,19 +13,22 @@ export default {
 
     if (method !== 'GET' && method !== 'HEAD') {
       const resp = await env.ASSETS.fetch(request);
-      return withHomeLinkHeaders(resp, url.pathname);
+      const typed = withWellKnownContentType(resp, url.pathname);
+      return withHomeLinkHeaders(typed, url.pathname);
     }
 
     const accept = request.headers.get('accept') || '';
     if (!prefersMarkdown(accept)) {
       const resp = await env.ASSETS.fetch(request);
-      return withHomeLinkHeaders(resp, url.pathname);
+      const typed = withWellKnownContentType(resp, url.pathname);
+      return withHomeLinkHeaders(typed, url.pathname);
     }
 
     const mdUrl = htmlPathToMarkdown(url);
     if (!mdUrl) {
       const resp = await env.ASSETS.fetch(request);
-      return withHomeLinkHeaders(resp, url.pathname);
+      const typed = withWellKnownContentType(resp, url.pathname);
+      return withHomeLinkHeaders(typed, url.pathname);
     }
 
     const mdRequest = new Request(mdUrl.toString(), {
@@ -36,7 +40,8 @@ export default {
 
     if (mdResp.status !== 200) {
       const resp = await env.ASSETS.fetch(request);
-      return withHomeLinkHeaders(resp, url.pathname);
+      const typed = withWellKnownContentType(resp, url.pathname);
+      return withHomeLinkHeaders(typed, url.pathname);
     }
 
     const body = method === 'GET' ? await mdResp.text() : null;

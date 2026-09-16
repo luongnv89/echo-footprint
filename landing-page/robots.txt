@@ -30,4 +30,6 @@ Allow: /
 User-agent: Bytespider
 Allow: /
 
+Agentmap: https://echo-footprint.luongnv.com/.well-known/ai-catalog.json
+
 Sitemap: https://echo-footprint.luongnv.com/sitemap.xml

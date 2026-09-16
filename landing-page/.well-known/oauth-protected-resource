@@ -1,0 +1,6 @@
+{
+  "resource": "https://echo-footprint.luongnv.com/",
+  "authorization_servers": ["https://echo-footprint.luongnv.com"],
+  "scopes_supported": ["site.read"],
+  "bearer_methods_supported": ["header"]
+}
