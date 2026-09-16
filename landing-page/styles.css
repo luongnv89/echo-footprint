@@ -7,8 +7,7 @@
    2. Type: Fraunces (display serif, editorial voice) + Instrument
       Sans (clean body). Mono labels in ui-monospace stack.
       Deliberately NOT Inter/Roboto as the display face.
-   3. Texture: hairline rules + generous whitespace + one soft
-      radial paper glow. No gradients-as-brand, no glassmorphism.
+   3. Texture: none — flat white, hairline rules, generous whitespace.
    4. Green-ink (#15803D) is used wherever green appears AS TEXT
       so WCAG AA 4.5:1 holds on white. #22C55E stays decorative.
    ============================================================ */
@@ -56,16 +55,6 @@ body {
   font-size: 17px;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-}
-
-/* Subtle paper atmosphere: one faint radial glow, no color wash */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background: radial-gradient(60% 32% at 50% 0%, rgba(0, 0, 0, 0.045), transparent 70%);
 }
 
 ::selection {
